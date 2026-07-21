@@ -40,9 +40,9 @@ Reklam məzmunu backend-dən dinamik çəkilir (admin CRUD ilə idarə olunur). 
 
 ## Tez-tez edilən səhvlər
 
-| Səhv | Düzəliş |
-|---|---|
-| Skip vaxtını 5s hardcode etmək | Admin paneldən gələn dəyəri istifadə et (default 5s) |
-| Reklam zamanı player kontrollarının aktiv qalması | Reklam bitənə qədər kontrollar kilidli |
-| Reklam overlay-in frame-dən fərqli ölçüdə olması | Overlay video konteynerinin ölçüsünə tam bağlanır |
-| Watch progress-i hər timeupdate-də DB-yə yazmaq | Throttle + unload zamanı flush |
+| Səhv                                              | Düzəliş                                              |
+| ------------------------------------------------- | ---------------------------------------------------- |
+| Skip vaxtını 5s hardcode etmək                    | Admin paneldən gələn dəyəri istifadə et (default 5s) |
+| Reklam zamanı player kontrollarının aktiv qalması | Reklam bitənə qədər kontrollar kilidli               |
+| Reklam overlay-in frame-dən fərqli ölçüdə olması  | Overlay video konteynerinin ölçüsünə tam bağlanır    |
+| Watch progress-i hər timeupdate-də DB-yə yazmaq   | Throttle + unload zamanı flush                       |

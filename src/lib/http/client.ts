@@ -1,4 +1,8 @@
-import axios, { AxiosError, type AxiosInstance, type CreateAxiosDefaults } from "axios";
+import axios, {
+  AxiosError,
+  type AxiosInstance,
+  type CreateAxiosDefaults,
+} from "axios";
 
 export interface HttpError {
   status: number | null;

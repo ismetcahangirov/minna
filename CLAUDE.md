@@ -7,11 +7,11 @@ Dillər: **EN (default), TR, RU**.
 
 ## Əsas Sənədlər
 
-| Sənəd | Məzmun |
-|---|---|
-| `PROJECT-ISSUES.md` | Epic/sub-issue strukturu — GitHub issue-lar bu sənədə əsasən yaradılır |
-| `DESIGN-SPEC.md` | Dizayn sistemi, səhifə-üzrə təlimatlar, atmosferik fon videolarının frame-by-frame analizi (bölmə 6) |
-| `.claude/skills/` | Layihə skill-ləri — aşağıdakı cədvələ bax |
+| Sənəd               | Məzmun                                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `PROJECT-ISSUES.md` | Epic/sub-issue strukturu — GitHub issue-lar bu sənədə əsasən yaradılır                               |
+| `DESIGN-SPEC.md`    | Dizayn sistemi, səhifə-üzrə təlimatlar, atmosferik fon videolarının frame-by-frame analizi (bölmə 6) |
+| `.claude/skills/`   | Layihə skill-ləri — aşağıdakı cədvələ bax                                                            |
 
 ## Texnologiya Stack-i
 
@@ -45,13 +45,13 @@ Dillər: **EN (default), TR, RU**.
 
 ## Skills — nə vaxt hansını oxu
 
-| Skill | Nə vaxt istifadə et |
-|---|---|
-| `design-system` | Hər hansı UI komponenti/səhifə yazarkən — rənglər, qadağalar, tipoqrafiya, animasiya |
-| `atmospheric-backgrounds` | Login, profil, search, 404, admin fon video/animasiyaları üzərində işləyərkən |
-| `consumet-data-fetching` | Consumet API-dan data çəkərkən — RTK Query + Axios + Redis + SSR/ISR strategiyası |
-| `video-player-ads` | Bölüm izləmə səhifəsi, video player, pre-roll reklam sistemi işlərində |
-| `admin-panel` | Admin panel funksionallığı (reklam, video, bloq, istifadəçi idarəetməsi) yazarkən |
-| `i18n-localization` | UI mətni əlavə edərkən / yeni səhifə yaradarkən (EN/TR/RU) |
-| `seo-performance` | Metadata, sitemap, Core Web Vitals, şəkil/video optimizasiyası işlərində |
-| `git-workflow` | Hər işə başlayarkən, branch/PR açarkən, GitHub issue yaradarkən |
+| Skill                     | Nə vaxt istifadə et                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| `design-system`           | Hər hansı UI komponenti/səhifə yazarkən — rənglər, qadağalar, tipoqrafiya, animasiya |
+| `atmospheric-backgrounds` | Login, profil, search, 404, admin fon video/animasiyaları üzərində işləyərkən        |
+| `consumet-data-fetching`  | Consumet API-dan data çəkərkən — RTK Query + Axios + Redis + SSR/ISR strategiyası    |
+| `video-player-ads`        | Bölüm izləmə səhifəsi, video player, pre-roll reklam sistemi işlərində               |
+| `admin-panel`             | Admin panel funksionallığı (reklam, video, bloq, istifadəçi idarəetməsi) yazarkən    |
+| `i18n-localization`       | UI mətni əlavə edərkən / yeni səhifə yaradarkən (EN/TR/RU)                           |
+| `seo-performance`         | Metadata, sitemap, Core Web Vitals, şəkil/video optimizasiyası işlərində             |
+| `git-workflow`            | Hər işə başlayarkən, branch/PR açarkən, GitHub issue yaradarkən                      |

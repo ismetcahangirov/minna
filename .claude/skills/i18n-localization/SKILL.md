@@ -31,9 +31,9 @@ Açar adlandırması: səhifə/komponent üzrə nested — `home.sections.trendi
 
 ## Tez-tez edilən səhvlər
 
-| Səhv | Düzəliş |
-|---|---|
-| Komponentdə hardcoded "Skip Ad" mətni | `t('player.skipAd')` + 3 dildə açar |
-| Yalnız EN faylına açar əlavə etmək | Hər açar 3 faylda da olmalıdır (TR/RU boş qalmasın) |
-| Metadata-nı yalnız EN yazmaq | generateMetadata locale-aware olmalıdır |
-| Anime təsvirlərini tərcümə etməyə çalışmaq | API datası olduğu kimi qalır |
+| Səhv                                       | Düzəliş                                             |
+| ------------------------------------------ | --------------------------------------------------- |
+| Komponentdə hardcoded "Skip Ad" mətni      | `t('player.skipAd')` + 3 dildə açar                 |
+| Yalnız EN faylına açar əlavə etmək         | Hər açar 3 faylda da olmalıdır (TR/RU boş qalmasın) |
+| Metadata-nı yalnız EN yazmaq               | generateMetadata locale-aware olmalıdır             |
+| Anime təsvirlərini tərcümə etməyə çalışmaq | API datası olduğu kimi qalır                        |

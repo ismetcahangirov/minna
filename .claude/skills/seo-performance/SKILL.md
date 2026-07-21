@@ -33,17 +33,17 @@ SEO və performans "sonda əlavə olunan" deyil — hər feature-in qəbul meyar
 
 ## Core Web Vitals Hədəfləri
 
-| Metrik | Diqqət nöqtəsi |
-|---|---|
-| LCP | Hero/banner şəkli prioritetli (`priority` prop), fon videosu LCP-ni bloklamamalıdır |
-| CLS | Kart/skeleton ölçüləri sabit — layout shift yaradan lazy content YOX |
-| INP | Ağır animasiyalar (Framer Motion, Three.js) main thread-i bloklamamalıdır |
+| Metrik | Diqqət nöqtəsi                                                                      |
+| ------ | ----------------------------------------------------------------------------------- |
+| LCP    | Hero/banner şəkli prioritetli (`priority` prop), fon videosu LCP-ni bloklamamalıdır |
+| CLS    | Kart/skeleton ölçüləri sabit — layout shift yaradan lazy content YOX                |
+| INP    | Ağır animasiyalar (Framer Motion, Three.js) main thread-i bloklamamalıdır           |
 
 ## Tez-tez edilən səhvlər
 
-| Səhv | Düzəliş |
-|---|---|
-| `<img>` tag-i istifadə etmək | `next/image` |
-| Fon videosunu autoplay + səsli qoymaq | `muted loop playsinline` məcburidir |
-| Three.js-i əsas bundle-a daxil etmək | `dynamic(() => import(...), { ssr: false })` |
-| SEO səhifəsini `use client`-ə çevirmək | Server component + SSR/ISR saxla |
+| Səhv                                   | Düzəliş                                      |
+| -------------------------------------- | -------------------------------------------- |
+| `<img>` tag-i istifadə etmək           | `next/image`                                 |
+| Fon videosunu autoplay + səsli qoymaq  | `muted loop playsinline` məcburidir          |
+| Three.js-i əsas bundle-a daxil etmək   | `dynamic(() => import(...), { ssr: false })` |
+| SEO səhifəsini `use client`-ə çevirmək | Server component + SSR/ISR saxla             |

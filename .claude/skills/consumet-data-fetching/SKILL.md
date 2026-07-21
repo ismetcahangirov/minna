@@ -29,18 +29,18 @@ Client (RTK Query) → Next.js API route / server component
 
 ## Data İstehlakçıları
 
-| Yer | Mənbə | Render |
-|---|---|---|
-| Home seksiyaları (son əlavə, populyar, top-rated, trend) | Consumet + Redis | SSR/ISR |
-| Header kateqoriyalar dropdown | Consumet + Redis (uzun TTL) | SSR + client hydrate |
-| Axtarış nəticələri | Consumet (debounced) | Client (RTK Query) |
-| Anime detal + bölüm siyahısı | Consumet + Redis | SSR/ISR + dynamic metadata |
-| Favoritlər / izləmə tarixçəsi | Neon DB (Consumet deyil) | Auth-protected client |
+| Yer                                                      | Mənbə                       | Render                     |
+| -------------------------------------------------------- | --------------------------- | -------------------------- |
+| Home seksiyaları (son əlavə, populyar, top-rated, trend) | Consumet + Redis            | SSR/ISR                    |
+| Header kateqoriyalar dropdown                            | Consumet + Redis (uzun TTL) | SSR + client hydrate       |
+| Axtarış nəticələri                                       | Consumet (debounced)        | Client (RTK Query)         |
+| Anime detal + bölüm siyahısı                             | Consumet + Redis            | SSR/ISR + dynamic metadata |
+| Favoritlər / izləmə tarixçəsi                            | Neon DB (Consumet deyil)    | Auth-protected client      |
 
 ## Tez-tez edilən səhvlər
 
-| Səhv | Düzəliş |
-|---|---|
-| Client komponentdən birbaşa Consumet-ə fetch | Server qatı + Redis-dən keçir |
-| Cache-siz hər sorğunu Consumet-ə ötürmək | Redis cache məcburidir (SETUP-05, PERF-04) |
-| Home-u tam client-side render etmək | SEO pozulur — SSR/ISR istifadə et |
+| Səhv                                         | Düzəliş                                    |
+| -------------------------------------------- | ------------------------------------------ |
+| Client komponentdən birbaşa Consumet-ə fetch | Server qatı + Redis-dən keçir              |
+| Cache-siz hər sorğunu Consumet-ə ötürmək     | Redis cache məcburidir (SETUP-05, PERF-04) |
+| Home-u tam client-side render etmək          | SEO pozulur — SSR/ISR istifadə et          |

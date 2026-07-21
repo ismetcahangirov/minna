@@ -14,7 +14,10 @@ export const CACHE_TTL = {
 } as const;
 
 /** Namespaced key builder to keep the Redis keyspace organized. */
-export function cacheKey(namespace: string, ...parts: (string | number)[]): string {
+export function cacheKey(
+  namespace: string,
+  ...parts: (string | number)[]
+): string {
   return [namespace, ...parts].join(":");
 }
 

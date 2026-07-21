@@ -19,7 +19,13 @@ const axiosBaseQuery =
   (): BaseQueryFn<AxiosBaseQueryArgs, unknown, HttpError> =>
   async ({ url, method = "GET", data, params, headers }) => {
     try {
-      const result = await apiClient.request({ url, method, data, params, headers });
+      const result = await apiClient.request({
+        url,
+        method,
+        data,
+        params,
+        headers,
+      });
       return { data: result.data };
     } catch (error) {
       return { error: error as HttpError };
@@ -31,6 +37,14 @@ const axiosBaseQuery =
 export const baseApi = createApi({
   reducerPath: "api",
   baseQuery: axiosBaseQuery(),
-  tagTypes: ["Anime", "Episodes", "Favorites", "WatchProgress", "Blogs", "Ads", "Users"],
+  tagTypes: [
+    "Anime",
+    "Episodes",
+    "Favorites",
+    "WatchProgress",
+    "Blogs",
+    "Ads",
+    "Users",
+  ],
   endpoints: () => ({}),
 });
