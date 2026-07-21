@@ -1,0 +1,47 @@
+{
+  "common": {
+    "appName": "Minna",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "error": "Something went wrong"
+  },
+  "nav": {
+    "favorites": "Favorites",
+    "new": "New",
+    "popular": "Popular",
+    "blogs": "Blogs",
+    "search": "Search",
+    "language": "Language"
+  },
+  "auth": {
+    "login": "Log in",
+    "logout": "Log out",
+    "profile": "Profile",
+    "continueWithGoogle": "Continue with Google"
+  },
+  "home": {
+    "hero": {
+      "tagline": "Premium anime streaming platform. Coming soon."
+    },
+    "sections": {
+      "latest": "Latest additions",
+      "popular": "Popular now",
+      "topRated": "Top rated",
+      "trending": "Trending"
+    }
+  },
+  "search": {
+    "placeholder": "Search anime...",
+    "noResults": "No results found"
+  },
+  "player": {
+    "skipAdIn": "Skip ad in {seconds}s",
+    "skipAd": "Skip ad",
+    "nextEpisode": "Next episode"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist.",
+    "backHome": "Back to home"
+  }
+}
