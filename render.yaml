@@ -1,0 +1,34 @@
+# Render.com fallback blueprint (SETUP-08 / DEPLOY-02).
+# Used only if the backend cannot run on Vercel. Deploy the Next.js app as a
+# Node web service. Secrets (DATABASE_URL, REDIS_URL, GOOGLE_* , CONSUMET_API_URL,
+# NEXTAUTH_*) are set in the Render dashboard, not committed — see .env.example.
+services:
+  - type: web
+    name: minna-web
+    runtime: node
+    plan: starter
+    region: frankfurt
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    autoDeploy: false
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CONSUMET_API_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false
