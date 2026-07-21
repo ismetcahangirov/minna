@@ -1,0 +1,47 @@
+{
+  "common": {
+    "appName": "Minna",
+    "loading": "Загрузка...",
+    "retry": "Повторить",
+    "error": "Что-то пошло не так"
+  },
+  "nav": {
+    "favorites": "Избранное",
+    "new": "Новое",
+    "popular": "Популярное",
+    "blogs": "Блоги",
+    "search": "Поиск",
+    "language": "Язык"
+  },
+  "auth": {
+    "login": "Войти",
+    "logout": "Выйти",
+    "profile": "Профиль",
+    "continueWithGoogle": "Продолжить с Google"
+  },
+  "home": {
+    "hero": {
+      "tagline": "Премиальная платформа для просмотра аниме. Скоро."
+    },
+    "sections": {
+      "latest": "Последние добавления",
+      "popular": "Сейчас популярно",
+      "topRated": "Топ рейтинга",
+      "trending": "В тренде"
+    }
+  },
+  "search": {
+    "placeholder": "Поиск аниме...",
+    "noResults": "Ничего не найдено"
+  },
+  "player": {
+    "skipAdIn": "Пропустить рекламу через {seconds}с",
+    "skipAd": "Пропустить рекламу",
+    "nextEpisode": "Следующий эпизод"
+  },
+  "notFound": {
+    "title": "Страница не найдена",
+    "description": "Запрашиваемая страница не существует.",
+    "backHome": "На главную"
+  }
+}

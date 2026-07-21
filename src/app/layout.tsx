@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 import "./globals.css";
 
 import { StoreProvider } from "@/store/provider";
@@ -14,24 +16,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Minna — Watch Anime Online",
-  description:
-    "Premium anime streaming platform. Watch the latest, popular and top-rated anime.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("home.hero");
+  return {
+    title: "Minna — Watch Anime Online",
+    description: t("tagline"),
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${inter.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <StoreProvider>{children}</StoreProvider>
+        <NextIntlClientProvider>
+          <StoreProvider>{children}</StoreProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

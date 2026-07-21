@@ -1,0 +1,47 @@
+{
+  "common": {
+    "appName": "Minna",
+    "loading": "Yükleniyor...",
+    "retry": "Tekrar dene",
+    "error": "Bir şeyler ters gitti"
+  },
+  "nav": {
+    "favorites": "Favoriler",
+    "new": "Yeni",
+    "popular": "Popüler",
+    "blogs": "Bloglar",
+    "search": "Ara",
+    "language": "Dil"
+  },
+  "auth": {
+    "login": "Giriş yap",
+    "logout": "Çıkış yap",
+    "profile": "Profil",
+    "continueWithGoogle": "Google ile devam et"
+  },
+  "home": {
+    "hero": {
+      "tagline": "Premium anime izleme platformu. Çok yakında."
+    },
+    "sections": {
+      "latest": "Son eklenenler",
+      "popular": "Şu an popüler",
+      "topRated": "En yüksek puanlılar",
+      "trending": "Trend olanlar"
+    }
+  },
+  "search": {
+    "placeholder": "Anime ara...",
+    "noResults": "Sonuç bulunamadı"
+  },
+  "player": {
+    "skipAdIn": "Reklamı geç: {seconds}sn",
+    "skipAd": "Reklamı geç",
+    "nextEpisode": "Sonraki bölüm"
+  },
+  "notFound": {
+    "title": "Sayfa bulunamadı",
+    "description": "Aradığınız sayfa mevcut değil.",
+    "backHome": "Ana sayfaya dön"
+  }
+}
