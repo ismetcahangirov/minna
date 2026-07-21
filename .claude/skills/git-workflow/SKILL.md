@@ -41,9 +41,9 @@ Branch prefiksləri: `feature/`, `fix/`, `chore/`, `docs/` (conventional branch 
 
 ## Tez-tez edilən səhvlər
 
-| Səhv | Düzəliş |
-|---|---|
-| `main`-ə birbaşa commit | Həmişə ayrıca branch |
-| Pull etmədən köhnə main üzərində branch açmaq | Əvvəl `git pull origin main` |
-| PR-ı azərbaycanca yazmaq | PR ingiliscə olmalıdır |
-| Label/assign olmadan PR açmaq | Label + epic label + assign məcburidir |
+| Səhv                                          | Düzəliş                                |
+| --------------------------------------------- | -------------------------------------- |
+| `main`-ə birbaşa commit                       | Həmişə ayrıca branch                   |
+| Pull etmədən köhnə main üzərində branch açmaq | Əvvəl `git pull origin main`           |
+| PR-ı azərbaycanca yazmaq                      | PR ingiliscə olmalıdır                 |
+| Label/assign olmadan PR açmaq                 | Label + epic label + assign məcburidir |

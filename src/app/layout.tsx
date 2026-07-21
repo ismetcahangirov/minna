@@ -36,7 +36,7 @@ export default async function RootLayout({
       lang={locale}
       className={`${inter.variable} ${geistMono.variable} dark h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="flex min-h-full flex-col">
         <NextIntlClientProvider>
           <StoreProvider>{children}</StoreProvider>
         </NextIntlClientProvider>

@@ -14,6 +14,7 @@ verilib (kompozisiya, rəng palitrası, hərəkət tipi). Statik şəkillər
 ## 1. Dizayn Sistemi
 
 ### Rənglər
+
 - Əsas fon: qara (`#000000` və ya çox tünd boz)
 - Vurğu rəngi: Netflix logosundakı qırmızı (`#E50914` ton ailəsi)
 - İkinci ton qarışığı: mavi–bənövşəyi (`blue → purple`) — YALNIZ ayrıca
@@ -21,6 +22,7 @@ verilib (kompozisiya, rəng palitrası, hərəkət tipi). Statik şəkillər
 - Logo: qırmızı
 
 ### Qadağalar (UI Komponentləri üçün Strict Rules)
+
 - ❌ Glassmorphism (bulanıq şüşə effekti) YOX
 - ❌ Gradient rənglər YOX (düymə, kart, panel və s. UI komponentlərində)
 - ❌ Border-radius YOX — bütün komponentlər sərt/kəskin künclü
@@ -33,9 +35,11 @@ verilib (kompozisiya, rəng palitrası, hərəkət tipi). Statik şəkillər
 > təbiətli fon effektləridir, düz rəngli UI elementləri deyil.
 
 ### İkonlar
+
 - Yalnız SVG ikonlar: `react-icons` və ya `lucide-react`
 
 ### Tipoqrafiya
+
 - Netflix-in istifadə etdiyi font (Netflix Sans) açıq lisenziyalı
   olmadığı üçün, vizual olaraq bənzər, sərt/güclü geometrik sans-serif
   alternativ seçilməlidir (məs. Helvetica Neue Bold tərzi və ya bənzər
@@ -43,6 +47,7 @@ verilib (kompozisiya, rəng palitrası, hərəkət tipi). Statik şəkillər
   çəki istifadə olunmalıdır.
 
 ### Animasiya Texnologiyaları
+
 - 3D elementlər: React Three Fiber / Three.js
 - Komponent animasiyaları: Framer Motion
 - Animasiyalı komponentlər 21st.dev sayt promptları ilə yaradılmalı
@@ -61,6 +66,7 @@ verilib (kompozisiya, rəng palitrası, hərəkət tipi). Statik şəkillər
 ## 3. Səhifə-üzrə Dizayn Təlimatları
 
 ### 3.1 Ana Səhifə (`home-*` referansı)
+
 - Hero/banner seksiyası
 - Anime kartları: 16:9 nisbətində
 - Seksiyalar: Son əlavə edilənlər, Populyar olanlar, Ən yüksək
@@ -68,34 +74,42 @@ verilib (kompozisiya, rəng palitrası, hərəkət tipi). Statik şəkillər
 - Kart hover zamanı animasiya (böyümə, kölgə, sürətli önizləmə)
 
 ### 3.2 Profil Səhifəsi (`profile-*` referansı)
+
 - Arxa planda tam-ekran animasiya video — bax bölmə 6.2
 - İstifadəçi məlumatı, izləmə tarixçəsi, favoritlər preview
 
 ### 3.3 Populyar / Bloqlar / Favoritlər Səhifələri
+
 - Kartlar **dikey (vertical)** formatda
 - Infinite scroll (IntersectionObserver) — skeleton loading state
 
 ### 3.4 Bloq Detal Səhifəsi
+
 - Bloqun şəkli tam-ekran arxa plan kimi
 - Məzmun şəklin üzərində, oxunaqlı tünd overlay (flat dark layer,
   gradient yox)
 
 ### 3.5 Axtarış Səhifəsi (`search-*` referansı)
+
 - Arxa planda animasiya video — bax bölmə 6.3
 - Axtarış input-u mərkəzdə/üstdə, nəticələr aşağıda kartlar şəklində
 
 ### 3.6 Login Səhifəsi (`login-*` referansı)
+
 - Arxa planda animasiya video — bax bölmə 6.1
 - "Google ilə davam et" düyməsi mərkəzdə
 
 ### 3.7 404 Səhifəsi (`404-*` referansı)
+
 - Arxa planda animasiya video — bax bölmə 6.4
 
 ### 3.8 Anime Detal Səhifəsi (`anime-detail-*` referansı)
+
 - Başlıq, təsvir, janr/reytinq badge-ləri, bölüm siyahısı
 - "Favoritlərə əlavə et" düyməsi
 
 ### 3.9 Bölüm İzləmə Səhifəsi (`episode-*` referansı)
+
 - YouTube-vari tam funksional video player dizaynı
 - **Reklam overlay dizaynı:**
   - Reklam video frame ilə **tam eyni ölçüdə**, videonun üzərində
@@ -104,6 +118,7 @@ verilib (kompozisiya, rəng palitrası, hərəkət tipi). Statik şəkillər
   - Player kontrolları reklam bitdikdən sonra aktiv olur
 
 ### 3.10 Admin Paneli (`admin-*` referansı)
+
 - Desktop/böyük tablet dizaynı: `admin_sehifesi_boyuk_tablet_ve_yuxari_ekran_ucun.webp`
   faylına əsaslanır — bax bölmə 6.5 üçün mobil davranış təsviri
 - Arxa planda animasiya video (default, admin öz videosunu seçə bilər)
@@ -136,6 +151,7 @@ Three.js ilə (və ya real video faylı hosting edilən yerdə `<video loop mute
 placeholder ilə) sadiq şəkildə bərpa etməsidir.
 
 ### 6.1 Login səhifəsi — `login_sehifesi___tablet_ve_yuxari_olculer_ucun.mov`
+
 - **Ölçü:** 736×414 (16:9-a yaxın, tablet/desktop üçün), 4.9 saniyəlik loop
 - **Kompozisiya:** Tünd, atmosferik, "sinema-vari" fon planı — aşağı
   kontrastlı, bulanıq (defocused) bir mühit görüntüsü, üzərində login
@@ -154,7 +170,9 @@ placeholder ilə) sadiq şəkildə bərpa etməsidir.
   üçün əlavə tündləşdirilmiş overlay sahə
 
 ### 6.2 Profil səhifəsi
+
 **Mobil — `profil_sehifesi_mobil_ucun.mov`**
+
 - **Ölçü:** 720×1280 (dik, mobil), 9.9 saniyə
 - **Kompozisiya:** Video **tam qaradan başlayır** (fade-in effekti) və
   sonra tünd, isti-boz (warm-grey/qəhvəyi) atmosferik səhnəyə keçir —
@@ -168,6 +186,7 @@ placeholder ilə) sadiq şəkildə bərpa etməsidir.
   hissə yavaş atmosferik hərəkət (duman/toz zərrəcikləri)
 
 **Tablet/Web — `profil_sehifesi_tablet_ve_web_ucun.mov`**
+
 - **Ölçü:** 736×414 (üfüqi, tablet/desktop), 18.9 saniyə (daha uzun loop)
 - **Kompozisiya:** Mobil versiya ilə eyni əhval-ruhiyyə, lakin üfüqi
   kadrlaşdırma — daha geniş atmosferik mənzərə, tünd, aşağı-kontrast
@@ -181,6 +200,7 @@ placeholder ilə) sadiq şəkildə bərpa etməsidir.
   animasiyası mobil versiyada təkrarlanmalı
 
 ### 6.3 Axtarış səhifəsi — `search_page.mov`
+
 - **Ölçü:** 736×414, 15.7 saniyə
 - **Kompozisiya:** Digər fonlardan fərqli olaraq daha parlaq (brightness
   ≈ 95/255) və fərqli rəng ailəsi — teal/yaşıl-firuzəyi çalarlı
@@ -197,6 +217,7 @@ placeholder ilə) sadiq şəkildə bərpa etməsidir.
   (breathing) radial glow animasiyası, 6-10san dövr
 
 ### 6.4 404 səhifəsi — `404_sehifesi_.mov`
+
 - **Ölçü:** 1280×720 (tam üfüqi/desktop), 16.7 saniyə
 - **Kompozisiya:** Ən isti/parlaq fon (brightness ≈ 104-110/255) —
   qəhvəyi-narıncı, "köz/xarab siqnal" əhval-ruhiyyəsi, mərkəzi sahə
@@ -213,9 +234,11 @@ placeholder ilə) sadiq şəkildə bərpa etməsidir.
   rəqəmləri/ikonu ön planda sərt-küncli, glow effektsiz qalmalıdır
 
 ### 6.5 Admin Panel
+
 **Desktop/Böyük Tablet — `admin_sehifesi_boyuk_tablet_ve_yuxari_ekran_ucun.webp`**
 (Statik şəkil — birbaşa fayl kimi verilə bilər, aşağıdakı struktur
 təsviri əlavə kontekst üçündür)
+
 - Tünd/qara fon üzərində qurulmuş dashboard
 - Sol/yuxarı naviqasiya sahəsi + əsas məzmun sahəsi struktur olaraq
   sərt-küncli kartlar və cədvəllərdən ibarətdir
@@ -223,6 +246,7 @@ təsviri əlavə kontekst üçündür)
   istifadə olunub
 
 **Mobil — `admin_sehifesi_mobil_ucun.mov`**
+
 - **Ölçü:** 720×1280, 18 saniyə
 - **Fərq:** Bu fayl digərlərindən fərqli olaraq atmosferik fon deyil,
   **faktiki admin UI-nin mobil ekranda necə davrandığının demo
@@ -240,6 +264,7 @@ təsviri əlavə kontekst üçündür)
   cədvəl siyahısı, aşağı sərt-küncli, qara fon + qırmızı aksent)
 
 ### 6.6 Ümumi Texniki Qeydlər (bütün atmosferik fonlar üçün)
+
 - Bütün 4 atmosferik video (login, profil ×2, search, 404) ortaq
   xüsusiyyət paylaşır: **çox yavaş hərəkət, aşağı-orta parlaqlıq,
   mərkəzi/əsas kontent üçün qəsdən boş buraxılmış sahə**

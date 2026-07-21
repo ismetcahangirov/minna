@@ -11,14 +11,14 @@ Tam funksional, rol-əsaslı qorunan dashboard. Qara fon, sərt-künclü kartlar
 
 ## Modullar
 
-| Modul | Funksiya |
-|---|---|
-| Auth (ADMIN-01) | Rol-əsaslı giriş nəzarəti — yalnız admin rolu daxil ola bilər |
-| Reklamlar (ADMIN-02) | Əlavə et/sil/redaktə; reklam müddəti + skip vaxtı (default 5s) təyini |
+| Modul                       | Funksiya                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------ |
+| Auth (ADMIN-01)             | Rol-əsaslı giriş nəzarəti — yalnız admin rolu daxil ola bilər                              |
+| Reklamlar (ADMIN-02)        | Əlavə et/sil/redaktə; reklam müddəti + skip vaxtı (default 5s) təyini                      |
 | Video validasiya (ADMIN-03) | Yüklənən fon videosu avtomatik yoxlanır: ölçü, kodek (H.264/WebM), sıxılma, bitrate limiti |
-| Fon videoları (ADMIN-04) | Hər səhifə üçün fon idarəsi: login, profil (mobil/tablet ayrı), search, 404, admin |
-| Bloqlar (ADMIN-05) | Yarat / redaktə et / sil |
-| İstifadəçilər (ADMIN-06) | Siyahı, blokla, sil |
+| Fon videoları (ADMIN-04)    | Hər səhifə üçün fon idarəsi: login, profil (mobil/tablet ayrı), search, 404, admin         |
+| Bloqlar (ADMIN-05)          | Yarat / redaktə et / sil                                                                   |
+| İstifadəçilər (ADMIN-06)    | Siyahı, blokla, sil                                                                        |
 
 ## Kritik Qaydalar
 
@@ -36,8 +36,8 @@ Tam funksional, rol-əsaslı qorunan dashboard. Qara fon, sərt-künclü kartlar
 
 ## Tez-tez edilən səhvlər
 
-| Səhv | Düzəliş |
-|---|---|
-| Yalnız middleware/client-də admin yoxlaması | Hər API route-da server-side rol yoxlaması |
-| Default videonu üzərinə yazmaq (overwrite) | Default toxunulmazdır — yalnız prioritet dəyişir |
+| Səhv                                                      | Düzəliş                                           |
+| --------------------------------------------------------- | ------------------------------------------------- |
+| Yalnız middleware/client-də admin yoxlaması               | Hər API route-da server-side rol yoxlaması        |
+| Default videonu üzərinə yazmaq (overwrite)                | Default toxunulmazdır — yalnız prioritet dəyişir  |
 | Format-doğrulamadan yan keçib videonu birbaşa aktiv etmək | Doğrulama məcburi addımdır (performans qorunması) |
