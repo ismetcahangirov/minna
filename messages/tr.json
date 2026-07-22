@@ -24,13 +24,21 @@
   },
   "home": {
     "hero": {
-      "tagline": "Premium anime izleme platformu. Çok yakında."
+      "tagline": "Trend, popüler ve en yüksek puanlı animeleri premium kalitede izleyin.",
+      "watchNow": "Şimdi izle",
+      "moreInfo": "Daha fazla",
+      "carouselLabel": "Öne çıkan animeler",
+      "goToSlide": "{index}. slayta git"
     },
     "sections": {
       "latest": "Son eklenenler",
       "popular": "Şu an popüler",
       "topRated": "En yüksek puanlılar",
       "trending": "Trend olanlar"
+    },
+    "seeAll": "Tümünü gör",
+    "card": {
+      "episode": "Böl."
     }
   },
   "search": {

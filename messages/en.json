@@ -24,13 +24,21 @@
   },
   "home": {
     "hero": {
-      "tagline": "Premium anime streaming platform. Coming soon."
+      "tagline": "Stream trending, popular and top-rated anime in premium quality.",
+      "watchNow": "Watch now",
+      "moreInfo": "More info",
+      "carouselLabel": "Featured anime",
+      "goToSlide": "Go to slide {index}"
     },
     "sections": {
       "latest": "Latest additions",
       "popular": "Popular now",
       "topRated": "Top rated",
       "trending": "Trending"
+    },
+    "seeAll": "See all",
+    "card": {
+      "episode": "Ep"
     }
   },
   "search": {
