@@ -73,9 +73,32 @@
     "noResults": "No results found"
   },
   "player": {
+    "advertisement": "Advertisement",
     "skipAdIn": "Skip ad in {seconds}s",
     "skipAd": "Skip ad",
-    "nextEpisode": "Next episode"
+    "visitAdvertiser": "Learn more",
+    "play": "Play",
+    "pause": "Pause",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "volume": "Volume",
+    "seek": "Seek",
+    "quality": "Quality",
+    "subtitles": "Subtitles",
+    "subtitlesOff": "Off",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit fullscreen",
+    "unavailableTitle": "This episode can't be played right now",
+    "unavailableBody": "No streaming source is available. Streaming requires a configured Consumet origin — please try again later.",
+    "episodeLabel": "Episode {number}",
+    "nowPlaying": "Now playing",
+    "prevEpisode": "Previous episode",
+    "nextEpisode": "Next episode",
+    "backToAnime": "Back to anime",
+    "upNext": "Up next",
+    "nextEpisodeIn": "Next episode in {seconds}s",
+    "playNow": "Play now",
+    "cancel": "Cancel"
   },
   "notFound": {
     "title": "Page not found",

@@ -73,9 +73,32 @@
     "noResults": "Sonuç bulunamadı"
   },
   "player": {
+    "advertisement": "Reklam",
     "skipAdIn": "Reklamı geç: {seconds}sn",
     "skipAd": "Reklamı geç",
-    "nextEpisode": "Sonraki bölüm"
+    "visitAdvertiser": "Daha fazla",
+    "play": "Oynat",
+    "pause": "Duraklat",
+    "mute": "Sesi kapat",
+    "unmute": "Sesi aç",
+    "volume": "Ses",
+    "seek": "İlerle",
+    "quality": "Kalite",
+    "subtitles": "Altyazılar",
+    "subtitlesOff": "Kapalı",
+    "fullscreen": "Tam ekran",
+    "exitFullscreen": "Tam ekrandan çık",
+    "unavailableTitle": "Bu bölüm şu anda oynatılamıyor",
+    "unavailableBody": "Yayın kaynağı bulunamadı. Yayın için yapılandırılmış bir Consumet kaynağı gerekir — lütfen daha sonra tekrar deneyin.",
+    "episodeLabel": "Bölüm {number}",
+    "nowPlaying": "Şimdi oynatılıyor",
+    "prevEpisode": "Önceki bölüm",
+    "nextEpisode": "Sonraki bölüm",
+    "backToAnime": "Animeye dön",
+    "upNext": "Sırada",
+    "nextEpisodeIn": "Sonraki bölüm {seconds}sn içinde",
+    "playNow": "Şimdi oynat",
+    "cancel": "İptal"
   },
   "notFound": {
     "title": "Sayfa bulunamadı",
