@@ -189,8 +189,8 @@ export async function AnimeDetailView({
 
       {/* Body */}
       <div className="mx-auto w-full max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-3">
-          <div className="flex flex-col gap-10 lg:col-span-2">
+        <div className="grid gap-10 md:grid-cols-3">
+          <div className="flex flex-col gap-10 md:col-span-2">
             {synopsis && (
               <section>
                 <h2 className="text-foreground mb-3 text-lg font-bold tracking-tight sm:text-xl">
@@ -205,7 +205,7 @@ export async function AnimeDetailView({
             <EpisodeList animeId={detail.id} episodes={detail.episodes} />
           </div>
 
-          <aside className="lg:col-span-1">
+          <aside className="md:col-span-1">
             <dl className="border-border bg-surface border p-4">
               <InfoRow label={t("info.type")} value={detail.type} />
               <InfoRow

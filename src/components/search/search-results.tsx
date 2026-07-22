@@ -2,7 +2,7 @@ import { AnimeCard, AnimeCardSkeleton } from "@/components/anime/anime-card";
 import type { AnimeSummary } from "@/lib/anime/types";
 
 const gridClass =
-  "grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5";
+  "grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 xl:grid-cols-5";
 
 interface SearchResultsGridProps {
   items: AnimeSummary[];
