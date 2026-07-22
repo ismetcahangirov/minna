@@ -205,7 +205,8 @@
       "dashboard": "Panel",
       "ads": "Reklamlar",
       "backgrounds": "Arka planlar",
-      "blogs": "Bloglar"
+      "blogs": "Bloglar",
+      "users": "Kullanıcılar"
     },
     "dashboard": {
       "heading": "Panel",
@@ -334,6 +335,25 @@
         "slugTaken": "Bu slug zaten kullanımda.",
         "saveFailed": "Yazı kaydedilemedi. Lütfen tekrar deneyin."
       }
+    },
+    "users": {
+      "title": "Kullanıcılar",
+      "subtitle": "Kullanıcıları görüntüleyin, engelleyin ve silin.",
+      "empty": "Henüz kullanıcı yok.",
+      "user": "Kullanıcı",
+      "role": "Rol",
+      "joined": "Katıldı",
+      "status": "Durum",
+      "actions": "İşlemler",
+      "roleAdmin": "Yönetici",
+      "roleUser": "Üye",
+      "active": "Aktif",
+      "blocked": "Engelli",
+      "block": "Kullanıcıyı engelle",
+      "unblock": "Engeli kaldır",
+      "delete": "Kullanıcıyı sil",
+      "confirmDelete": "{name} ve tüm verileri silinsin mi? Bu geri alınamaz.",
+      "you": "siz"
     }
   }
 }

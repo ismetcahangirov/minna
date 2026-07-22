@@ -20,6 +20,10 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   image: text("image"),
   role: userRoleEnum("role").notNull().default("user"),
+  // Admin-set block flag (ADMIN-06). A blocked user cannot open a new session —
+  // the Google sign-in flow rejects them — while their data (favorites, watch
+  // history) is preserved unless the account is deleted.
+  blocked: boolean("blocked").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

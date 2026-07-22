@@ -205,7 +205,8 @@
       "dashboard": "Dashboard",
       "ads": "Ads",
       "backgrounds": "Backgrounds",
-      "blogs": "Blogs"
+      "blogs": "Blogs",
+      "users": "Users"
     },
     "dashboard": {
       "heading": "Dashboard",
@@ -334,6 +335,25 @@
         "slugTaken": "That slug is already in use.",
         "saveFailed": "Could not save the post. Please try again."
       }
+    },
+    "users": {
+      "title": "Users",
+      "subtitle": "View, block and remove users.",
+      "empty": "No users yet.",
+      "user": "User",
+      "role": "Role",
+      "joined": "Joined",
+      "status": "Status",
+      "actions": "Actions",
+      "roleAdmin": "Admin",
+      "roleUser": "Member",
+      "active": "Active",
+      "blocked": "Blocked",
+      "block": "Block user",
+      "unblock": "Unblock user",
+      "delete": "Delete user",
+      "confirmDelete": "Delete {name} and all their data? This can't be undone.",
+      "you": "you"
     }
   }
 }

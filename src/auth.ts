@@ -32,6 +32,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    // Deny sign-in to blocked accounts (ADMIN-06) before any session is issued.
+    // Returning false sends the user to the Auth.js error page. The db is
+    // imported dynamically to keep DATABASE_URL out of the build-time graph.
+    async signIn({ user }) {
+      const { isBlockedUser } = await import("@/lib/auth/blocked");
+      const blocked = await isBlockedUser({
+        googleId: user?.id,
+        email: user?.email,
+      });
+      return !blocked;
+    },
     // On sign-in `user` carries the Google profile: mirror it into Neon
     // (AUTH-02) and cache the internal user id + role on the token. On later
     // requests `user` is undefined and the token already holds them, so there
