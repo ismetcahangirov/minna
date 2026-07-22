@@ -13,6 +13,24 @@ export const CACHE_TTL = {
   long: 60 * 60 * 24, // 24 hours
 } as const;
 
+/**
+ * Readiness ping for the cache layer (DEPLOY-03). Distinguishes "no Redis
+ * configured" (a valid state — the cache no-ops) from an actual connection
+ * failure, so the readiness probe can report a degraded-but-optional cache
+ * without failing the overall check.
+ */
+export async function cachePing(): Promise<"ok" | "unconfigured" | "error"> {
+  const redis = getRedis();
+  if (!redis) return "unconfigured";
+  try {
+    const reply = await redis.ping();
+    return reply === "PONG" ? "ok" : "error";
+  } catch (error) {
+    console.error("[cache] ping failed:", (error as Error).message);
+    return "error";
+  }
+}
+
 /** Namespaced key builder to keep the Redis keyspace organized. */
 export function cacheKey(
   namespace: string,

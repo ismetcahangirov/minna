@@ -7,7 +7,7 @@ recommended target is **Vercel**; **Render.com** is a documented fallback
 
 - **Primary:** [Vercel](#vercel-primary)
 - **Fallback:** [Render.com](#rendercom-fallback)
-- **Data stores:** Neon (Postgres) + Redis — see the production hardening notes in
+- **Data stores:** [Neon (Postgres) + Redis](#data-stores-production) — see also
   [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and the env reference below.
 
 ---
@@ -102,3 +102,53 @@ region on the `starter` plan:
 - `NODE_VERSION` is pinned to `22` to match `.nvmrc` / `package.json#engines`.
 - The `starter` plan sleeps on inactivity; the health check keeps a paid
   instance warm. Scale via `numInstances` / `plan` in `render.yaml` if needed.
+
+---
+
+## Data stores (production)
+
+### Neon (Postgres)
+
+- **Driver:** Drizzle over the Neon **HTTP** driver (`drizzle-orm/neon-http`,
+  `src/db/index.ts`) — stateless, fetch-based queries with no persistent socket,
+  which is ideal for serverless/Fluid Compute. There is no connection pool to
+  size on the app side.
+- **`DATABASE_URL`:** use Neon's **pooled** connection string (the host contains
+  `-pooler`) with `?sslmode=require`. Pooling is handled by Neon's PgBouncer, so
+  the serverless functions never exhaust Postgres connections under bursty load.
+- **Migrations:** generated SQL lives in `drizzle/`. Apply to production with
+  `DATABASE_URL=<prod> npm run db:migrate` (run from CI or locally against the
+  production branch). Do **not** use `db:push` against production.
+- **Branching:** develop against a Neon branch, then promote — production keeps a
+  stable branch with its own `DATABASE_URL`.
+
+### Redis
+
+- **Client:** a single `ioredis` connection cached on `globalThis`
+  (`src/lib/cache/redis.ts`) and reused across warm invocations. Configured to
+  fail fast: `maxRetriesPerRequest: 2`, `enableOfflineQueue: false`, capped
+  reconnects.
+- **`REDIS_URL`:** point at a managed provider (Upstash, Redis Cloud). Use the
+  `rediss://` scheme for TLS — `ioredis` enables TLS automatically for it.
+- **Graceful degradation:** if `REDIS_URL` is unset or the server is unreachable,
+  the cache layer no-ops and every read falls through to the origin. A cache
+  outage never fails a request — so Redis is **not** required for the app to
+  serve, only for performance.
+- **TTLs:** centralized in `CACHE_TTL` (`src/lib/cache/cache.ts`) — 5 min for
+  fast-changing data, 30 min for listings, 24 h for near-static detail.
+
+### Readiness probe
+
+`GET /api/ready` exercises both stores and reports each:
+
+```json
+{ "status": "ready", "checks": { "database": "ok", "redis": "ok" } }
+```
+
+- `database` is required → a failure returns HTTP **503** (`status: not_ready`).
+- `redis` is optional → `ok` / `unconfigured` / `error` is reported, but a
+  degraded cache still returns **200**.
+
+Use `/api/ready` for deploy verification and external uptime monitors; keep
+`/api/health` (liveness) as the platform `healthCheckPath` so a transient store
+blip does not trigger an instance restart.
