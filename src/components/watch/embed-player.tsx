@@ -119,13 +119,6 @@ export function EmbedPlayer({
           className="absolute inset-0 size-full border-0"
           allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
           allowFullScreen
-          // Free embed hosts monetize with pop-up/pop-under and click-through
-          // redirect ads. The sandbox grants only what the player needs to run
-          // (scripts, its own origin for the source API, fullscreen presentation)
-          // and deliberately withholds `allow-popups` and
-          // `allow-top-navigation*`, so the embed can neither open pop-ups nor
-          // redirect our page on click. Verified: playback still resolves.
-          sandbox="allow-scripts allow-same-origin allow-presentation"
           onLoad={() => setLoading(false)}
         />
       )}
