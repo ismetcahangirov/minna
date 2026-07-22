@@ -88,7 +88,9 @@ export type NewAd = typeof ads.$inferInsert;
 // Anime/episode ids are external Consumet ids (text, no FK). Position and
 // duration are stored in whole seconds; the client throttles writes (interval +
 // unload flush) rather than persisting every timeupdate. The (user, episode)
-// pair is unique so progress is upserted in place.
+// pair is unique so progress is upserted in place. `title`/`image` are
+// denormalized (like `favorites`) so the profile watch-history view (PROFILE-03)
+// renders without a Consumet round-trip.
 export const watchProgress = pgTable(
   "watch_progress",
   {
@@ -99,6 +101,8 @@ export const watchProgress = pgTable(
     animeId: text("anime_id").notNull(),
     episodeId: text("episode_id").notNull(),
     episodeNumber: integer("episode_number"),
+    title: text("title"),
+    image: text("image"),
     positionSeconds: integer("position_seconds").notNull().default(0),
     durationSeconds: integer("duration_seconds"),
     completed: boolean("completed").notNull().default(false),

@@ -24,6 +24,8 @@ export interface EpisodeRef {
 
 interface WatchExperienceProps {
   animeId: string;
+  /** Anime title, denormalized into saved progress for the profile history. */
+  animeTitle: string;
   episode: { id: string; number: number; title: string | null };
   prevEpisode: EpisodeRef | null;
   nextEpisode: EpisodeRef | null;
@@ -48,6 +50,7 @@ const SAVE_INTERVAL_MS = 15_000;
  */
 export function WatchExperience({
   animeId,
+  animeTitle,
   episode,
   prevEpisode,
   nextEpisode,
@@ -81,8 +84,17 @@ export function WatchExperience({
       episodeNumber: episode.number,
       positionSeconds: position,
       durationSeconds: duration || null,
+      title: animeTitle,
+      image: poster,
     });
-  }, [animeId, episode.id, episode.number, isAuthenticated]);
+  }, [
+    animeId,
+    animeTitle,
+    poster,
+    episode.id,
+    episode.number,
+    isAuthenticated,
+  ]);
 
   // Throttled persistence: periodic flush + flush when the tab is hidden or the
   // component unmounts (episode change / navigation away). Never a write per
