@@ -75,3 +75,34 @@ export async function getBlogBySlug(slug: string): Promise<BlogDetail | null> {
     return null;
   }
 }
+
+/** A published post's slug and last-modified date, for the sitemap (PERF-01). */
+export interface BlogSitemapEntry {
+  slug: string;
+  updatedAt: Date;
+}
+
+/**
+ * Slugs of every published post, newest first, for `sitemap.xml` (PERF-01).
+ * Capped at Google's per-sitemap URL limit and degrades to an empty list on
+ * any DB failure so the sitemap route always renders.
+ */
+export async function listBlogSitemapEntries(): Promise<BlogSitemapEntry[]> {
+  try {
+    const { db } = await import("@/db");
+    const rows = await db
+      .select({ slug: blogs.slug, updatedAt: blogs.updatedAt })
+      .from(blogs)
+      .where(eq(blogs.published, true))
+      .orderBy(desc(blogs.publishedAt))
+      .limit(50_000);
+
+    return rows.map((row) => ({ slug: row.slug, updatedAt: row.updatedAt }));
+  } catch (error) {
+    console.error(
+      "[blog] listBlogSitemapEntries failed:",
+      (error as Error).message,
+    );
+    return [];
+  }
+}
