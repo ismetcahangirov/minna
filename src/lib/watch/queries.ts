@@ -1,8 +1,9 @@
 import "server-only";
 
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { watchProgress } from "@/db/schema";
+import type { WatchHistoryItem } from "@/lib/watch/types";
 
 /** Resume state for one episode (PLAYER-05). */
 export interface WatchProgressState {
@@ -45,5 +46,90 @@ export async function getWatchProgress(
   } catch (error) {
     console.error("[watch] getProgress failed:", (error as Error).message);
     return null;
+  }
+}
+
+/** Default number of items in the profile watch-history quick view. */
+export const WATCH_HISTORY_LIMIT = 12;
+
+/** Clamps the requested item count to a sane range. */
+function safeLimit(limit: number): number {
+  if (!Number.isFinite(limit) || limit < 1) return WATCH_HISTORY_LIMIT;
+  return Math.min(Math.floor(limit), 60);
+}
+
+/**
+ * The signed-in user's most recently watched episodes, newest first, for the
+ * profile "continue watching" quick view (PROFILE-03). Collapsed to one entry
+ * per anime (the latest episode touched) so the list reads as a resume list
+ * rather than a raw event log.
+ *
+ * Over-fetches so de-duplication still fills `limit` distinct anime, then
+ * derives a `progress` fraction from the stored position/duration. `@/db` is
+ * imported dynamically so its `DATABASE_URL` requirement stays out of the
+ * build-time module graph; any failure degrades to an empty list rather than
+ * breaking the render.
+ */
+export async function listRecentWatchHistory(
+  userId: string,
+  limit: number = WATCH_HISTORY_LIMIT,
+): Promise<WatchHistoryItem[]> {
+  const count = safeLimit(limit);
+  if (!userId) return [];
+
+  try {
+    const { db } = await import("@/db");
+    const rows = await db
+      .select({
+        animeId: watchProgress.animeId,
+        episodeId: watchProgress.episodeId,
+        episodeNumber: watchProgress.episodeNumber,
+        title: watchProgress.title,
+        image: watchProgress.image,
+        positionSeconds: watchProgress.positionSeconds,
+        durationSeconds: watchProgress.durationSeconds,
+        completed: watchProgress.completed,
+        updatedAt: watchProgress.updatedAt,
+      })
+      .from(watchProgress)
+      .where(eq(watchProgress.userId, userId))
+      .orderBy(desc(watchProgress.updatedAt))
+      .limit(count * 4);
+
+    const seen = new Set<string>();
+    const items: WatchHistoryItem[] = [];
+    for (const row of rows) {
+      if (seen.has(row.animeId)) continue;
+      seen.add(row.animeId);
+
+      const duration = row.durationSeconds ?? 0;
+      const progress =
+        duration > 0
+          ? Math.min(1, Math.max(0, row.positionSeconds / duration))
+          : 0;
+
+      items.push({
+        animeId: row.animeId,
+        episodeId: row.episodeId,
+        episodeNumber: row.episodeNumber,
+        title: row.title,
+        image: row.image,
+        positionSeconds: row.positionSeconds,
+        durationSeconds: row.durationSeconds,
+        completed: row.completed,
+        progress,
+        updatedAt: row.updatedAt.toISOString(),
+      });
+
+      if (items.length >= count) break;
+    }
+
+    return items;
+  } catch (error) {
+    console.error(
+      "[watch] listRecentWatchHistory failed:",
+      (error as Error).message,
+    );
+    return [];
   }
 }
