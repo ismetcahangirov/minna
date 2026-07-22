@@ -18,10 +18,16 @@ function createRedis(): Redis | null {
   }
 
   const client = new Redis(url, {
-    // Serverless-friendly: fail fast instead of buffering commands forever
-    // while a connection is down, and cap reconnection attempts.
-    maxRetriesPerRequest: 2,
-    enableOfflineQueue: false,
+    // Serverless cold starts race the TLS handshake: the first cache call
+    // fires before the socket is ready. With `enableOfflineQueue: false` that
+    // rejected instantly ("Stream isn't writeable"), so caching silently
+    // no-op'd on every cold invocation and every request fell through to the
+    // origin — which promptly got AniList-rate-limited (429). Queue commands
+    // until the connection is ready instead, bounded by connectTimeout so a
+    // genuinely-down Redis still fails fast rather than hanging.
+    maxRetriesPerRequest: 3,
+    enableOfflineQueue: true,
+    connectTimeout: 10_000,
     lazyConnect: false,
     retryStrategy: (times) => (times > 3 ? null : Math.min(times * 200, 1000)),
   });
