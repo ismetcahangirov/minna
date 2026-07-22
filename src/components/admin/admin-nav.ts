@@ -1,4 +1,9 @@
-import { LayoutDashboard, Megaphone, type LucideIcon } from "lucide-react";
+import {
+  Image as ImageIcon,
+  LayoutDashboard,
+  Megaphone,
+  type LucideIcon,
+} from "lucide-react";
 
 /**
  * A single admin sidebar destination. `key` resolves under the `admin.nav`
@@ -18,4 +23,5 @@ export interface AdminNavItem {
 export const ADMIN_NAV: AdminNavItem[] = [
   { key: "dashboard", href: "/admin", icon: LayoutDashboard },
   { key: "ads", href: "/admin/ads", icon: Megaphone },
+  { key: "backgrounds", href: "/admin/backgrounds", icon: ImageIcon },
 ];

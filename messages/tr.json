@@ -203,7 +203,8 @@
     "closeMenu": "Menüyü kapat",
     "nav": {
       "dashboard": "Panel",
-      "ads": "Reklamlar"
+      "ads": "Reklamlar",
+      "backgrounds": "Arka planlar"
     },
     "dashboard": {
       "heading": "Panel",
@@ -253,6 +254,42 @@
         "invalidUrl": "Geçerli bir http(s) URL girin.",
         "invalidNumber": "Geçerli bir sayı girin.",
         "saveFailed": "Reklam kaydedilemedi. Lütfen tekrar deneyin."
+      }
+    },
+    "backgrounds": {
+      "title": "Arka planlar",
+      "subtitle": "Her sayfa için özel bir arka plan videosu ayarlayın. Videolar yayına girmeden önce format kontrolünden geçer; birini temizlemek yerleşik varsayılanı geri getirir.",
+      "pages": {
+        "login": "Giriş",
+        "profile": "Profil",
+        "search": "Arama",
+        "not_found": "404 / Bulunamadı",
+        "admin": "Yönetim paneli"
+      },
+      "variants": {
+        "desktop": "Varsayılan",
+        "mobile": "Mobil",
+        "tablet": "Tablet"
+      },
+      "usingDefault": "Varsayılan kullanılıyor",
+      "active": "Aktif",
+      "inactive": "Pasif",
+      "save": "Kaydet",
+      "saving": "Kaydediliyor...",
+      "saved": "Kaydedildi",
+      "clear": "Varsayılana dön",
+      "confirmClear": "Bu arka plan yerleşik varsayılana sıfırlansın mı?",
+      "videoUrlHint": "Doğrudan mp4/webm URL. Format kontrolünden geçmeli.",
+      "errors": {
+        "required": "Bir video URL'si girin.",
+        "unreachable": "URL'ye ulaşılamadı.",
+        "unsupportedContainer": "mp4 veya webm video kullanın.",
+        "unsupportedCodec": "Desteklenmeyen kodek. H.264 veya WebM (VP8/VP9/AV1) kullanın.",
+        "tooLarge": "Video çok büyük (en fazla 10 MB).",
+        "bitrateTooHigh": "Arka plan için bit hızı çok yüksek.",
+        "dimensionsTooLarge": "Çözünürlük çok yüksek (en fazla 1920x1080).",
+        "tooLong": "Arka plan döngüsü için video çok uzun (en fazla 60sn).",
+        "saveFailed": "Kaydedilemedi. Lütfen tekrar deneyin."
       }
     }
   }
