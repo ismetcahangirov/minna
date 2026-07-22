@@ -117,6 +117,44 @@
       "signIn": "Google ile devam et"
     }
   },
+  "profile": {
+    "title": "Profil",
+    "heading": "Profilin",
+    "subtitle": "Hesabını yönet ve kaldığın yerden devam et.",
+    "signedOutTitle": "Profilini görmek için giriş yap",
+    "signedOutHint": "Profilin, izleme geçmişin ve favorilerin hesabına bağlıdır.",
+    "signIn": "Google ile devam et",
+    "memberSince": "Üyelik: {date}",
+    "roleUser": "Üye",
+    "roleAdmin": "Yönetici",
+    "displayName": "Görünen ad",
+    "email": "E-posta",
+    "edit": "Düzenle",
+    "save": "Kaydet",
+    "saving": "Kaydediliyor...",
+    "cancel": "İptal",
+    "saved": "Profil güncellendi",
+    "namePlaceholder": "Adın",
+    "errorEmpty": "Ad boş olamaz.",
+    "errorTooLong": "Ad çok uzun.",
+    "errorUnauthorized": "Lütfen tekrar giriş yap.",
+    "errorFailed": "Kaydedilemedi. Lütfen tekrar dene.",
+    "history": {
+      "title": "İzlemeye devam et",
+      "subtitle": "Son bölümlerine geri dön.",
+      "empty": "Henüz bir şey izlenmedi",
+      "emptyHint": "İzlediğin bölümler burada görünecek.",
+      "resume": "Devam et",
+      "episode": "Böl. {number}",
+      "completed": "İzlendi"
+    },
+    "favorites": {
+      "title": "Favorilerin",
+      "empty": "Henüz favori yok",
+      "emptyHint": "Buraya kaydetmek için herhangi bir animedeki kalbe dokun.",
+      "seeAll": "Tümünü gör"
+    }
+  },
   "player": {
     "advertisement": "Reklam",
     "skipAdIn": "Reklamı geç: {seconds}sn",
