@@ -1,7 +1,8 @@
 # Render.com fallback blueprint (SETUP-08 / DEPLOY-02).
-# Used only if the backend cannot run on Vercel. Deploy the Next.js app as a
-# Node web service. Secrets (DATABASE_URL, REDIS_URL, GOOGLE_* , CONSUMET_API_URL,
-# NEXTAUTH_*) are set in the Render dashboard, not committed — see .env.example.
+# Used only if the backend cannot run on Vercel. Deploys the Next.js app as a
+# Node web service. Secrets (DATABASE_URL, REDIS_URL, GOOGLE_*, CONSUMET_API_URL,
+# NEXTAUTH_*, NEXT_PUBLIC_SITE_URL) are set in the Render dashboard, not
+# committed — see .env.example and docs/DEPLOYMENT.md.
 services:
   - type: web
     name: minna-web
@@ -9,15 +10,19 @@ services:
     plan: starter
     region: frankfurt
     branch: main
+    numInstances: 1
+    # Liveness probe added in DEPLOY-01. Render restarts the instance if this
+    # path stops returning 2xx.
+    healthCheckPath: /api/health
     buildCommand: npm ci && npm run build
     startCommand: npm run start
-    healthCheckPath: /
     autoDeploy: false
     envVars:
       - key: NODE_VERSION
         value: "22"
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
+      # Secrets & environment-specific URLs — set in the Render dashboard.
       - key: DATABASE_URL
         sync: false
       - key: REDIS_URL
@@ -30,5 +35,11 @@ services:
         sync: false
       - key: NEXTAUTH_SECRET
         sync: false
+      # Must equal the public Render URL, e.g. https://minna-web.onrender.com
       - key: NEXTAUTH_URL
+        sync: false
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+      # Optional Core Web Vitals beacon endpoint (PERF-03); leave blank if unused.
+      - key: NEXT_PUBLIC_WEB_VITALS_ENDPOINT
         sync: false
