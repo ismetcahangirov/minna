@@ -11,24 +11,24 @@ epics → sub-issues → state so the next task is always obvious.
 
 ## Progress overview
 
-| Epic                                   | Issue | Status        |
-| -------------------------------------- | ----- | ------------- |
-| EPIC-01 · Project Setup                | #4    | [x] Done      |
-| EPIC-02 · Authentication (Google)      | #14   | [x] Done      |
-| EPIC-03 · Header & Navigation          | #19   | [x] Done      |
-| EPIC-04 · Home Page                    | #26   | [x] Done      |
-| EPIC-05 · Anime Detail Page            | #34   | [~] In review |
-| EPIC-06 · Episode Watch + Video Player | #39   | [ ] Todo      |
-| EPIC-07 · Search Page                  | #45   | [ ] Todo      |
-| EPIC-08 · Popular / Blogs / Favorites  | #50   | [ ] Todo      |
-| EPIC-09 · Profile Page                 | #56   | [ ] Todo      |
-| EPIC-10 · Login Page                   | #60   | [ ] Todo      |
-| EPIC-11 · 404 Page                     | #63   | [ ] Todo      |
-| EPIC-12 · Admin Panel                  | #66   | [ ] Todo      |
-| EPIC-13 · SEO & Performance            | #74   | [ ] Todo      |
-| EPIC-14 · Responsive Design            | #79   | [ ] Todo      |
-| EPIC-15 · Documentation                | #83   | [ ] Todo      |
-| EPIC-16 · Deployment                   | #88   | [ ] Todo      |
+| Epic                                   | Issue | Status   |
+| -------------------------------------- | ----- | -------- |
+| EPIC-01 · Project Setup                | #4    | [x] Done |
+| EPIC-02 · Authentication (Google)      | #14   | [x] Done |
+| EPIC-03 · Header & Navigation          | #19   | [x] Done |
+| EPIC-04 · Home Page                    | #26   | [x] Done |
+| EPIC-05 · Anime Detail Page            | #34   | [x] Done |
+| EPIC-06 · Episode Watch + Video Player | #39   | [x] Done |
+| EPIC-07 · Search Page                  | #45   | [ ] Todo |
+| EPIC-08 · Popular / Blogs / Favorites  | #50   | [ ] Todo |
+| EPIC-09 · Profile Page                 | #56   | [ ] Todo |
+| EPIC-10 · Login Page                   | #60   | [ ] Todo |
+| EPIC-11 · 404 Page                     | #63   | [ ] Todo |
+| EPIC-12 · Admin Panel                  | #66   | [ ] Todo |
+| EPIC-13 · SEO & Performance            | #74   | [ ] Todo |
+| EPIC-14 · Responsive Design            | #79   | [ ] Todo |
+| EPIC-15 · Documentation                | #83   | [ ] Todo |
+| EPIC-16 · Deployment                   | #88   | [ ] Todo |
 
 ---
 
@@ -69,7 +69,7 @@ epics → sub-issues → state so the next task is always obvious.
 - [x] HOME-06 Anime card component (hover animation)
 - [x] HOME-07 Data fetching — Consumet + RTK Query + Redis (SSR/ISR)
 
-### EPIC-05 · Anime Detail Page (#34) — _in review_
+### EPIC-05 · Anime Detail Page (#34)
 
 - [x] DETAIL-01 Display anime info (title, description, genre, rating) (#35)
 - [x] DETAIL-02 Episode list component (#36)
@@ -83,20 +83,28 @@ epics → sub-issues → state so the next task is always obvious.
 > (`drizzle/0001_*.sql`) to the Neon database before the feature works in
 > production (`npm run db:migrate`).
 
+### EPIC-06 · Episode Watch + Video Player + Ads (#39)
+
+- [x] PLAYER-01 Custom video player (play/pause, progress, volume, fullscreen,
+      quality, subtitles) (#40)
+- [x] PLAYER-02 Pre-roll ad overlay (admin-configured skip countdown,
+      YouTube-style) (#41)
+- [x] PLAYER-03 Fetch ad content from the backend (admin-managed) (#42)
+- [x] PLAYER-04 Next-episode navigation + auto-suggest overlay (#43)
+- [x] PLAYER-05 Store watch progress (resume where you left off) (#44)
+
+> Route: `/watch/[animeId]/[episodeId]` (SSR + dynamic SEO). Server-only
+> `getEpisodeSources` (short-TTL Redis cache) feeds a client `WatchExperience`
+> island that sequences the pre-roll ad into the custom player, shows an
+> "up next" overlay on end, and persists throttled watch progress. New `ads`
+> and `watch_progress` tables; weighted-random `getActivePreRollAd` selector;
+> auth-guarded `saveWatchProgress` server action. **Follow-up:** apply the
+> migration (`drizzle/0002_*.sql`) to Neon before ads/progress work in
+> production, and seed rows via the EPIC-12 admin panel.
+
 ---
 
 ## Upcoming
-
-### EPIC-06 · Episode Watch + Video Player + Ads (#39)
-
-- [ ] PLAYER-01 Custom video player (play/pause, progress, volume, fullscreen,
-      quality, subtitles)
-- [ ] PLAYER-02 Pre-roll ad overlay (5s skip countdown, YouTube-style)
-- [ ] PLAYER-03 Fetch ad content from the backend (admin-managed)
-- [ ] PLAYER-04 Next-episode navigation + auto-suggest
-- [ ] PLAYER-05 Store watch progress (resume where you left off)
-
-> Depends on the `/watch/[id]/[episode]` route that EPIC-05 already links to.
 
 ### EPIC-07 · Search Page (#45)
 
@@ -178,8 +186,10 @@ epics → sub-issues → state so the next task is always obvious.
 - **No CI yet.** `test + lint + build` is planned in DEPLOY-04. Until then, run
   `npm run lint` and `npm run build` locally before opening a PR. The repo
   squash-merges PRs.
-- **Pending DB migration.** `drizzle/0001_*.sql` (the `favorites` table) must be
-  applied to Neon (`npm run db:migrate`) before favorites work in production.
+- **Pending DB migrations.** `drizzle/0001_*.sql` (the `favorites` table) and
+  `drizzle/0002_*.sql` (the `ads` + `watch_progress` tables) must be applied to
+  Neon (`npm run db:migrate`) before favorites, ads and watch progress work in
+  production.
 - **Deferred routes.** Header/detail links to `/favorites`, `/popular`, `/new`,
   `/blogs`, `/search`, `/login` and `/watch/*` are intentional forward links to
   routes built in later epics.
