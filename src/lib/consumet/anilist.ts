@@ -36,14 +36,18 @@ const PROVIDER_FACTORIES = {
 type ProviderKey = keyof typeof PROVIDER_FACTORIES;
 
 /**
- * Default streaming source. These scraping sources are inherently volatile —
- * AnimeKai's domain (`anikai.to`) stopped resolving, so it is no longer a safe
- * default. AnimePahe is currently the most stable, but if it is unreachable
- * from the deployment switch by setting `ANIME_PROVIDER` — e.g. `kickassanime`,
- * `animesama`, `animeunity` — with no code change. Metadata is unaffected
- * either way (it comes from AniList, not the sub-provider).
+ * Default streaming source. These scraping sources are inherently volatile and
+ * this library version (1.8.8, the latest published) has fallen behind: as of
+ * mid-2026 the English providers are all unusable — animekai's domain
+ * (`anikai.to`) and animepahe's (`animepahe.si`) no longer resolve, hianime
+ * shut down, and kickassanime/animesaturn 404 (their site markup moved).
+ * AnimeUnity is the only bundled provider whose scraper still resolves episodes
+ * AND playable sources end-to-end (verified: 480p/720p/1080p m3u8), so it is the
+ * default. Caveat: AnimeUnity is an Italian catalogue, so audio/subtitles may be
+ * Italian. Switch with `ANIME_PROVIDER` (no code change) if a better source
+ * comes back. Metadata is unaffected either way — it comes from AniList.
  */
-const DEFAULT_PROVIDER: ProviderKey = "animepahe";
+const DEFAULT_PROVIDER: ProviderKey = "animeunity";
 
 function resolveProviderKey(): ProviderKey {
   const raw = process.env.ANIME_PROVIDER?.trim().toLowerCase();
