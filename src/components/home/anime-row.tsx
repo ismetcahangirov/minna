@@ -41,7 +41,7 @@ export async function AnimeRow({
   const episodeLabel = t("card.episode");
 
   return (
-    <section className="w-full">
+    <section className="mx-auto w-full max-w-[1600px]">
       <div className="flex items-end justify-between px-4 sm:px-6 lg:px-8">
         <h2 className="text-foreground text-lg font-bold tracking-tight sm:text-xl">
           {t(`sections.${titleKey}`)}
@@ -75,7 +75,7 @@ export async function AnimeRow({
 /** Streaming fallback for {@link AnimeRow}; mirrors its layout to avoid CLS. */
 export function AnimeRowSkeleton() {
   return (
-    <section className="w-full">
+    <section className="mx-auto w-full max-w-[1600px]">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="bg-surface h-6 w-40 animate-pulse" />
       </div>

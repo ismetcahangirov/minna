@@ -244,7 +244,7 @@ export function VideoPlayer({
   return (
     <div
       ref={containerRef}
-      className="group/player relative aspect-video w-full overflow-hidden bg-black outline-none select-none"
+      className="group/player relative mx-auto aspect-video w-full overflow-hidden bg-black outline-none select-none lg:max-w-[138vh]"
       tabIndex={0}
       onKeyDown={onKeyDown}
       onPointerMove={revealControls}
