@@ -1,3 +1,6 @@
+import { BackgroundVideoLayer } from "@/components/backgrounds/background-video-layer";
+import { getBackgroundSources } from "@/lib/backgrounds/queries";
+
 /**
  * Atmospheric profile background (PROFILE-02).
  *
@@ -14,7 +17,9 @@
  * The soft glows are a deliberate exception to the no-gradient UI rule, allowed
  * only on this photographic background layer; the profile UI on top stays flat.
  */
-export function ProfileBackground() {
+export async function ProfileBackground() {
+  const sources = await getBackgroundSources("profile");
+
   return (
     <div
       aria-hidden
@@ -46,6 +51,9 @@ export function ProfileBackground() {
             "radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,0.72) 100%)",
         }}
       />
+
+      {/* Admin override (ADMIN-04) — covers the CSS default when present. */}
+      <BackgroundVideoLayer sources={sources} />
     </div>
   );
 }

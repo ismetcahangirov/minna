@@ -203,7 +203,8 @@
     "closeMenu": "Close menu",
     "nav": {
       "dashboard": "Dashboard",
-      "ads": "Ads"
+      "ads": "Ads",
+      "backgrounds": "Backgrounds"
     },
     "dashboard": {
       "heading": "Dashboard",
@@ -253,6 +254,42 @@
         "invalidUrl": "Enter a valid http(s) URL.",
         "invalidNumber": "Enter a valid number.",
         "saveFailed": "Could not save the ad. Please try again."
+      }
+    },
+    "backgrounds": {
+      "title": "Backgrounds",
+      "subtitle": "Set a custom background video per page. Videos are format-checked before they go live; clearing one restores the built-in default.",
+      "pages": {
+        "login": "Login",
+        "profile": "Profile",
+        "search": "Search",
+        "not_found": "404 / Not found",
+        "admin": "Admin panel"
+      },
+      "variants": {
+        "desktop": "Default",
+        "mobile": "Mobile",
+        "tablet": "Tablet"
+      },
+      "usingDefault": "Using default",
+      "active": "Active",
+      "inactive": "Inactive",
+      "save": "Save",
+      "saving": "Saving...",
+      "saved": "Saved",
+      "clear": "Reset to default",
+      "confirmClear": "Reset this background to the built-in default?",
+      "videoUrlHint": "Direct mp4/webm URL. Must pass the format check.",
+      "errors": {
+        "required": "Enter a video URL.",
+        "unreachable": "Couldn't reach that URL.",
+        "unsupportedContainer": "Use an mp4 or webm video.",
+        "unsupportedCodec": "Unsupported codec. Use H.264 or WebM (VP8/VP9/AV1).",
+        "tooLarge": "Video is too large (max 10 MB).",
+        "bitrateTooHigh": "Bitrate is too high for a background.",
+        "dimensionsTooLarge": "Resolution is too high (max 1920x1080).",
+        "tooLong": "Video is too long for a background loop (max 60s).",
+        "saveFailed": "Couldn't save. Please try again."
       }
     }
   }

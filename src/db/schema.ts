@@ -155,3 +155,56 @@ export const blogs = pgTable("blogs", {
 
 export type Blog = typeof blogs.$inferSelect;
 export type NewBlog = typeof blogs.$inferInsert;
+
+// Which page an atmospheric background belongs to (ADMIN-04). Each page ships a
+// built-in CSS/video default that lives in code and is never stored here; a row
+// exists only when an admin has supplied an override.
+export const backgroundPageEnum = pgEnum("background_page", [
+  "login",
+  "profile",
+  "search",
+  "not_found",
+  "admin",
+]);
+
+// A page can carry breakpoint-specific overrides — profile is authored as
+// mobile vs. tablet/web (`desktop`) separately (DESIGN-SPEC §6.2); other pages
+// use `desktop` only. When a breakpoint has no row, the page's default shows.
+export const backgroundVariantEnum = pgEnum("background_variant", [
+  "desktop",
+  "mobile",
+  "tablet",
+]);
+
+// Admin-supplied atmospheric background overrides (ADMIN-04). Defaults are never
+// stored — deleting a row simply falls back to the built-in default, so the
+// default can never be destroyed. Each (page, variant) holds at most one
+// override; the public resolver reads only `active` rows and the watch/player
+// stack is unaffected. Video urls pass the ADMIN-03 format gate before a row is
+// written.
+export const backgroundVideos = pgTable(
+  "background_videos",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    page: backgroundPageEnum("page").notNull(),
+    variant: backgroundVariantEnum("variant").notNull().default("desktop"),
+    videoUrl: text("video_url").notNull(),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    unique("background_videos_page_variant_unique").on(
+      table.page,
+      table.variant,
+    ),
+  ],
+);
+
+export type BackgroundVideo = typeof backgroundVideos.$inferSelect;
+export type NewBackgroundVideo = typeof backgroundVideos.$inferInsert;
