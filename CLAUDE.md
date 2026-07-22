@@ -39,6 +39,7 @@ Dillər: **EN (default), TR, RU**.
 ## Git / GitHub Workflow (qısa)
 
 - İşə başlamazdan əvvəl `main` pull et; hər tapşırıq üçün ayrıca branch (`feature/...`, `fix/...`, `chore/...`, `docs/...`).
+- **Bir tapşırığı bir nəhəng commit ilə atma — işi məntiqi, kiçik hissələrə bölüb ayrı-ayrı commit-lər et.** Hər commit tək bir tamamlanmış dəyişikliyi əhatə etsin (məs. əvvəl schema/migration, sonra API/endpoint, sonra UI komponenti, sonra testlər). Hər commit özlüyündə build/test-dən keçən vəziyyətdə olsun və mesajı ingiliscə, Conventional Commits formatında yazılsın (`feat:`, `fix:`, `chore:` və s.).
 - PR **ingiliscə** yazılır, label-lar əlavə olunur, repo sahibinə assign edilir; CI keçəndən sonra merge.
 - Hər EPIC üçün label: `epic:auth`, `epic:home`, `epic:admin` və s.
 - Ətraflı: `git-workflow` skill.
