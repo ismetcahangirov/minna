@@ -150,3 +150,30 @@
     @apply font-sans;
   }
 }
+
+/* Atmospheric background — search page (SEARCH-03). A slow teal "breathing"
+   glow: an intentional exception to the no-gradient UI rule, scoped to the
+   photographic background layer only (DESIGN-SPEC.md §6.3). */
+@keyframes search-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.12);
+  }
+}
+
+.search-atmosphere-glow {
+  animation: search-breathe 9s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-atmosphere-glow {
+    animation: none;
+    opacity: 0.6;
+  }
+}
