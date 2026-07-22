@@ -15,6 +15,13 @@
       "when": 1784710120708,
       "tag": "0001_medical_quasimodo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784711446108,
+      "tag": "0002_numerous_blade",
+      "breakpoints": true
     }
   ]
 }

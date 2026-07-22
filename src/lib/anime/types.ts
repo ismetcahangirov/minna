@@ -127,6 +127,94 @@ export interface ConsumetInfoResponse extends ConsumetAnimeResult {
   episodes?: ConsumetEpisode[] | null;
 }
 
+// --- Episode streaming sources (EPIC-06) -----------------------------------
+
+/** One playable stream variant for an episode (a quality rung). */
+export interface EpisodeSource {
+  url: string;
+  /** Human label such as "1080p", "720p" or "default" (adaptive/auto). */
+  quality: string;
+  /** True for HLS playlists (`.m3u8`); false for progressive files (mp4). */
+  isM3U8: boolean;
+}
+
+/** A closed-caption track for the player's subtitle menu. */
+export interface EpisodeSubtitle {
+  url: string;
+  /** Language label as the provider returns it, e.g. "English". */
+  lang: string;
+}
+
+/**
+ * Normalized watch payload for one episode (PLAYER-01): the available quality
+ * rungs, subtitle tracks and any origin headers the stream requires. Empty
+ * `sources` means nothing is playable — the watch page shows an unavailable
+ * state rather than an empty player.
+ */
+export interface EpisodeStream {
+  sources: EpisodeSource[];
+  subtitles: EpisodeSubtitle[];
+  /** Provider referer/user-agent headers, when the CDN requires them. */
+  headers: Record<string, string>;
+}
+
+// --- Raw Consumet watch shapes (permissive on purpose) ---------------------
+
+export interface ConsumetSource {
+  url?: string | null;
+  quality?: string | null;
+  isM3U8?: boolean | null;
+}
+
+export interface ConsumetSubtitle {
+  url?: string | null;
+  lang?: string | null;
+}
+
+export interface ConsumetWatchResponse {
+  sources?: ConsumetSource[] | null;
+  subtitles?: ConsumetSubtitle[] | null;
+  headers?: Record<string, string> | null;
+}
+
+/**
+ * Narrows a raw Consumet watch payload into a strict {@link EpisodeStream}.
+ * Entries missing a url are dropped; a `null`/empty input yields an empty
+ * stream (no sources) rather than throwing.
+ */
+export function toEpisodeStream(
+  raw: ConsumetWatchResponse | null | undefined,
+): EpisodeStream {
+  const sources: EpisodeSource[] = Array.isArray(raw?.sources)
+    ? raw.sources
+        .map((s): EpisodeSource | null => {
+          const url = s?.url?.trim();
+          if (!url) return null;
+          return {
+            url,
+            quality: s?.quality?.trim() || "default",
+            isM3U8: s?.isM3U8 === true || url.endsWith(".m3u8"),
+          };
+        })
+        .filter((s): s is EpisodeSource => s !== null)
+    : [];
+
+  const subtitles: EpisodeSubtitle[] = Array.isArray(raw?.subtitles)
+    ? raw.subtitles
+        .map((s): EpisodeSubtitle | null => {
+          const url = s?.url?.trim();
+          if (!url) return null;
+          return { url, lang: s?.lang?.trim() || "Unknown" };
+        })
+        .filter((s): s is EpisodeSubtitle => s !== null)
+    : [];
+
+  const headers =
+    raw?.headers && typeof raw.headers === "object" ? raw.headers : {};
+
+  return { sources, subtitles, headers };
+}
+
 function pickTitle(title: ConsumetAnimeResult["title"]): string {
   if (typeof title === "string") return title.trim() || "Untitled";
   return (

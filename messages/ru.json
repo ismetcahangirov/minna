@@ -73,9 +73,32 @@
     "noResults": "Ничего не найдено"
   },
   "player": {
+    "advertisement": "Реклама",
     "skipAdIn": "Пропустить рекламу через {seconds}с",
     "skipAd": "Пропустить рекламу",
-    "nextEpisode": "Следующий эпизод"
+    "visitAdvertiser": "Подробнее",
+    "play": "Воспроизвести",
+    "pause": "Пауза",
+    "mute": "Выключить звук",
+    "unmute": "Включить звук",
+    "volume": "Громкость",
+    "seek": "Перемотка",
+    "quality": "Качество",
+    "subtitles": "Субтитры",
+    "subtitlesOff": "Выкл.",
+    "fullscreen": "Полный экран",
+    "exitFullscreen": "Выйти из полного экрана",
+    "unavailableTitle": "Этот эпизод сейчас недоступен для просмотра",
+    "unavailableBody": "Источник видео не найден. Для просмотра требуется настроенный источник Consumet — попробуйте позже.",
+    "episodeLabel": "Эпизод {number}",
+    "nowPlaying": "Сейчас смотрите",
+    "prevEpisode": "Предыдущий эпизод",
+    "nextEpisode": "Следующий эпизод",
+    "backToAnime": "К аниме",
+    "upNext": "Далее",
+    "nextEpisodeIn": "Следующий эпизод через {seconds}с",
+    "playNow": "Смотреть сейчас",
+    "cancel": "Отмена"
   },
   "notFound": {
     "title": "Страница не найдена",
