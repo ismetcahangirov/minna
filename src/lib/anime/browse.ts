@@ -1,14 +1,10 @@
 import "server-only";
 
+import { advancedSearchAnime } from "@/lib/consumet/anilist";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
-import { consumetClient } from "@/lib/http/consumet";
 import { BROWSE_PAGE_SIZE, type PagedResult } from "@/lib/browse/types";
 
-import {
-  type AnimeSummary,
-  type ConsumetListResponse,
-  toAnimeSummary,
-} from "@/lib/anime/types";
+import { type AnimeSummary, toAnimeSummary } from "@/lib/anime/types";
 
 /** Guards the cache key and upstream call against absurd deep-link pages. */
 const MAX_PAGE = 500;
@@ -21,15 +17,14 @@ function safePage(page: number | undefined): number {
 /**
  * One page of the Popular listing (LIST-02) for the infinite-scroll page.
  *
- * Uses the AniList `advanced-search` endpoint sorted by `POPULARITY_DESC` so the
- * listing paginates cleanly (the `/meta/anilist/popular` endpoint is used for
- * the fixed-size home row; this needs an arbitrary `page`). Read-through Redis
- * cache with a medium TTL — the popular ranking is near-static.
+ * Uses the AniList `advancedSearch` provider sorted by `POPULARITY_DESC` so the
+ * listing paginates cleanly with an arbitrary `page`. Read-through Redis cache
+ * with a medium TTL — the popular ranking is near-static.
  *
- * Resilient by design: the public Consumet instance is deprecated, so callers
- * must configure a self-hosted `CONSUMET_API_URL`. When the origin is missing or
- * unreachable this resolves to stale cache (if any) or an empty page rather than
- * throwing, keeping the page online. Empty pages are never cached.
+ * Resilient by design: anime data comes from the embedded AniList provider
+ * (see `@/lib/consumet/anilist`). If a page cannot be resolved this resolves to
+ * stale cache (if any) or an empty page rather than throwing, keeping the page
+ * online. Empty pages are never cached.
  */
 export async function listPopularAnime(
   page: number = 1,
@@ -41,16 +36,11 @@ export async function listPopularAnime(
   if (cached) return cached;
 
   try {
-    const { data } = await consumetClient.get<ConsumetListResponse>(
-      "/meta/anilist/advanced-search",
-      {
-        params: {
-          page: current,
-          perPage: BROWSE_PAGE_SIZE,
-          sort: '["POPULARITY_DESC"]',
-        },
-      },
-    );
+    const data = await advancedSearchAnime({
+      sort: ["POPULARITY_DESC"],
+      page: current,
+      perPage: BROWSE_PAGE_SIZE,
+    });
 
     const items = (Array.isArray(data?.results) ? data.results : [])
       .map(toAnimeSummary)

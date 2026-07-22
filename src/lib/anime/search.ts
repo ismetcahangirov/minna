@@ -1,15 +1,11 @@
 import "server-only";
 
+import { advancedSearchAnime } from "@/lib/consumet/anilist";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
-import { consumetClient } from "@/lib/http/consumet";
 
-import {
-  type AnimeSummary,
-  type ConsumetListResponse,
-  toAnimeSummary,
-} from "@/lib/anime/types";
+import { type AnimeSummary, toAnimeSummary } from "@/lib/anime/types";
 
-/** How many results one search page requests from Consumet. */
+/** How many results one search page requests from the AniList provider. */
 export const SEARCH_PER_PAGE = 24;
 
 /** Longest query we forward — guards the cache key and upstream call. */
@@ -47,7 +43,7 @@ function normalizeGenres(genres: string[] | undefined): string[] {
 /**
  * Searches the Consumet AniList catalog (SEARCH-01/04).
  *
- * Uses the `advanced-search` endpoint so a free-text `query` and a `genres`
+ * Uses the `advancedSearch` provider so a free-text `query` and a `genres`
  * facet can be combined in one call; results are sorted by popularity for a
  * useful default ordering. A blank query with no genres short-circuits to an
  * empty page (the idle state renders no request).
@@ -56,10 +52,9 @@ function normalizeGenres(genres: string[] | undefined): string[] {
  * page — the search space is large and volatile, so results are only briefly
  * memoized and empty pages are never cached.
  *
- * Resilient by design: the public Consumet instance is deprecated, so callers
- * must configure a self-hosted `CONSUMET_API_URL`. When the origin is missing
- * or unreachable this resolves to an empty page rather than throwing, keeping
- * the search route online.
+ * Resilient by design: anime data comes from the embedded AniList provider
+ * (see `@/lib/consumet/anilist`). If a page cannot be resolved this resolves to
+ * an empty page rather than throwing, keeping the search route online.
  */
 export async function searchAnime({
   query,
@@ -85,18 +80,13 @@ export async function searchAnime({
   if (cached) return cached;
 
   try {
-    const params: Record<string, string | number> = {
+    const data = await advancedSearchAnime({
+      query: q || undefined,
+      genres: genreList,
+      sort: ["POPULARITY_DESC"],
       page: safePage,
       perPage: SEARCH_PER_PAGE,
-      sort: '["POPULARITY_DESC"]',
-    };
-    if (q) params.query = q;
-    if (genreList.length > 0) params.genres = JSON.stringify(genreList);
-
-    const { data } = await consumetClient.get<ConsumetListResponse>(
-      "/meta/anilist/advanced-search",
-      { params },
-    );
+    });
 
     const results = (Array.isArray(data?.results) ? data.results : [])
       .map(toAnimeSummary)
