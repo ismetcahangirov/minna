@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "s4.anilist.co", pathname: "/**" },
       { protocol: "https", hostname: "img.anili.st", pathname: "/**" },
     ],
+    // Serve AVIF first (best compression), then WebP, then the original
+    // format for unsupported browsers (PERF-02). AVIF/WebP shrink the
+    // poster/banner artwork substantially versus the source JPEG/PNG.
+    formats: ["image/avif", "image/webp"],
+    // Cache optimized remote images for a day; the AniList CDN artwork is
+    // effectively immutable, so re-optimizing on every revalidation is waste.
+    minimumCacheTTL: 86_400,
   },
 };
 

@@ -11,6 +11,11 @@ import type { BackgroundSources } from "@/lib/backgrounds/config";
  * rendered and toggled by breakpoint; a single source covers every breakpoint,
  * and a missing breakpoint falls back to the other (e.g. login mobile reuses the
  * desktop/tablet video — atmospheric skill rule 5).
+ *
+ * Videos use `preload="metadata"` rather than `auto` (PERF-02): the browser
+ * still fetches enough to autoplay, but the off-breakpoint hidden `<video>` no
+ * longer eagerly downloads its full payload, and the visible one does not race
+ * the LCP image for bandwidth on first paint.
  */
 export function BackgroundVideoLayer({
   sources,
@@ -33,7 +38,7 @@ export function BackgroundVideoLayer({
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
       />
     );
   }
@@ -47,7 +52,7 @@ export function BackgroundVideoLayer({
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
       />
       <video
         className={`${common} hidden lg:block`}
@@ -56,7 +61,7 @@ export function BackgroundVideoLayer({
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
       />
     </>
   );
