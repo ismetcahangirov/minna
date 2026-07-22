@@ -221,3 +221,48 @@
     opacity: 0.6;
   }
 }
+
+/* Atmospheric background — login page (LOGIN-02). A dark, cinematic slate-blue
+   (~#4F6373, measured avg RGB (80,99,115)) haze with a very slow, dreamy drift
+   and a brief fade-in from black, leaving the centre clear for the login card
+   (DESIGN-SPEC.md §6.1). An intentional exception to the no-gradient UI rule,
+   scoped to this background layer only. */
+@keyframes login-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes login-drift {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translate3d(-2%, 2%, 0) scale(1.08);
+  }
+}
+
+.login-atmosphere {
+  animation: login-fade-in 1.6s ease-out both;
+}
+
+.login-atmosphere-glow {
+  animation: login-drift 14s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-atmosphere {
+    animation: none;
+  }
+  .login-atmosphere-glow {
+    animation: none;
+    opacity: 0.65;
+  }
+}

@@ -22,6 +22,14 @@
     "profile": "Profil",
     "continueWithGoogle": "Google ile devam et"
   },
+  "login": {
+    "title": "Giriş yap",
+    "heading": "Tekrar hoş geldin",
+    "subtitle": "İzleme geçmişini, favorilerini ve ilerlemeni senkron tutmak için giriş yap.",
+    "continueWithGoogle": "Google ile devam et",
+    "googleOnly": "Tek giriş yöntemi Google'dır.",
+    "terms": "Devam ederek Kullanım Koşulları'nı ve Gizlilik Politikası'nı kabul etmiş olursun."
+  },
   "home": {
     "hero": {
       "tagline": "Trend, popüler ve en yüksek puanlı animeleri premium kalitede izleyin.",
