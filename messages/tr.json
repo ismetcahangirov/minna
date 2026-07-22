@@ -204,7 +204,8 @@
     "nav": {
       "dashboard": "Panel",
       "ads": "Reklamlar",
-      "backgrounds": "Arka planlar"
+      "backgrounds": "Arka planlar",
+      "blogs": "Bloglar"
     },
     "dashboard": {
       "heading": "Panel",
@@ -290,6 +291,48 @@
         "dimensionsTooLarge": "Çözünürlük çok yüksek (en fazla 1920x1080).",
         "tooLong": "Arka plan döngüsü için video çok uzun (en fazla 60sn).",
         "saveFailed": "Kaydedilemedi. Lütfen tekrar deneyin."
+      }
+    },
+    "blogs": {
+      "title": "Bloglar",
+      "subtitle": "Blog yazıları oluşturun ve yönetin.",
+      "new": "Yeni yazı",
+      "newTitle": "Yeni yazı",
+      "newSubtitle": "Yeni bir blog yazısı yazın.",
+      "editTitle": "Yazıyı düzenle",
+      "editSubtitle": "Bu yazıyı güncelleyin.",
+      "empty": "Henüz yazı yok. İlkini yazın.",
+      "status": "Durum",
+      "actions": "İşlemler",
+      "published": "Yayında",
+      "draft": "Taslak",
+      "edit": "Düzenle",
+      "delete": "Sil",
+      "confirmDelete": "\"{title}\" yazısı silinsin mi? Bu geri alınamaz.",
+      "create": "Yazı oluştur",
+      "save": "Değişiklikleri kaydet",
+      "saving": "Kaydediliyor...",
+      "cancel": "İptal",
+      "fields": {
+        "title": "Başlık",
+        "slug": "Slug",
+        "slugHint": "URL parçası. Başlıktan üretmek için boş bırakın.",
+        "excerpt": "Özet",
+        "excerptHint": "Liste kartında görünen kısa özet.",
+        "content": "İçerik",
+        "contentHint": "Düz metin. Boş satırlar paragrafları ayırır.",
+        "coverImage": "Kapak görseli URL",
+        "coverImageHint": "Yazı sayfası için isteğe bağlı tam ekran arka plan.",
+        "author": "Yazar",
+        "published": "Yayında",
+        "date": "Tarih"
+      },
+      "errors": {
+        "required": "Bu alan zorunludur.",
+        "invalidUrl": "Geçerli bir http(s) URL girin.",
+        "invalidSlug": "Küçük harf, rakam ve tire kullanın.",
+        "slugTaken": "Bu slug zaten kullanımda.",
+        "saveFailed": "Yazı kaydedilemedi. Lütfen tekrar deneyin."
       }
     }
   }
