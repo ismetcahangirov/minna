@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
+import { AdminBackground } from "@/components/admin/admin-background";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { requireAdmin } from "@/lib/auth/admin";
 
@@ -27,8 +28,11 @@ export default async function AdminLayout({
   const user = await requireAdmin();
 
   return (
-    <AdminShell user={{ name: user.name, email: user.email }}>
-      {children}
-    </AdminShell>
+    <>
+      <AdminBackground />
+      <AdminShell user={{ name: user.name, email: user.email }}>
+        {children}
+      </AdminShell>
+    </>
   );
 }
