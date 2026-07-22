@@ -41,6 +41,33 @@
       "episode": "Эп."
     }
   },
+  "detail": {
+    "watchNow": "Смотреть",
+    "addToFavorites": "В избранное",
+    "inFavorites": "В избранном",
+    "loginToFavorite": "Войдите, чтобы сохранить",
+    "synopsis": "Описание",
+    "episodes": "Эпизоды",
+    "episodeLabel": "Эпизод {number}",
+    "noEpisodes": "Эпизоды пока недоступны.",
+    "sortAsc": "Сначала старые",
+    "sortDesc": "Сначала новые",
+    "info": {
+      "type": "Тип",
+      "status": "Статус",
+      "year": "Год",
+      "episodes": "Эпизоды",
+      "season": "Сезон",
+      "studios": "Студии",
+      "duration": "Длительность",
+      "durationValue": "{minutes} мин"
+    },
+    "notFound": {
+      "title": "Аниме не найдено",
+      "description": "Мы не смогли найти нужное аниме. Возможно, оно было удалено или ссылка неверна.",
+      "browse": "На главную"
+    }
+  },
   "search": {
     "placeholder": "Поиск аниме...",
     "noResults": "Ничего не найдено"
