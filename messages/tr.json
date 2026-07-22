@@ -69,8 +69,23 @@
     }
   },
   "search": {
+    "title": "Ara",
+    "heading": "Bir sonraki animeni bul",
+    "subtitle": "Binlerce başlığı ada veya türe göre ara.",
     "placeholder": "Anime ara...",
-    "noResults": "Sonuç bulunamadı"
+    "inputLabel": "Anime ara",
+    "clear": "Aramayı temizle",
+    "filtersLabel": "Türe göre filtrele",
+    "idlePrompt": "Aramak için yazmaya başla",
+    "idleHint": "Başlığa göre ara veya aşağıdan bir tür seç.",
+    "searching": "Aranıyor...",
+    "resultsFor": "\"{query}\" için sonuçlar",
+    "noResults": "Sonuç bulunamadı",
+    "noResultsHint": "Farklı bir başlık veya tür dene.",
+    "loadMore": "Daha fazla yükle",
+    "loadingMore": "Yükleniyor...",
+    "error": "Arama şu anda kullanılamıyor.",
+    "retry": "Tekrar dene"
   },
   "player": {
     "advertisement": "Reklam",

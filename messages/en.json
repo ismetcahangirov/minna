@@ -69,8 +69,23 @@
     }
   },
   "search": {
+    "title": "Search",
+    "heading": "Find your next anime",
+    "subtitle": "Search thousands of titles by name or genre.",
     "placeholder": "Search anime...",
-    "noResults": "No results found"
+    "inputLabel": "Search anime",
+    "clear": "Clear search",
+    "filtersLabel": "Filter by genre",
+    "idlePrompt": "Start typing to search",
+    "idleHint": "Search by title or pick a genre below.",
+    "searching": "Searching...",
+    "resultsFor": "Results for \"{query}\"",
+    "noResults": "No results found",
+    "noResultsHint": "Try a different title or genre.",
+    "loadMore": "Load more",
+    "loadingMore": "Loading...",
+    "error": "Search is unavailable right now.",
+    "retry": "Retry"
   },
   "player": {
     "advertisement": "Advertisement",
