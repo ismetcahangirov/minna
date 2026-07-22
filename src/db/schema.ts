@@ -117,3 +117,34 @@ export const watchProgress = pgTable(
 
 export type WatchProgress = typeof watchProgress.$inferSelect;
 export type NewWatchProgress = typeof watchProgress.$inferInsert;
+
+// Editorial blog posts listed on the Blogs page and read on the blog detail
+// page (LIST-03 / LIST-05). Rows are authored from the admin panel (EPIC-12);
+// the public pages only read `published` posts. `slug` is the stable, unique
+// URL segment (`/blogs/[slug]`); `coverImage` is the full-bleed background of
+// the detail page. `publishedAt` (defaulting to creation time) drives the
+// newest-first listing and can be backdated by an editor.
+export const blogs = pgTable("blogs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  // Short summary shown on the listing card; falls back to none when empty.
+  excerpt: text("excerpt"),
+  content: text("content").notNull(),
+  coverImage: text("cover_image"),
+  author: text("author"),
+  published: boolean("published").notNull().default(true),
+  publishedAt: timestamp("published_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export type Blog = typeof blogs.$inferSelect;
+export type NewBlog = typeof blogs.$inferInsert;
