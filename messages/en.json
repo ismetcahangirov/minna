@@ -22,6 +22,14 @@
     "profile": "Profile",
     "continueWithGoogle": "Continue with Google"
   },
+  "login": {
+    "title": "Sign in",
+    "heading": "Welcome back",
+    "subtitle": "Sign in to keep your watch history, favorites and progress in sync.",
+    "continueWithGoogle": "Continue with Google",
+    "googleOnly": "Google is the only sign-in method.",
+    "terms": "By continuing you agree to our Terms and Privacy Policy."
+  },
   "home": {
     "hero": {
       "tagline": "Stream trending, popular and top-rated anime in premium quality.",
