@@ -1,3 +1,6 @@
+import { BackgroundVideoLayer } from "@/components/backgrounds/background-video-layer";
+import { getBackgroundSources } from "@/lib/backgrounds/queries";
+
 /**
  * Atmospheric 404 background (404-02).
  *
@@ -16,7 +19,9 @@
  * only on this photographic background layer; the 404 graphic on top stays flat,
  * hard-cornered and glow-free (DESIGN-SPEC.md §6.4).
  */
-export function NotFoundBackground() {
+export async function NotFoundBackground() {
+  const sources = await getBackgroundSources("not_found");
+
   return (
     <div
       aria-hidden
@@ -48,6 +53,9 @@ export function NotFoundBackground() {
             "radial-gradient(ellipse at center, transparent 28%, rgba(0,0,0,0.70) 100%)",
         }}
       />
+
+      {/* Admin override (ADMIN-04) — covers the CSS default when present. */}
+      <BackgroundVideoLayer sources={sources} />
     </div>
   );
 }

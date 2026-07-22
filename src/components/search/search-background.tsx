@@ -1,3 +1,6 @@
+import { BackgroundVideoLayer } from "@/components/backgrounds/background-video-layer";
+import { getBackgroundSources } from "@/lib/backgrounds/queries";
+
 /**
  * Atmospheric search background (SEARCH-03).
  *
@@ -10,7 +13,9 @@
  * The teal accent is a deliberate exception to the no-gradient UI rule, allowed
  * only on this photographic background layer; the search UI on top stays flat.
  */
-export function SearchBackground() {
+export async function SearchBackground() {
+  const sources = await getBackgroundSources("search");
+
   return (
     <div
       aria-hidden
@@ -42,6 +47,9 @@ export function SearchBackground() {
             "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.65) 100%)",
         }}
       />
+
+      {/* Admin override (ADMIN-04) — covers the CSS default when present. */}
+      <BackgroundVideoLayer sources={sources} />
     </div>
   );
 }

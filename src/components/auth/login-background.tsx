@@ -1,3 +1,6 @@
+import { BackgroundVideoLayer } from "@/components/backgrounds/background-video-layer";
+import { getBackgroundSources } from "@/lib/backgrounds/queries";
+
 /**
  * Atmospheric login background (LOGIN-02).
  *
@@ -16,7 +19,9 @@
  * The soft glows are a deliberate exception to the no-gradient UI rule, allowed
  * only on this photographic background layer; the login card on top stays flat.
  */
-export function LoginBackground() {
+export async function LoginBackground() {
+  const sources = await getBackgroundSources("login");
+
   return (
     <div
       aria-hidden
@@ -48,6 +53,9 @@ export function LoginBackground() {
             "radial-gradient(ellipse at center, rgba(0,0,0,0.35) 20%, rgba(0,0,0,0.78) 100%)",
         }}
       />
+
+      {/* Admin override (ADMIN-04) — covers the CSS default when present. */}
+      <BackgroundVideoLayer sources={sources} />
     </div>
   );
 }
