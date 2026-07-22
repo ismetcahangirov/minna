@@ -41,6 +41,33 @@
       "episode": "Ep"
     }
   },
+  "detail": {
+    "watchNow": "Watch now",
+    "addToFavorites": "Add to favorites",
+    "inFavorites": "In favorites",
+    "loginToFavorite": "Log in to save",
+    "synopsis": "Synopsis",
+    "episodes": "Episodes",
+    "episodeLabel": "Episode {number}",
+    "noEpisodes": "Episodes are not available yet.",
+    "sortAsc": "Oldest first",
+    "sortDesc": "Newest first",
+    "info": {
+      "type": "Type",
+      "status": "Status",
+      "year": "Year",
+      "episodes": "Episodes",
+      "season": "Season",
+      "studios": "Studios",
+      "duration": "Duration",
+      "durationValue": "{minutes} min"
+    },
+    "notFound": {
+      "title": "Anime not found",
+      "description": "We couldn't find the anime you're looking for. It may have been removed or the link is incorrect.",
+      "browse": "Back to home"
+    }
+  },
   "search": {
     "placeholder": "Search anime...",
     "noResults": "No results found"

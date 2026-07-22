@@ -80,6 +80,53 @@ export interface ConsumetListResponse {
   results?: ConsumetAnimeResult[] | null;
 }
 
+// --- Anime detail (EPIC-05) ------------------------------------------------
+
+/** A single playable episode shown on the detail page (DETAIL-02). */
+export interface AnimeEpisode {
+  /** Provider episode id — used to build the `/watch/[id]/[episode]` route. */
+  id: string;
+  number: number;
+  title: string | null;
+  description: string | null;
+  /** Air date string as the provider returns it, when available. */
+  airDate: string | null;
+}
+
+/**
+ * Full anime record backing the detail page (DETAIL-01). Extends the card
+ * {@link AnimeSummary} with the extra fields the detail view and its dynamic
+ * SEO metadata need (DETAIL-04).
+ */
+export interface AnimeDetail extends AnimeSummary {
+  titleRomaji: string | null;
+  titleNative: string | null;
+  synonyms: string[];
+  season: string | null;
+  studios: string[];
+  /** Average episode runtime in minutes. */
+  duration: number | null;
+  episodes: AnimeEpisode[];
+}
+
+// --- Raw Consumet AniList info shapes (permissive on purpose) ---------------
+
+export interface ConsumetEpisode {
+  id?: string | number | null;
+  number?: number | null;
+  title?: string | null;
+  description?: string | null;
+  airDate?: string | null;
+}
+
+export interface ConsumetInfoResponse extends ConsumetAnimeResult {
+  synonyms?: string[] | null;
+  season?: string | null;
+  studios?: string[] | null;
+  duration?: number | null;
+  episodes?: ConsumetEpisode[] | null;
+}
+
 function pickTitle(title: ConsumetAnimeResult["title"]): string {
   if (typeof title === "string") return title.trim() || "Untitled";
   return (
@@ -136,5 +183,70 @@ export function toAnimeSummary(
     color: raw.color?.trim() || null,
     episodeNumber:
       typeof raw.episodeNumber === "number" ? raw.episodeNumber : null,
+  };
+}
+
+/** Keeps only the non-empty strings from a loosely-typed Consumet array. */
+function toStringList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((s): s is string => typeof s === "string" && s.length > 0)
+    : [];
+}
+
+/**
+ * Narrows a raw Consumet episode into a strict {@link AnimeEpisode}, or `null`
+ * when it lacks a usable id. `index` provides a fallback episode number for
+ * providers that omit it.
+ */
+function toAnimeEpisode(
+  raw: ConsumetEpisode | null | undefined,
+  index: number,
+): AnimeEpisode | null {
+  if (!raw || raw.id === undefined || raw.id === null) return null;
+
+  const id = String(raw.id).trim();
+  if (!id) return null;
+
+  return {
+    id,
+    number:
+      typeof raw.number === "number" && Number.isFinite(raw.number)
+        ? raw.number
+        : index + 1,
+    title: raw.title?.trim() || null,
+    description: raw.description?.trim() || null,
+    airDate: raw.airDate?.trim() || null,
+  };
+}
+
+/**
+ * Narrows a raw Consumet info payload into a strict {@link AnimeDetail}, reusing
+ * {@link toAnimeSummary} for the shared card fields. Returns `null` when the
+ * entry has no usable id (the detail page treats that as a 404).
+ */
+export function toAnimeDetail(
+  raw: ConsumetInfoResponse | null | undefined,
+): AnimeDetail | null {
+  const summary = toAnimeSummary(raw);
+  if (!summary || !raw) return null;
+
+  const title =
+    typeof raw.title === "object" && raw.title !== null ? raw.title : null;
+
+  const episodes = Array.isArray(raw.episodes)
+    ? raw.episodes
+        .map(toAnimeEpisode)
+        .filter((entry): entry is AnimeEpisode => entry !== null)
+    : [];
+
+  return {
+    ...summary,
+    titleRomaji: title?.romaji?.trim() || null,
+    titleNative: title?.native?.trim() || null,
+    synonyms: toStringList(raw.synonyms),
+    season: raw.season?.trim() || null,
+    studios: toStringList(raw.studios),
+    duration: typeof raw.duration === "number" ? raw.duration : null,
+    episodes,
   };
 }

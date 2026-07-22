@@ -41,6 +41,33 @@
       "episode": "Böl."
     }
   },
+  "detail": {
+    "watchNow": "Şimdi izle",
+    "addToFavorites": "Favorilere ekle",
+    "inFavorites": "Favorilerde",
+    "loginToFavorite": "Kaydetmek için giriş yap",
+    "synopsis": "Özet",
+    "episodes": "Bölümler",
+    "episodeLabel": "{number}. Bölüm",
+    "noEpisodes": "Bölümler henüz mevcut değil.",
+    "sortAsc": "Önce eskiler",
+    "sortDesc": "Önce yeniler",
+    "info": {
+      "type": "Tür",
+      "status": "Durum",
+      "year": "Yıl",
+      "episodes": "Bölümler",
+      "season": "Sezon",
+      "studios": "Stüdyolar",
+      "duration": "Süre",
+      "durationValue": "{minutes} dk"
+    },
+    "notFound": {
+      "title": "Anime bulunamadı",
+      "description": "Aradığınız animeyi bulamadık. Kaldırılmış olabilir veya bağlantı hatalı.",
+      "browse": "Ana sayfaya dön"
+    }
+  },
   "search": {
     "placeholder": "Anime ara...",
     "noResults": "Sonuç bulunamadı"
