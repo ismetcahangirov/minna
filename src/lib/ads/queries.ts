@@ -3,7 +3,13 @@ import "server-only";
 import { eq } from "drizzle-orm";
 
 import { ads } from "@/db/schema";
-import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
+import {
+  CACHE_TTL,
+  cacheDelete,
+  cacheGet,
+  cacheKey,
+  cacheSet,
+} from "@/lib/cache";
 
 /**
  * Client-safe pre-roll ad DTO (PLAYER-03). Only the fields the player needs are
@@ -13,16 +19,27 @@ export interface PreRollAd {
   id: string;
   videoUrl: string;
   targetUrl: string | null;
+  /** Admin-configured cap before auto-advancing; `null` plays to the end. */
+  durationSeconds: number | null;
   /** Seconds before the "Skip ad" button unlocks (admin-configured). */
   skipAfterSeconds: number;
 }
 
 type AdPoolRow = Pick<
   PreRollAd,
-  "id" | "videoUrl" | "targetUrl" | "skipAfterSeconds"
+  "id" | "videoUrl" | "targetUrl" | "durationSeconds" | "skipAfterSeconds"
 > & { weight: number };
 
 const AD_POOL_KEY = cacheKey("ads", "preroll", "active");
+
+/**
+ * Drops the cached active-ad pool so admin edits (ADMIN-02) surface on the next
+ * watch page load rather than waiting out the short TTL. Called from the admin
+ * ad mutations.
+ */
+export async function invalidateAdPool(): Promise<void> {
+  await cacheDelete(AD_POOL_KEY);
+}
 
 /**
  * Loads the active pre-roll ad pool. The pool (not the per-request pick) is
@@ -41,6 +58,7 @@ async function getActiveAdPool(): Promise<AdPoolRow[]> {
         id: ads.id,
         videoUrl: ads.videoUrl,
         targetUrl: ads.targetUrl,
+        durationSeconds: ads.durationSeconds,
         skipAfterSeconds: ads.skipAfterSeconds,
         weight: ads.weight,
       })
@@ -77,6 +95,7 @@ export async function getActivePreRollAd(): Promise<PreRollAd | null> {
         id: ad.id,
         videoUrl: ad.videoUrl,
         targetUrl: ad.targetUrl,
+        durationSeconds: ad.durationSeconds,
         skipAfterSeconds: ad.skipAfterSeconds,
       };
     }
@@ -87,6 +106,7 @@ export async function getActivePreRollAd(): Promise<PreRollAd | null> {
     id: fallback.id,
     videoUrl: fallback.videoUrl,
     targetUrl: fallback.targetUrl,
+    durationSeconds: fallback.durationSeconds,
     skipAfterSeconds: fallback.skipAfterSeconds,
   };
 }

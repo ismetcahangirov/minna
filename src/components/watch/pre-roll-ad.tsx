@@ -41,6 +41,13 @@ export function PreRollAd({ ad, onComplete }: PreRollAdProps) {
     return () => clearInterval(timer);
   }, []);
 
+  // Auto-advance once the admin-configured duration cap is reached (ADMIN-02),
+  // even if the ad video would run longer. Null/0 means play to the end.
+  useEffect(() => {
+    const cap = ad.durationSeconds ?? 0;
+    if (cap > 0 && elapsed >= cap) onComplete();
+  }, [elapsed, ad.durationSeconds, onComplete]);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
