@@ -43,6 +43,13 @@
       "when": 1784723543639,
       "tag": "0005_ad_duration_seconds",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784724676881,
+      "tag": "0006_background_videos",
+      "breakpoints": true
     }
   ]
 }
