@@ -36,11 +36,14 @@ const PROVIDER_FACTORIES = {
 type ProviderKey = keyof typeof PROVIDER_FACTORIES;
 
 /**
- * Default streaming source. AnimeKai carries a large, actively-updated English
- * catalogue. If it goes down (these scraping sources are inherently volatile),
- * switch by setting `ANIME_PROVIDER` — e.g. `animepahe` — with no code change.
+ * Default streaming source. These scraping sources are inherently volatile —
+ * AnimeKai's domain (`anikai.to`) stopped resolving, so it is no longer a safe
+ * default. AnimePahe is currently the most stable, but if it is unreachable
+ * from the deployment switch by setting `ANIME_PROVIDER` — e.g. `kickassanime`,
+ * `animesama`, `animeunity` — with no code change. Metadata is unaffected
+ * either way (it comes from AniList, not the sub-provider).
  */
-const DEFAULT_PROVIDER: ProviderKey = "animekai";
+const DEFAULT_PROVIDER: ProviderKey = "animepahe";
 
 function resolveProviderKey(): ProviderKey {
   const raw = process.env.ANIME_PROVIDER?.trim().toLowerCase();
@@ -139,10 +142,39 @@ export function advancedSearchAnime(
   ) as unknown as Promise<ConsumetListResponse>;
 }
 
-export function fetchAnimeInfo(id: string): Promise<ConsumetInfoResponse> {
-  return getAnilist().fetchAnimeInfo(
+export async function fetchAnimeInfo(
+  id: string,
+): Promise<ConsumetInfoResponse> {
+  const anilist = getAnilist();
+
+  // Metadata (title, art, description, genres, studios…) comes from AniList's
+  // GraphQL API and never touches the scraping sub-provider, so it stays
+  // reliable even when the streaming source is down.
+  const info = (await anilist.fetchAnilistInfoById(
     id,
-  ) as unknown as Promise<ConsumetInfoResponse>;
+  )) as unknown as ConsumetInfoResponse;
+
+  // Episodes come from the volatile scraping sub-provider (ANIME_PROVIDER).
+  // Fetch them best-effort and merge them in: if the source is unreachable the
+  // detail page still renders from metadata and the watch page shows an
+  // "unavailable" state — far better than 404-ing the whole title, which is
+  // what the library's coupled `fetchAnimeInfo` does when the scraper throws.
+  try {
+    const episodes = (await anilist.fetchEpisodesListById(
+      id,
+    )) as unknown as ConsumetInfoResponse["episodes"];
+    if (Array.isArray(episodes) && episodes.length > 0) {
+      info.episodes = episodes;
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `[anime] episodes for "${id}" unavailable (metadata still served):`,
+      message,
+    );
+  }
+
+  return info;
 }
 
 export function fetchEpisodeSources(
