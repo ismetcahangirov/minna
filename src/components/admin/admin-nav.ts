@@ -1,4 +1,5 @@
 import {
+  FileText,
   Image as ImageIcon,
   LayoutDashboard,
   Megaphone,
@@ -24,4 +25,5 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { key: "dashboard", href: "/admin", icon: LayoutDashboard },
   { key: "ads", href: "/admin/ads", icon: Megaphone },
   { key: "backgrounds", href: "/admin/backgrounds", icon: ImageIcon },
+  { key: "blogs", href: "/admin/blogs", icon: FileText },
 ];

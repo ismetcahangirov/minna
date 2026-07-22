@@ -204,7 +204,8 @@
     "nav": {
       "dashboard": "Dashboard",
       "ads": "Ads",
-      "backgrounds": "Backgrounds"
+      "backgrounds": "Backgrounds",
+      "blogs": "Blogs"
     },
     "dashboard": {
       "heading": "Dashboard",
@@ -290,6 +291,48 @@
         "dimensionsTooLarge": "Resolution is too high (max 1920x1080).",
         "tooLong": "Video is too long for a background loop (max 60s).",
         "saveFailed": "Couldn't save. Please try again."
+      }
+    },
+    "blogs": {
+      "title": "Blogs",
+      "subtitle": "Write and manage blog posts.",
+      "new": "New post",
+      "newTitle": "New post",
+      "newSubtitle": "Write a new blog post.",
+      "editTitle": "Edit post",
+      "editSubtitle": "Update this post.",
+      "empty": "No posts yet. Write your first one.",
+      "status": "Status",
+      "actions": "Actions",
+      "published": "Published",
+      "draft": "Draft",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Delete the post \"{title}\"? This can't be undone.",
+      "create": "Create post",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "fields": {
+        "title": "Title",
+        "slug": "Slug",
+        "slugHint": "URL segment. Leave blank to generate from the title.",
+        "excerpt": "Excerpt",
+        "excerptHint": "Short summary shown on the listing card.",
+        "content": "Content",
+        "contentHint": "Plain text. Blank lines separate paragraphs.",
+        "coverImage": "Cover image URL",
+        "coverImageHint": "Optional full-bleed background for the post page.",
+        "author": "Author",
+        "published": "Published",
+        "date": "Date"
+      },
+      "errors": {
+        "required": "This field is required.",
+        "invalidUrl": "Enter a valid http(s) URL.",
+        "invalidSlug": "Use lowercase letters, numbers and hyphens.",
+        "slugTaken": "That slug is already in use.",
+        "saveFailed": "Could not save the post. Please try again."
       }
     }
   }
