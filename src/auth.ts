@@ -20,7 +20,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // Auth.js trusts the incoming Host header for building callback URLs.
   trustHost: true,
   secret: process.env.NEXTAUTH_SECRET,
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // sessions live for 30 days of inactivity
+    updateAge: 24 * 60 * 60, // slide the expiry at most once a day
+  },
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,

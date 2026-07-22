@@ -6,19 +6,27 @@ import { MobileMenu } from "@/components/header/mobile-menu";
 import { NavLinks } from "@/components/header/nav-links";
 import { UserMenu, type SessionUser } from "@/components/header/user-menu";
 import { getCategories } from "@/lib/anime/categories";
+import { getCurrentUser } from "@/lib/auth/session";
 
 /**
  * The shared site header (EPIC-03), rendered on every page from the root
  * layout. Server component: fetches the category taxonomy once (Redis-cached)
  * and hydrates the interactive pieces as client islands.
  *
- * `user` is threaded through as a prop so the auth session (EPIC-02) can be
- * wired here in a single place without touching the client components. It is
- * `null` until authentication lands.
+ * `user` is threaded through as a prop so the auth session (EPIC-02) is wired
+ * here in a single place without touching the client components — the session
+ * user (or `null` when signed out) is read server-side and passed down.
  */
 export async function SiteHeader() {
   const categories = await getCategories();
-  const user: SessionUser | null = null;
+  const currentUser = await getCurrentUser();
+  const user: SessionUser | null = currentUser
+    ? {
+        name: currentUser.name,
+        email: currentUser.email,
+        image: currentUser.image,
+      }
+    : null;
 
   return (
     <HeaderShell>
