@@ -6,12 +6,15 @@
     "error": "Something went wrong"
   },
   "nav": {
+    "categories": "Categories",
     "favorites": "Favorites",
     "new": "New",
     "popular": "Popular",
     "blogs": "Blogs",
     "search": "Search",
-    "language": "Language"
+    "language": "Language",
+    "menu": "Menu",
+    "close": "Close"
   },
   "auth": {
     "login": "Log in",
