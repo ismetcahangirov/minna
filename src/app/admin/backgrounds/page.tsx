@@ -43,7 +43,7 @@ export default async function AdminBackgroundsPage() {
             <h2 className="text-foreground text-lg font-semibold tracking-tight">
               {t(`pages.${page}`)}
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {BACKGROUND_PAGE_VARIANTS[page].map((variant) => {
                 const row = byKey.get(`${page}:${variant}`);
                 return (
