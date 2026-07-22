@@ -52,7 +52,7 @@ jobs:
           # real secrets live in the Vercel/Render dashboards (see DEPLOYMENT.md).
           DATABASE_URL: postgresql://user:pass@ep-ci.eu-central-1.aws.neon.tech/ci?sslmode=require
           REDIS_URL: ""
-          CONSUMET_API_URL: http://localhost:3001
+          ANIME_PROVIDER: animekai
           GOOGLE_CLIENT_ID: ci-placeholder
           GOOGLE_CLIENT_SECRET: ci-placeholder
           NEXTAUTH_SECRET: ci-placeholder-secret-ci-placeholder-secret

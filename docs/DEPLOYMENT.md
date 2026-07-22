@@ -21,7 +21,7 @@ The full annotated list lives in [`.env.example`](../.env.example).
 | --------------------------------- | -------- | -------------------------------------------------------------- |
 | `DATABASE_URL`                    | yes      | Neon **pooled** connection string, `?sslmode=require`.         |
 | `REDIS_URL`                       | prod     | Cache layer. Unset → cache no-ops and falls through to origin. |
-| `CONSUMET_API_URL`                | yes      | Base URL of the (self-hosted) Consumet API.                    |
+| `ANIME_PROVIDER`                  | no       | Streaming sub-provider (embedded). Default `animekai`.         |
 | `GOOGLE_CLIENT_ID`                | yes      | Google OAuth — the only auth method.                           |
 | `GOOGLE_CLIENT_SECRET`            | yes      | Google OAuth.                                                  |
 | `NEXTAUTH_SECRET`                 | yes      | `openssl rand -base64 32`.                                     |

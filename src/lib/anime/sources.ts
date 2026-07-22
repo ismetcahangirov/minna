@@ -2,34 +2,24 @@ import "server-only";
 
 import { cache } from "react";
 
+import { fetchEpisodeSources } from "@/lib/consumet/anilist";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
-import { consumetClient } from "@/lib/http/consumet";
 
-import {
-  type ConsumetWatchResponse,
-  type EpisodeStream,
-  toEpisodeStream,
-} from "@/lib/anime/types";
-
-/**
- * Must match the provider used to resolve the episode list in `detail.ts`;
- * episode ids are provider-scoped, so the watch endpoint has to be queried with
- * the same sub-provider that produced them.
- */
-const EPISODE_PROVIDER = "gogoanime";
+import { type EpisodeStream, toEpisodeStream } from "@/lib/anime/types";
 
 /**
  * Resolves the playable streams for one episode (PLAYER-01), or an empty stream
- * when none are available.
+ * when none are available. Episode ids are provider-scoped, produced by the same
+ * embedded AniList sub-provider that built the episode list in `detail.ts`.
  *
  * Short-TTL Redis cache: stream urls are signed/rotated by the CDN, so they go
  * stale far sooner than anime metadata. Wrapped in React `cache()` so the page
  * component and `generateMetadata` share a single fetch per request.
  *
- * Resilient by design: the public Consumet instance is deprecated (self-host
- * `CONSUMET_API_URL`). When the origin is missing or unreachable this resolves
- * to an empty {@link EpisodeStream} — the watch page renders an "unavailable"
- * state instead of crashing.
+ * Resilient by design: streams come from the embedded AniList provider (see
+ * `@/lib/consumet/anilist`). When none can be resolved this returns an empty
+ * {@link EpisodeStream} — the watch page renders an "unavailable" state instead
+ * of crashing.
  */
 export const getEpisodeSources = cache(
   async (episodeId: string): Promise<EpisodeStream> => {
@@ -42,10 +32,7 @@ export const getEpisodeSources = cache(
     if (cached) return cached;
 
     try {
-      const { data } = await consumetClient.get<ConsumetWatchResponse>(
-        `/meta/anilist/watch/${encodeURIComponent(cleanId)}`,
-        { params: { provider: EPISODE_PROVIDER } },
-      );
+      const data = await fetchEpisodeSources(cleanId);
 
       const stream = toEpisodeStream(data);
       // Only cache a real hit — never memoize an empty (origin-down) result.

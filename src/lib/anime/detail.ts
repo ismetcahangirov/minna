@@ -2,21 +2,10 @@ import "server-only";
 
 import { cache } from "react";
 
+import { fetchAnimeInfo } from "@/lib/consumet/anilist";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
-import { consumetClient } from "@/lib/http/consumet";
 
-import {
-  type AnimeDetail,
-  type ConsumetInfoResponse,
-  toAnimeDetail,
-} from "@/lib/anime/types";
-
-/**
- * Consumet AniList sub-provider used to resolve playable episodes for a title.
- * The AniList meta `info` endpoint maps AniList entries onto this streaming
- * provider's episode list.
- */
-const EPISODE_PROVIDER = "gogoanime";
+import { type AnimeDetail, toAnimeDetail } from "@/lib/anime/types";
 
 /**
  * Returns the full detail record for one anime (DETAIL-01/02), or `null` when
@@ -26,10 +15,11 @@ const EPISODE_PROVIDER = "gogoanime";
  * React `cache()` so the page component and `generateMetadata` (DETAIL-04)
  * share a single fetch per request.
  *
- * Resilient by design: the public Consumet instance is deprecated, so callers
- * must configure a self-hosted `CONSUMET_API_URL`. When the origin is missing
- * or unreachable this resolves to stale cache (if any) or `null` — the detail
- * route turns a `null` into a 404 rather than crashing the render.
+ * Resilient by design: anime data comes from the embedded AniList provider (see
+ * `@/lib/consumet/anilist`), which maps AniList metadata onto the streaming
+ * sub-provider's episode list. If it cannot be resolved this resolves to stale
+ * cache (if any) or `null` — the detail route turns a `null` into a 404 rather
+ * than crashing the render.
  */
 export const getAnimeInfo = cache(
   async (id: string): Promise<AnimeDetail | null> => {
@@ -42,10 +32,7 @@ export const getAnimeInfo = cache(
     if (cached) return cached;
 
     try {
-      const { data } = await consumetClient.get<ConsumetInfoResponse>(
-        `/meta/anilist/info/${encodeURIComponent(cleanId)}`,
-        { params: { provider: EPISODE_PROVIDER } },
-      );
+      const data = await fetchAnimeInfo(cleanId);
 
       const detail = toAnimeDetail(data);
       if (detail) await cacheSet(key, detail, CACHE_TTL.long);
