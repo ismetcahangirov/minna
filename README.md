@@ -5,6 +5,8 @@ streams anime sourced from the [Consumet API](https://github.com/consumet),
 authenticates exclusively through Google OAuth, and ships in three languages —
 **English (default), Turkish, and Russian**.
 
+[![CI](https://github.com/ismetcahangirov/minna/actions/workflows/ci.yml/badge.svg)](https://github.com/ismetcahangirov/minna/actions/workflows/ci.yml)
+
 > **Design language:** pure-black canvas (`#000000`), Netflix-red accent
 > (`#E50914`), sharp corners, no glassmorphism, no gradients on UI surfaces,
 > SVG icons only. Atmospheric background videos on the login, profile, search
