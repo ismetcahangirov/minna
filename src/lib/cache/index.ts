@@ -3,6 +3,7 @@ export {
   cacheDelete,
   cacheGet,
   cacheKey,
+  cachePing,
   cacheSet,
   getOrSet,
 } from "@/lib/cache/cache";
