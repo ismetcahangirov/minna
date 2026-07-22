@@ -266,3 +266,51 @@
     opacity: 0.65;
   }
 }
+
+/* Atmospheric background — 404 page (404-02). The warmest scene: a smouldering
+   brown-orange ember (~#8A6154, measured avg RGB (138,97,84)) with a gentle
+   sinusoidal brightness pulse — the "breathing ember / bad signal" flicker
+   unique to this page — leaving the centre clear for the 404 graphic
+   (DESIGN-SPEC.md §6.4). An intentional exception to the no-gradient UI rule,
+   scoped to this background layer only. */
+@keyframes notfound-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes notfound-ember {
+  0%,
+  100% {
+    opacity: 0.62;
+    filter: brightness(1);
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    filter: brightness(1.06);
+    transform: scale(1.04);
+  }
+}
+
+.notfound-atmosphere {
+  animation: notfound-fade-in 1.4s ease-out both;
+}
+
+.notfound-atmosphere-glow {
+  animation: notfound-ember 4s ease-in-out infinite;
+  will-change: opacity, filter, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notfound-atmosphere {
+    animation: none;
+  }
+  .notfound-atmosphere-glow {
+    animation: none;
+    opacity: 0.68;
+  }
+}
