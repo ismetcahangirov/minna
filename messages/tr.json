@@ -87,6 +87,36 @@
     "error": "Arama şu anda kullanılamıyor.",
     "retry": "Tekrar dene"
   },
+  "browse": {
+    "retry": "Tekrar dene",
+    "endOfList": "Sona ulaştınız",
+    "errorTitle": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+    "popular": {
+      "title": "Popüler",
+      "heading": "Popüler animeler",
+      "subtitle": "Şu anda en çok izlenen yapımlar — keşfetmeye devam etmek için kaydırın.",
+      "empty": "Henüz gösterilecek bir şey yok",
+      "emptyHint": "Katalog kullanılabilir olduğunda popüler animeler burada görünecek."
+    },
+    "blogs": {
+      "title": "Blog",
+      "heading": "Blogdan",
+      "subtitle": "Minna ekibinden haberler, içerikler ve detaylı yazılar.",
+      "empty": "Henüz gönderi yok",
+      "emptyHint": "Haberler ve içerikler için yakında tekrar uğrayın.",
+      "backToBlogs": "Bloga dön"
+    },
+    "favorites": {
+      "title": "Favoriler",
+      "heading": "Favorilerin",
+      "subtitle": "Kaydettiğin tüm animeler, en yeniden başlayarak.",
+      "empty": "Henüz favori yok",
+      "emptyHint": "Buraya kaydetmek için herhangi bir animedeki kalbe dokun.",
+      "signedOutTitle": "Favorilerini görmek için giriş yap",
+      "signedOutHint": "Kaydettiğin animeler hesabına bağlıdır. Görüntülemek ve yönetmek için giriş yap.",
+      "signIn": "Google ile devam et"
+    }
+  },
   "player": {
     "advertisement": "Reklam",
     "skipAdIn": "Reklamı geç: {seconds}sn",

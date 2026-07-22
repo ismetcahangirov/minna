@@ -87,6 +87,36 @@
     "error": "Search is unavailable right now.",
     "retry": "Retry"
   },
+  "browse": {
+    "retry": "Retry",
+    "endOfList": "You've reached the end",
+    "errorTitle": "Something went wrong. Please try again.",
+    "popular": {
+      "title": "Popular",
+      "heading": "Popular anime",
+      "subtitle": "The most-watched titles right now — scroll to keep exploring.",
+      "empty": "Nothing to show yet",
+      "emptyHint": "Popular anime will appear here once the catalog is available."
+    },
+    "blogs": {
+      "title": "Blog",
+      "heading": "From the blog",
+      "subtitle": "News, features and deep dives from the Minna team.",
+      "empty": "No posts yet",
+      "emptyHint": "Check back soon for news and features.",
+      "backToBlogs": "Back to blog"
+    },
+    "favorites": {
+      "title": "Favorites",
+      "heading": "Your favorites",
+      "subtitle": "Every anime you've saved, newest first.",
+      "empty": "No favorites yet",
+      "emptyHint": "Tap the heart on any anime to save it here.",
+      "signedOutTitle": "Sign in to see your favorites",
+      "signedOutHint": "Your saved anime are tied to your account. Sign in to view and manage them.",
+      "signIn": "Continue with Google"
+    }
+  },
   "player": {
     "advertisement": "Advertisement",
     "skipAdIn": "Skip ad in {seconds}s",
