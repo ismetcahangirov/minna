@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, ListVideo } from "lucide-react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,8 +14,14 @@ import { saveWatchProgress } from "@/lib/watch/actions";
 import { cn } from "@/lib/utils";
 
 import { NextEpisodeOverlay } from "./next-episode-overlay";
-import { PreRollAd } from "./pre-roll-ad";
 import { VideoPlayer } from "./video-player";
+
+// The pre-roll ad is optional (only present when an admin has an active ad) and
+// non-critical to the first paint, so it is code-split out of the watch bundle
+// and fetched on demand when an ad actually needs to render (PERF-03).
+const PreRollAd = dynamic(() =>
+  import("./pre-roll-ad").then((mod) => mod.PreRollAd),
+);
 
 /** Minimal neighbouring-episode reference for prev/next navigation. */
 export interface EpisodeRef {
