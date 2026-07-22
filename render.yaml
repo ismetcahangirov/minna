@@ -27,8 +27,10 @@ services:
         sync: false
       - key: REDIS_URL
         sync: false
-      - key: CONSUMET_API_URL
-        sync: false
+      # Anime streaming sub-provider (embedded @consumet/extensions). Optional;
+      # defaults to animekai. Switch if a source goes down — no redeploy of code.
+      - key: ANIME_PROVIDER
+        value: animekai
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET

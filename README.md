@@ -33,7 +33,7 @@ authenticates exclusively through Google OAuth, and ships in three languages —
 ## Features
 
 - **Home & catalog** — curated anime sections with SSR/ISR and Redis-cached
-  Consumet data.
+  data from the embedded Consumet/AniList provider.
 - **Search & browse** — debounced title search with genre facets, plus a
   paginated Popular listing with infinite scroll.
 - **Anime detail & watch** — episode listing, a custom video player with a
@@ -52,19 +52,19 @@ authenticates exclusively through Google OAuth, and ships in three languages —
 
 ## Tech stack
 
-| Area         | Choice                                            |
-| ------------ | ------------------------------------------------- |
-| Framework    | Next.js 16 (App Router) + React 19 + TypeScript   |
-| Data source  | Consumet API (over Axios, server-side only)       |
-| Database     | Neon (Postgres) via Drizzle ORM + drizzle-kit     |
-| Cache        | Redis (`ioredis`)                                 |
-| Auth         | Auth.js (NextAuth v5) — Google OAuth only         |
-| State / data | Redux Toolkit + RTK Query                         |
-| Styling      | Tailwind CSS v4 + shadcn / Base UI                |
-| i18n         | next-intl (EN / TR / RU)                          |
-| Icons        | lucide-react (SVG only — no emoji)                |
-| Tooling      | ESLint, Prettier, Husky + lint-staged, commitlint |
-| Deploy       | Vercel (Render.com fallback — see `render.yaml`)  |
+| Area         | Choice                                               |
+| ------------ | ---------------------------------------------------- |
+| Framework    | Next.js 16 (App Router) + React 19 + TypeScript      |
+| Data source  | Embedded Consumet (`@consumet/extensions`) + AniList |
+| Database     | Neon (Postgres) via Drizzle ORM + drizzle-kit        |
+| Cache        | Redis (`ioredis`)                                    |
+| Auth         | Auth.js (NextAuth v5) — Google OAuth only            |
+| State / data | Redux Toolkit + RTK Query                            |
+| Styling      | Tailwind CSS v4 + shadcn / Base UI                   |
+| i18n         | next-intl (EN / TR / RU)                             |
+| Icons        | lucide-react (SVG only — no emoji)                   |
+| Tooling      | ESLint, Prettier, Husky + lint-staged, commitlint    |
+| Deploy       | Vercel (Render.com fallback — see `render.yaml`)     |
 
 ## Getting started
 
@@ -75,8 +75,9 @@ authenticates exclusively through Google OAuth, and ships in three languages —
 - A **Redis** instance (optional in dev — the cache degrades to a no-op when
   `REDIS_URL` is unset)
 - **Google OAuth** credentials (Client ID + Secret)
-- A running **Consumet API** endpoint (self-hosting is recommended; the public
-  instance is rate-limited/unavailable)
+- No external anime API is required — data is fetched in-process via the
+  embedded **`@consumet/extensions`** AniList provider (metadata from AniList;
+  streams from a swappable `ANIME_PROVIDER` sub-provider)
 
 ### Setup
 
@@ -101,18 +102,18 @@ Open [http://localhost:3000](http://localhost:3000).
 Copy `.env.example` to `.env.local` and fill in real values. Never commit
 `.env.local`.
 
-| Variable                          | Required | Description                                                                 |
-| --------------------------------- | :------: | --------------------------------------------------------------------------- |
-| `DATABASE_URL`                    |   Yes    | Neon/Postgres pooled connection string. Used by Drizzle and drizzle-kit.    |
-| `REDIS_URL`                       |   No\*   | Redis connection URL. If unset, the cache layer becomes a no-op (dev only). |
-| `CONSUMET_API_URL`                |   Yes    | Base URL of the Consumet API. Self-hosting is recommended for rate limits.  |
-| `GOOGLE_CLIENT_ID`                |   Yes    | Google OAuth client ID (Google Cloud Console → Credentials).                |
-| `GOOGLE_CLIENT_SECRET`            |   Yes    | Google OAuth client secret.                                                 |
-| `NEXTAUTH_SECRET`                 |   Yes    | Auth.js session secret. Generate with `openssl rand -base64 32`.            |
-| `NEXTAUTH_URL`                    |   Yes    | Canonical app URL (`http://localhost:3000` in dev).                         |
-| `NEXT_PUBLIC_SITE_URL`            |   Yes    | Public site URL used for metadata / sitemap / Open Graph.                   |
-| `NEXT_PUBLIC_WEB_VITALS_ENDPOINT` |    No    | Endpoint that receives Core Web Vitals beacons. Leave unset in dev.         |
-| `NEXT_TELEMETRY_DISABLED`         |    No    | Set to `1` to disable Next.js telemetry.                                    |
+| Variable                          | Required | Description                                                                    |
+| --------------------------------- | :------: | ------------------------------------------------------------------------------ |
+| `DATABASE_URL`                    |   Yes    | Neon/Postgres pooled connection string. Used by Drizzle and drizzle-kit.       |
+| `REDIS_URL`                       |   No\*   | Redis connection URL. If unset, the cache layer becomes a no-op (dev only).    |
+| `ANIME_PROVIDER`                  |    No    | Embedded streaming sub-provider (default `animekai`). Switch if a source dies. |
+| `GOOGLE_CLIENT_ID`                |   Yes    | Google OAuth client ID (Google Cloud Console → Credentials).                   |
+| `GOOGLE_CLIENT_SECRET`            |   Yes    | Google OAuth client secret.                                                    |
+| `NEXTAUTH_SECRET`                 |   Yes    | Auth.js session secret. Generate with `openssl rand -base64 32`.               |
+| `NEXTAUTH_URL`                    |   Yes    | Canonical app URL (`http://localhost:3000` in dev).                            |
+| `NEXT_PUBLIC_SITE_URL`            |   Yes    | Public site URL used for metadata / sitemap / Open Graph.                      |
+| `NEXT_PUBLIC_WEB_VITALS_ENDPOINT` |    No    | Endpoint that receives Core Web Vitals beacons. Leave unset in dev.            |
+| `NEXT_TELEMETRY_DISABLED`         |    No    | Set to `1` to disable Next.js telemetry.                                       |
 
 \* Recommended in any shared/production environment.
 
