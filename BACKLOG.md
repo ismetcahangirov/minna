@@ -19,7 +19,7 @@ epics → sub-issues → state so the next task is always obvious.
 | EPIC-04 · Home Page                    | #26   | [x] Done |
 | EPIC-05 · Anime Detail Page            | #34   | [x] Done |
 | EPIC-06 · Episode Watch + Video Player | #39   | [x] Done |
-| EPIC-07 · Search Page                  | #45   | [ ] Todo |
+| EPIC-07 · Search Page                  | #45   | [x] Done |
 | EPIC-08 · Popular / Blogs / Favorites  | #50   | [ ] Todo |
 | EPIC-09 · Profile Page                 | #56   | [ ] Todo |
 | EPIC-10 · Login Page                   | #60   | [ ] Todo |
@@ -102,16 +102,24 @@ epics → sub-issues → state so the next task is always obvious.
 > migration (`drizzle/0002_*.sql`) to Neon before ads/progress work in
 > production, and seed rows via the EPIC-12 admin panel.
 
+### EPIC-07 · Search Page (#45)
+
+- [x] SEARCH-01 Search input + Consumet integration (#46)
+- [x] SEARCH-02 Results (16:9 cards) (#47)
+- [x] SEARCH-03 Background animation video (#48)
+- [x] SEARCH-04 Debounce / filtering (#49)
+
+> Route: `/search` (server-rendered shell + client island). Server-only
+> `searchAnime` (AniList `advanced-search`, short-TTL Redis cache, free-text
+> query + genre facet) sits behind the cached `/api/anime/search` route and a
+> `searchApi` RTK Query endpoint. The `SearchExperience` island debounces the
+> input (`useDebouncedValue`), accumulates "load more" pages and renders 16:9
+> cards via the shared `AnimeCard`. A CSS teal "breathing" `SearchBackground`
+> stands in for `search_page.mov` until an admin uploads one (ADMIN-04).
+
 ---
 
 ## Upcoming
-
-### EPIC-07 · Search Page (#45)
-
-- [ ] SEARCH-01 Search input + Consumet integration
-- [ ] SEARCH-02 Results (16:9 cards)
-- [ ] SEARCH-03 Background animation video
-- [ ] SEARCH-04 Debounce / filtering
 
 ### EPIC-08 · Popular / Blogs / Favorites — infinite scroll (#50)
 
@@ -191,5 +199,5 @@ epics → sub-issues → state so the next task is always obvious.
   Neon (`npm run db:migrate`) before favorites, ads and watch progress work in
   production.
 - **Deferred routes.** Header/detail links to `/favorites`, `/popular`, `/new`,
-  `/blogs`, `/search`, `/login` and `/watch/*` are intentional forward links to
-  routes built in later epics.
+  `/blogs` and `/login` are intentional forward links to routes built in later
+  epics. (`/search` and `/watch/*` now exist.)
