@@ -6,12 +6,15 @@
     "error": "Что-то пошло не так"
   },
   "nav": {
+    "categories": "Категории",
     "favorites": "Избранное",
     "new": "Новое",
     "popular": "Популярное",
     "blogs": "Блоги",
     "search": "Поиск",
-    "language": "Язык"
+    "language": "Язык",
+    "menu": "Меню",
+    "close": "Закрыть"
   },
   "auth": {
     "login": "Войти",

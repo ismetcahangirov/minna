@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import "./globals.css";
 
+import { SiteHeader } from "@/components/header";
 import { StoreProvider } from "@/store/provider";
 
 const inter = Inter({
@@ -38,7 +39,10 @@ export default async function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider>
-          <StoreProvider>{children}</StoreProvider>
+          <StoreProvider>
+            <SiteHeader />
+            {children}
+          </StoreProvider>
         </NextIntlClientProvider>
       </body>
     </html>

@@ -6,12 +6,15 @@
     "error": "Bir şeyler ters gitti"
   },
   "nav": {
+    "categories": "Kategoriler",
     "favorites": "Favoriler",
     "new": "Yeni",
     "popular": "Popüler",
     "blogs": "Bloglar",
     "search": "Ara",
-    "language": "Dil"
+    "language": "Dil",
+    "menu": "Menü",
+    "close": "Kapat"
   },
   "auth": {
     "login": "Giriş yap",
