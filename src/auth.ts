@@ -28,13 +28,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    // Under the JWT strategy Auth.js stores the user id in `token.sub`, so we
-    // surface it as `session.user.id` for server components and the client
-    // `useSession` hook without a DB round-trip. DB sync + role land in AUTH-02.
-    session({ session, token }) {
-      if (token.sub) {
-        session.user.id = token.sub;
+    // On sign-in `user` carries the Google profile: mirror it into Neon
+    // (AUTH-02) and cache the internal user id + role on the token. On later
+    // requests `user` is undefined and the token already holds them, so there
+    // is no DB round-trip. The db is imported dynamically so its DATABASE_URL
+    // requirement stays out of the build-time module graph.
+    async jwt({ token, user }) {
+      if (user?.id && user.email && user.name) {
+        const { syncUser } = await import("@/lib/auth/sync-user");
+        const dbUser = await syncUser({
+          googleId: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        });
+        token.id = dbUser.id;
+        token.role = dbUser.role;
       }
+      return token;
+    },
+    // Surface the internal id + role on the session read by server components,
+    // the `useSession` hook and the protected-route proxy (AUTH-03).
+    session({ session, token }) {
+      session.user.id = token.id ?? (token.sub as string);
+      session.user.role = token.role ?? "user";
       return session;
     },
   },
