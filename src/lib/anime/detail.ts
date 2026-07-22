@@ -5,7 +5,45 @@ import { cache } from "react";
 import { fetchAnimeInfo } from "@/lib/consumet/anilist";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 
-import { type AnimeDetail, toAnimeDetail } from "@/lib/anime/types";
+import {
+  type AnimeDetail,
+  type AnimeEpisode,
+  toAnimeDetail,
+} from "@/lib/anime/types";
+
+/**
+ * Builds a playable episode list from AniList metadata when the streaming
+ * sub-provider returned none — its scrapers are blocked from datacenter IPs
+ * (see `@/lib/consumet/anilist`), so on Vercel the scraped list is always
+ * empty. Episodes are numbered 1..N with the number as their id, which is
+ * exactly how the embed player addresses them (`/watch/{animeId}/{number}` →
+ * MegaPlay `ani/{animeId}/{number}`). The count prefers the aired-so-far figure
+ * for currently-airing titles, otherwise the total; an unknown count (e.g. a
+ * not-yet-aired title) is left empty so the UI shows its "no episodes" state.
+ */
+function ensureEpisodes(detail: AnimeDetail): AnimeDetail {
+  if (detail.episodes.length > 0) return detail;
+
+  const aired =
+    typeof detail.currentEpisode === "number" && detail.currentEpisode > 0
+      ? detail.currentEpisode
+      : null;
+  const total =
+    typeof detail.totalEpisodes === "number" && detail.totalEpisodes > 0
+      ? detail.totalEpisodes
+      : null;
+  const count = aired ?? total ?? 0;
+  if (count <= 0) return detail;
+
+  const episodes: AnimeEpisode[] = Array.from({ length: count }, (_, i) => ({
+    id: String(i + 1),
+    number: i + 1,
+    title: null,
+    description: null,
+    airDate: null,
+  }));
+  return { ...detail, episodes };
+}
 
 /**
  * Returns the full detail record for one anime (DETAIL-01/02), or `null` when
@@ -34,7 +72,8 @@ export const getAnimeInfo = cache(
     try {
       const data = await fetchAnimeInfo(cleanId);
 
-      const detail = toAnimeDetail(data);
+      const parsed = toAnimeDetail(data);
+      const detail = parsed ? ensureEpisodes(parsed) : null;
       if (detail) await cacheSet(key, detail, CACHE_TTL.long);
       return detail;
     } catch (error) {
