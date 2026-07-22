@@ -11,6 +11,9 @@ export interface SaveWatchProgressInput {
   episodeNumber?: number | null;
   positionSeconds: number;
   durationSeconds?: number | null;
+  /** Denormalized anime title/poster for the profile history view (PROFILE-03). */
+  title?: string | null;
+  image?: string | null;
 }
 
 export interface SaveWatchProgressResult {
@@ -50,6 +53,8 @@ export async function saveWatchProgress(
       : null;
   const completed =
     duration !== null && position >= duration * COMPLETION_RATIO;
+  const title = input.title?.trim() || null;
+  const image = input.image?.trim() || null;
 
   try {
     const { db } = await import("@/db");
@@ -64,6 +69,8 @@ export async function saveWatchProgress(
         positionSeconds: position,
         durationSeconds: duration,
         completed,
+        title,
+        image,
       })
       .onConflictDoUpdate({
         target: [watchProgress.userId, watchProgress.episodeId],
@@ -72,6 +79,8 @@ export async function saveWatchProgress(
           durationSeconds: duration,
           completed,
           episodeNumber: input.episodeNumber ?? null,
+          title,
+          image,
           updatedAt: sql`now()`,
         },
       });

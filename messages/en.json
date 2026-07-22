@@ -117,6 +117,44 @@
       "signIn": "Continue with Google"
     }
   },
+  "profile": {
+    "title": "Profile",
+    "heading": "Your profile",
+    "subtitle": "Manage your account and pick up where you left off.",
+    "signedOutTitle": "Sign in to view your profile",
+    "signedOutHint": "Your profile, watch history and favorites are tied to your account.",
+    "signIn": "Continue with Google",
+    "memberSince": "Member since {date}",
+    "roleUser": "Member",
+    "roleAdmin": "Admin",
+    "displayName": "Display name",
+    "email": "Email",
+    "edit": "Edit",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "saved": "Profile updated",
+    "namePlaceholder": "Your name",
+    "errorEmpty": "Name can't be empty.",
+    "errorTooLong": "Name is too long.",
+    "errorUnauthorized": "Please sign in again.",
+    "errorFailed": "Couldn't save. Please try again.",
+    "history": {
+      "title": "Continue watching",
+      "subtitle": "Jump back into your recent episodes.",
+      "empty": "Nothing watched yet",
+      "emptyHint": "Episodes you watch will show up here.",
+      "resume": "Resume",
+      "episode": "Ep {number}",
+      "completed": "Watched"
+    },
+    "favorites": {
+      "title": "Your favorites",
+      "empty": "No favorites yet",
+      "emptyHint": "Tap the heart on any anime to save it here.",
+      "seeAll": "See all"
+    }
+  },
   "player": {
     "advertisement": "Advertisement",
     "skipAdIn": "Skip ad in {seconds}s",

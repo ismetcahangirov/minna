@@ -177,3 +177,47 @@
     opacity: 0.6;
   }
 }
+
+/* Atmospheric background — profile page (PROFILE-02). A slow, low-brightness
+   warm brown-grey "smoke" drift with a brief fade-in from black, leaving the
+   upper area clear for the profile card (DESIGN-SPEC.md §6.2). An intentional
+   exception to the no-gradient UI rule, scoped to this background layer only. */
+@keyframes profile-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes profile-drift {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate3d(2%, -3%, 0) scale(1.1);
+  }
+}
+
+.profile-atmosphere {
+  animation: profile-fade-in 1.6s ease-out both;
+}
+
+.profile-atmosphere-glow {
+  animation: profile-drift 16s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-atmosphere {
+    animation: none;
+  }
+  .profile-atmosphere-glow {
+    animation: none;
+    opacity: 0.6;
+  }
+}
