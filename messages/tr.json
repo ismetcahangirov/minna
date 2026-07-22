@@ -202,7 +202,8 @@
     "openMenu": "Menüyü aç",
     "closeMenu": "Menüyü kapat",
     "nav": {
-      "dashboard": "Panel"
+      "dashboard": "Panel",
+      "ads": "Reklamlar"
     },
     "dashboard": {
       "heading": "Panel",
@@ -210,6 +211,49 @@
       "users": "Kullanıcılar",
       "blogs": "Blog yazıları",
       "ads": "Reklamlar"
+    },
+    "ads": {
+      "title": "Reklamlar",
+      "subtitle": "Bölüm öncesi gösterilen reklamları yönetin.",
+      "new": "Yeni reklam",
+      "newTitle": "Yeni reklam",
+      "newSubtitle": "Bir reklam ekleyin ve atlama/süre zamanlamasını ayarlayın.",
+      "editTitle": "Reklamı düzenle",
+      "editSubtitle": "Bu reklamın ayrıntılarını ve zamanlamasını güncelleyin.",
+      "empty": "Henüz reklam yok. Başlamak için bir tane oluşturun.",
+      "status": "Durum",
+      "actions": "İşlemler",
+      "active": "Aktif",
+      "inactive": "Pasif",
+      "edit": "Düzenle",
+      "delete": "Sil",
+      "confirmDelete": "\"{title}\" reklamı silinsin mi? Bu geri alınamaz.",
+      "seconds": "{value}sn",
+      "full": "Tam",
+      "create": "Reklam oluştur",
+      "save": "Değişiklikleri kaydet",
+      "saving": "Kaydediliyor...",
+      "cancel": "İptal",
+      "fields": {
+        "title": "Başlık",
+        "videoUrl": "Video URL",
+        "videoUrlHint": "Reklam videosuna doğrudan bağlantı (MP4/WebM).",
+        "targetUrl": "Yönlendirme URL'si",
+        "targetUrlHint": "İsteğe bağlı. Tıklanınca gidilecek adres.",
+        "skipAfterSeconds": "Atlama süresi",
+        "skipAfterHint": "Atla düğmesi açılmadan önceki saniye.",
+        "durationSeconds": "Süre",
+        "durationHint": "İsteğe bağlı saniye sınırı. Boş bırakılırsa video tam oynatılır.",
+        "weight": "Ağırlık",
+        "weightHint": "Yüksek değer daha sık gösterir.",
+        "active": "Aktif"
+      },
+      "errors": {
+        "required": "Bu alan zorunludur.",
+        "invalidUrl": "Geçerli bir http(s) URL girin.",
+        "invalidNumber": "Geçerli bir sayı girin.",
+        "saveFailed": "Reklam kaydedilemedi. Lütfen tekrar deneyin."
+      }
     }
   }
 }

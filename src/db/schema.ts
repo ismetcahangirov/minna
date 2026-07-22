@@ -69,6 +69,9 @@ export const ads = pgTable("ads", {
   videoUrl: text("video_url").notNull(),
   // Optional click-through destination when the viewer taps the ad.
   targetUrl: text("target_url"),
+  // Optional cap on how long the ad plays before auto-advancing to the episode
+  // (ADMIN-02). Null means play to the video's natural end.
+  durationSeconds: integer("duration_seconds"),
   skipAfterSeconds: integer("skip_after_seconds").notNull().default(5),
   weight: integer("weight").notNull().default(1),
   active: boolean("active").notNull().default(true),
