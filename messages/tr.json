@@ -195,5 +195,21 @@
     "title": "Sayfa bulunamadı",
     "description": "Aradığınız sayfa mevcut değil.",
     "backHome": "Ana sayfaya dön"
+  },
+  "admin": {
+    "title": "Yönetim",
+    "signOut": "Çıkış yap",
+    "openMenu": "Menüyü aç",
+    "closeMenu": "Menüyü kapat",
+    "nav": {
+      "dashboard": "Panel"
+    },
+    "dashboard": {
+      "heading": "Panel",
+      "subtitle": "Platformunuza genel bir bakış.",
+      "users": "Kullanıcılar",
+      "blogs": "Blog yazıları",
+      "ads": "Reklamlar"
+    }
   }
 }

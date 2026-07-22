@@ -195,5 +195,21 @@
     "title": "Page not found",
     "description": "The page you are looking for does not exist.",
     "backHome": "Back to home"
+  },
+  "admin": {
+    "title": "Admin",
+    "signOut": "Sign out",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "nav": {
+      "dashboard": "Dashboard"
+    },
+    "dashboard": {
+      "heading": "Dashboard",
+      "subtitle": "An overview of your platform.",
+      "users": "Users",
+      "blogs": "Blog posts",
+      "ads": "Ads"
+    }
   }
 }
