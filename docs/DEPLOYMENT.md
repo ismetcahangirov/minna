@@ -70,5 +70,35 @@ Vercel project's **Node.js Version** to 22.x under **Settings → General**.
 ## Render.com fallback
 
 The Next.js app also runs as a plain Node web service, described declaratively in
-[`render.yaml`](../render.yaml). Use this only if the backend cannot run on
-Vercel. Detailed setup steps are documented in DEPLOY-02.
+[`render.yaml`](../render.yaml). Use this **only** if the backend cannot run on
+Vercel — the app is otherwise identical on both platforms.
+
+### Blueprint
+
+`render.yaml` provisions one `web` service (`minna-web`) in the `frankfurt`
+region on the `starter` plan:
+
+- **Build:** `npm ci && npm run build`
+- **Start:** `npm run start`
+- **Health check:** `/api/health` — Render restarts the instance if this path
+  stops returning `2xx`.
+- **`autoDeploy: false`** — deploys are triggered manually (or via the deploy
+  hook) rather than on every push, matching the manual-merge workflow.
+
+### First deploy
+
+1. In the Render dashboard choose **New → Blueprint** and point it at the repo.
+   Render reads `render.yaml` and creates the `minna-web` service.
+2. Set every `sync: false` variable under the service's **Environment** tab —
+   the secrets and both URLs from the [env table](#environment-variables).
+   `NEXTAUTH_URL` and `NEXT_PUBLIC_SITE_URL` must equal the public Render URL
+   (e.g. `https://minna-web.onrender.com`).
+3. Add `https://<render-url>/api/auth/callback/google` to the Google OAuth
+   client's authorized redirect URIs.
+4. Trigger the first deploy. Verify `GET /api/health` returns `200`.
+
+### Notes
+
+- `NODE_VERSION` is pinned to `22` to match `.nvmrc` / `package.json#engines`.
+- The `starter` plan sleeps on inactivity; the health check keeps a paid
+  instance warm. Scale via `numInstances` / `plan` in `render.yaml` if needed.
