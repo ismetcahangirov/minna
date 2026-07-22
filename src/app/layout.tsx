@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import "./globals.css";
 
+import { WebVitals } from "@/components/analytics/web-vitals";
 import { SiteHeader } from "@/components/header";
 import { HeaderGate } from "@/components/header/header-gate";
 import { getSiteUrlObject } from "@/lib/seo/site";
@@ -65,6 +66,7 @@ export default async function RootLayout({
       className={`${inter.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <WebVitals />
         <NextIntlClientProvider>
           <StoreProvider>
             <HeaderGate>
