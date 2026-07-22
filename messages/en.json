@@ -202,7 +202,8 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "nav": {
-      "dashboard": "Dashboard"
+      "dashboard": "Dashboard",
+      "ads": "Ads"
     },
     "dashboard": {
       "heading": "Dashboard",
@@ -210,6 +211,49 @@
       "users": "Users",
       "blogs": "Blog posts",
       "ads": "Ads"
+    },
+    "ads": {
+      "title": "Ads",
+      "subtitle": "Manage pre-roll ads shown before episodes.",
+      "new": "New ad",
+      "newTitle": "New ad",
+      "newSubtitle": "Add a pre-roll ad and set its skip and duration timing.",
+      "editTitle": "Edit ad",
+      "editSubtitle": "Update this ad's details and timing.",
+      "empty": "No ads yet. Create one to get started.",
+      "status": "Status",
+      "actions": "Actions",
+      "active": "Active",
+      "inactive": "Inactive",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Delete the ad \"{title}\"? This can't be undone.",
+      "seconds": "{value}s",
+      "full": "Full",
+      "create": "Create ad",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "fields": {
+        "title": "Title",
+        "videoUrl": "Video URL",
+        "videoUrlHint": "Direct link to the ad video (MP4/WebM).",
+        "targetUrl": "Click-through URL",
+        "targetUrlHint": "Optional. Where the ad links when tapped.",
+        "skipAfterSeconds": "Skip after",
+        "skipAfterHint": "Seconds before the Skip button unlocks.",
+        "durationSeconds": "Duration",
+        "durationHint": "Optional cap in seconds. Empty plays the full video.",
+        "weight": "Weight",
+        "weightHint": "Higher shows more often.",
+        "active": "Active"
+      },
+      "errors": {
+        "required": "This field is required.",
+        "invalidUrl": "Enter a valid http(s) URL.",
+        "invalidNumber": "Enter a valid number.",
+        "saveFailed": "Could not save the ad. Please try again."
+      }
     }
   }
 }
