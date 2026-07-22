@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
+  // `@consumet/extensions` is a Node-only scraping library (cheerio, crypto,
+  // dynamic requires). Keep it out of the Server Components bundle and let it
+  // load via native require at runtime. See src/lib/consumet/anilist.ts.
+  serverExternalPackages: ["@consumet/extensions"],
   images: {
     // Consumet's AniList meta provider returns artwork on the AniList CDN.
     // Only these hosts are allowed for next/image optimization (HOME-06/07).
