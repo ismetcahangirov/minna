@@ -1,4 +1,6 @@
 import {
+  boolean,
+  integer,
   pgEnum,
   pgTable,
   text,
@@ -55,3 +57,63 @@ export const favorites = pgTable(
 
 export type Favorite = typeof favorites.$inferSelect;
 export type NewFavorite = typeof favorites.$inferInsert;
+
+// Pre-roll ads shown over the video player before an episode starts (PLAYER-02
+// /PLAYER-03). Rows are managed from the admin panel (EPIC-12); the watch page
+// only reads the active pool. `skipAfterSeconds` drives the countdown before
+// the "Skip ad" button unlocks (default 5s, never hardcoded on the client), and
+// `weight` biases random selection when several ads are active.
+export const ads = pgTable("ads", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  videoUrl: text("video_url").notNull(),
+  // Optional click-through destination when the viewer taps the ad.
+  targetUrl: text("target_url"),
+  skipAfterSeconds: integer("skip_after_seconds").notNull().default(5),
+  weight: integer("weight").notNull().default(1),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export type Ad = typeof ads.$inferSelect;
+export type NewAd = typeof ads.$inferInsert;
+
+// Per-user watch progress so a viewer resumes where they left off (PLAYER-05).
+// Anime/episode ids are external Consumet ids (text, no FK). Position and
+// duration are stored in whole seconds; the client throttles writes (interval +
+// unload flush) rather than persisting every timeupdate. The (user, episode)
+// pair is unique so progress is upserted in place.
+export const watchProgress = pgTable(
+  "watch_progress",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    animeId: text("anime_id").notNull(),
+    episodeId: text("episode_id").notNull(),
+    episodeNumber: integer("episode_number"),
+    positionSeconds: integer("position_seconds").notNull().default(0),
+    durationSeconds: integer("duration_seconds"),
+    completed: boolean("completed").notNull().default(false),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    unique("watch_progress_user_episode_unique").on(
+      table.userId,
+      table.episodeId,
+    ),
+  ],
+);
+
+export type WatchProgress = typeof watchProgress.$inferSelect;
+export type NewWatchProgress = typeof watchProgress.$inferInsert;
