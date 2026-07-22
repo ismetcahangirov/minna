@@ -3,6 +3,7 @@ import {
   Image as ImageIcon,
   LayoutDashboard,
   Megaphone,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -26,4 +27,5 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { key: "ads", href: "/admin/ads", icon: Megaphone },
   { key: "backgrounds", href: "/admin/backgrounds", icon: ImageIcon },
   { key: "blogs", href: "/admin/blogs", icon: FileText },
+  { key: "users", href: "/admin/users", icon: Users },
 ];
