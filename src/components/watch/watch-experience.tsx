@@ -9,12 +9,11 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PreRollAd as PreRollAdData } from "@/lib/ads/queries";
-import type { EpisodeStream } from "@/lib/anime/types";
 import { saveWatchProgress } from "@/lib/watch/actions";
 import { cn } from "@/lib/utils";
 
+import { EmbedPlayer } from "./embed-player";
 import { NextEpisodeOverlay } from "./next-episode-overlay";
-import { VideoPlayer } from "./video-player";
 
 // The pre-roll ad is optional (only present when an admin has an active ad) and
 // non-critical to the first paint, so it is code-split out of the watch bundle
@@ -36,10 +35,9 @@ interface WatchExperienceProps {
   episode: { id: string; number: number; title: string | null };
   prevEpisode: EpisodeRef | null;
   nextEpisode: EpisodeRef | null;
-  stream: EpisodeStream;
   ad: PreRollAdData | null;
   poster: string | null;
-  /** Resume position in seconds (PLAYER-05). */
+  /** Resume position in seconds (PLAYER-05), seeded into the progress writer. */
   initialTime: number;
   isAuthenticated: boolean;
 }
@@ -61,7 +59,6 @@ export function WatchExperience({
   episode,
   prevEpisode,
   nextEpisode,
-  stream,
   ad,
   poster,
   initialTime,
@@ -70,9 +67,8 @@ export function WatchExperience({
   const t = useTranslations("player");
   const router = useRouter();
 
-  const hasSources = stream.sources.length > 0;
-  // Show the ad only when there's actually an episode to gate behind it.
-  const [adDone, setAdDone] = useState(!(ad && hasSources));
+  // Gate the player behind the pre-roll ad when one is configured (PLAYER-02/03).
+  const [adDone, setAdDone] = useState(!ad);
   const [showNext, setShowNext] = useState(false);
 
   // Latest playback position, kept in a ref so timeupdate never re-renders.
@@ -107,7 +103,7 @@ export function WatchExperience({
   // component unmounts (episode change / navigation away). Never a write per
   // timeupdate.
   useEffect(() => {
-    if (!isAuthenticated || !hasSources) return;
+    if (!isAuthenticated) return;
     const interval = setInterval(flushProgress, SAVE_INTERVAL_MS);
     const onHide = () => {
       if (document.visibilityState === "hidden") flushProgress();
@@ -120,7 +116,7 @@ export function WatchExperience({
       window.removeEventListener("pagehide", flushProgress);
       flushProgress();
     };
-  }, [flushProgress, isAuthenticated, hasSources]);
+  }, [flushProgress, isAuthenticated]);
 
   const handleProgress = useCallback((position: number, duration: number) => {
     latest.current = { position, duration };
@@ -139,12 +135,11 @@ export function WatchExperience({
     <div className="flex flex-col gap-4">
       <div className="relative w-full overflow-hidden bg-black">
         {adDone ? (
-          <VideoPlayer
-            sources={stream.sources}
-            subtitles={stream.subtitles}
+          <EmbedPlayer
+            animeId={animeId}
+            episodeNumber={episode.number}
+            animeTitle={animeTitle}
             poster={poster}
-            initialTime={initialTime}
-            autoPlay={Boolean(ad)}
             onProgress={handleProgress}
             onEnded={handleEnded}
           />

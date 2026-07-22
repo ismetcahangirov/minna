@@ -6,7 +6,6 @@ import { EpisodeList } from "@/components/anime/episode-list";
 import { WatchExperience } from "@/components/watch/watch-experience";
 import { getActivePreRollAd } from "@/lib/ads/queries";
 import { getAnimeInfo } from "@/lib/anime/detail";
-import { getEpisodeSources } from "@/lib/anime/sources";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeEpisode } from "@/lib/anime/types";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -95,11 +94,13 @@ export async function generateMetadata({
 }
 
 /**
- * Episode watch page (EPIC-06). Server-rendered for SEO: the anime record and
- * episode streams flow through the Redis-cached Consumet layer, the active
- * pre-roll ad and the signed-in viewer's resume position are loaded in
- * parallel, and only the player itself is a client island. A missing anime is a
- * 404; a missing streaming source degrades to the player's unavailable state.
+ * Episode watch page (EPIC-06). Server-rendered for SEO: the anime record flows
+ * through the Redis-cached AniList layer while the active pre-roll ad and the
+ * signed-in viewer's resume position load in parallel. Only the player is a
+ * client island — it embeds the stream in the viewer's browser (the source
+ * sites block datacenter IPs, so playback can't be resolved server-side). A
+ * missing anime is a 404; an episode the embed can't resolve degrades to the
+ * player's unavailable state.
  */
 export default async function WatchPage({ params }: WatchRouteProps) {
   const { animeId, episodeId } = await params;
@@ -112,8 +113,7 @@ export default async function WatchPage({ params }: WatchRouteProps) {
 
   const user = await getCurrentUser();
 
-  const [stream, ad, progress, t] = await Promise.all([
-    getEpisodeSources(episodeId),
+  const [ad, progress, t] = await Promise.all([
     getActivePreRollAd(),
     user?.id ? getWatchProgress(user.id, episodeId) : Promise.resolve(null),
     getTranslations("player"),
@@ -138,7 +138,6 @@ export default async function WatchPage({ params }: WatchRouteProps) {
         }}
         prevEpisode={prev ? { id: prev.id, number: prev.number } : null}
         nextEpisode={next ? { id: next.id, number: next.number } : null}
-        stream={stream}
         ad={ad}
         poster={poster}
         initialTime={initialTime}
