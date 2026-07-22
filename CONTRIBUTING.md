@@ -113,6 +113,11 @@ If you changed the database schema, generate and commit the migration:
 npm run db:generate
 ```
 
+These same checks run in CI (GitHub Actions) on every pull request and push to
+`main` — format check, lint, tests (when present) and a production build. A
+green run is required before merging; see
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
 ### 5. Open a pull request
 
 Push your branch and open a PR:
