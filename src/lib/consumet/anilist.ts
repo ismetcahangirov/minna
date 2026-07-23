@@ -181,20 +181,6 @@ export async function fetchAnimeInfo(
   return info;
 }
 
-/**
- * Metadata-only info fetch (title, format/type, relations) — no episode scrape.
- * The scraping sub-provider is slow and IP-blocked on Vercel, so walking the
- * season relation chain (see `@/lib/anime/seasons`) uses this lightweight call
- * for each neighbour instead of the full {@link fetchAnimeInfo}.
- */
-export async function fetchAnimeMeta(
-  id: string,
-): Promise<ConsumetInfoResponse> {
-  return (await getAnilist().fetchAnilistInfoById(
-    id,
-  )) as unknown as ConsumetInfoResponse;
-}
-
 export function fetchEpisodeSources(
   episodeId: string,
 ): Promise<ConsumetWatchResponse> {
