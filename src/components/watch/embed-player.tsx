@@ -1,6 +1,13 @@
 "use client";
 
-import { Loader2, Maximize, Minimize, Play } from "lucide-react";
+import {
+  Loader2,
+  Lock,
+  LockOpen,
+  Maximize,
+  Minimize,
+  Play,
+} from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -65,6 +72,10 @@ export function EmbedPlayer({
   // move on return scrubs the video. A guard over the frame absorbs that stray
   // move until the viewer clicks to resume — the click never reaches the embed.
   const [recovering, setRecovering] = useState(false);
+  // Fullscreen only: lets the viewer lift the click-shield to reach the embed's
+  // native controls (volume/quality/subtitles/speed), which we can't drive from
+  // outside a cross-origin frame. Default locked (shield on = ad-safe).
+  const [unlocked, setUnlocked] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   // Remembers the last src we already reported "ended" for, so `complete` fires
   // onEnded once per episode. Written from the message callback (never render).
@@ -120,7 +131,10 @@ export function EmbedPlayer({
   // when the viewer leaves fullscreen with Esc rather than our button.
   useEffect(() => {
     function onFullscreenChange() {
-      setIsFullscreen(document.fullscreenElement === containerRef.current);
+      const full = document.fullscreenElement === containerRef.current;
+      setIsFullscreen(full);
+      // Re-lock for the next fullscreen session so it always starts ad-safe.
+      if (!full) setUnlocked(false);
     }
     document.addEventListener("fullscreenchange", onFullscreenChange);
     return () =>
@@ -226,14 +240,40 @@ export function EmbedPlayer({
       {/* Click-shield: in fullscreen the embed fills the screen and a click in
           the picture opens its ads. We cover the picture — not the bottom strip,
           where the embed's own play/seek controls sit — with a transparent layer
-          that absorbs those clicks. Fullscreen-only, so windowed click-to-pause
-          on the embed still works. Not a full guarantee: clicks on the exposed
-          control strip can still reach the embed. */}
-      {activated && isFullscreen && !errored && (
+          that absorbs those clicks. Fullscreen-only, and lifted while `unlocked`
+          so the viewer can reach the embed's native menus. */}
+      {activated && isFullscreen && !errored && !unlocked && (
         <div
           aria-hidden
           className="absolute inset-x-0 top-0 bottom-[12%] z-20"
         />
+      )}
+
+      {/* Lock toggle (fullscreen only): the shield blocks the embed's own
+          volume/quality/subtitle/speed menus, which we can't drive from outside
+          the frame — so the viewer unlocks to use them, then re-locks. The hint
+          makes clear the controls are inert until unlocked. */}
+      {activated && isFullscreen && !errored && (
+        <div className="absolute top-2 left-2 z-40 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setUnlocked((prev) => !prev)}
+            aria-pressed={!unlocked}
+            aria-label={unlocked ? t("lockControls") : t("unlockControls")}
+            className="text-muted-foreground hover:text-foreground flex items-center border border-black/40 bg-black/70 p-2.5 transition-colors"
+          >
+            {unlocked ? (
+              <LockOpen className="size-5" strokeWidth={2.5} />
+            ) : (
+              <Lock className="size-5" strokeWidth={2.5} />
+            )}
+          </button>
+          {!unlocked && (
+            <span className="border border-white/20 bg-black/80 px-3 py-1.5 text-xs font-semibold text-white">
+              {t("unlockControls")}
+            </span>
+          )}
+        </div>
       )}
 
       {/* Audio-language toggle, top-right and clear of the embed's bottom
