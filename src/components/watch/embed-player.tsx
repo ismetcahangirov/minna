@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Play } from "lucide-react";
+import { Loader2, Maximize, Minimize, Play } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -55,6 +55,12 @@ export function EmbedPlayer({
   const [activated, setActivated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errored, setErrored] = useState(false);
+  // Whether *our* container is the fullscreen element. The embed's own
+  // fullscreen is disabled (see the iframe `allow`), so fullscreen always runs
+  // through us — that's what lets the click-shield below sit in the fullscreen
+  // layer and swallow stray clicks that would otherwise open the embed's ads.
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   // Remembers the last src we already reported "ended" for, so `complete` fires
   // onEnded once per episode. Written from the message callback (never render).
   const endedForSrc = useRef<string | null>(null);
@@ -104,10 +110,31 @@ export function EmbedPlayer({
     return () => window.removeEventListener("message", handleMessage);
   }, [onProgress, onEnded, src]);
 
+  // Track fullscreen through the browser event so our state stays correct even
+  // when the viewer leaves fullscreen with Esc rather than our button.
+  useEffect(() => {
+    function onFullscreenChange() {
+      setIsFullscreen(document.fullscreenElement === containerRef.current);
+    }
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
+
   const selectLang = useCallback((next: AudioLang) => setLang(next), []);
 
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void el.requestFullscreen?.();
+    }
+  }, []);
+
   return (
-    <div className="relative aspect-video w-full bg-black">
+    <div ref={containerRef} className="relative aspect-video w-full bg-black">
       {errored ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center">
           <p className="text-foreground text-base font-semibold">
@@ -119,13 +146,15 @@ export function EmbedPlayer({
         </div>
       ) : (
         activated && (
+          // Fullscreen is intentionally NOT delegated to the embed: we run it on
+          // our own container so the click-shield can live in the fullscreen
+          // layer. The embed still gets autoplay/PiP/DRM.
           <iframe
             key={src}
             src={src}
             title={`${animeTitle} — ${t("episodeLabel", { number: episodeNumber })}`}
             className="absolute inset-0 size-full border-0"
-            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-            allowFullScreen
+            allow="autoplay; encrypted-media; picture-in-picture"
             onLoad={() => setLoading(false)}
           />
         )
@@ -174,19 +203,49 @@ export function EmbedPlayer({
         </div>
       )}
 
-      {/* Audio-language toggle. Overlaid top-right; the embed's own controls sit
-          along the bottom, so this stays clear of them. */}
-      <div className="absolute top-2 right-2 z-30 flex border border-black/40 bg-black/70">
-        <LangButton
-          active={lang === "sub"}
-          onClick={() => selectLang("sub")}
-          label={t("subbed")}
+      {/* Click-shield: in fullscreen the embed fills the screen and a click in
+          the picture opens its ads. We cover the picture — not the bottom strip,
+          where the embed's own play/seek controls sit — with a transparent layer
+          that absorbs those clicks. Fullscreen-only, so windowed click-to-pause
+          on the embed still works. Not a full guarantee: clicks on the exposed
+          control strip can still reach the embed. */}
+      {activated && isFullscreen && !errored && (
+        <div
+          aria-hidden
+          className="absolute inset-x-0 top-0 bottom-[12%] z-20"
         />
-        <LangButton
-          active={lang === "dub"}
-          onClick={() => selectLang("dub")}
-          label={t("dubbed")}
-        />
+      )}
+
+      {/* Top-right controls: our own fullscreen toggle (the embed's is disabled)
+          plus the audio-language toggle. Kept above the shield so they stay
+          usable in fullscreen, and clear of the embed's bottom control bar. */}
+      <div className="absolute top-2 right-2 z-40 flex items-stretch gap-2">
+        {activated && (
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            aria-label={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
+            className="text-muted-foreground hover:text-foreground flex items-center border border-black/40 bg-black/70 px-3 transition-colors"
+          >
+            {isFullscreen ? (
+              <Minimize className="size-4" />
+            ) : (
+              <Maximize className="size-4" />
+            )}
+          </button>
+        )}
+        <div className="flex border border-black/40 bg-black/70">
+          <LangButton
+            active={lang === "sub"}
+            onClick={() => selectLang("sub")}
+            label={t("subbed")}
+          />
+          <LangButton
+            active={lang === "dub"}
+            onClick={() => selectLang("dub")}
+            label={t("dubbed")}
+          />
+        </div>
       </div>
     </div>
   );
