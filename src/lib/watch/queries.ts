@@ -49,6 +49,63 @@ export async function getWatchProgress(
   }
 }
 
+/** Per-episode watched/resume state for the episodes list (one anime). */
+export interface EpisodeWatchState {
+  completed: boolean;
+  /** 0..1 fraction of the episode watched (1 when completed with no duration). */
+  progress: number;
+}
+
+/**
+ * All of the signed-in user's saved episode states for one anime, keyed by
+ * episode id — used to mark the episodes list with "watched" ticks and resume
+ * progress bars. Returns `{}` for signed-out users or on any failure so the
+ * list still renders.
+ */
+export async function getAnimeWatchStates(
+  userId: string,
+  animeId: string,
+): Promise<Record<string, EpisodeWatchState>> {
+  if (!userId) return {};
+
+  try {
+    const { db } = await import("@/db");
+    const rows = await db
+      .select({
+        episodeId: watchProgress.episodeId,
+        positionSeconds: watchProgress.positionSeconds,
+        durationSeconds: watchProgress.durationSeconds,
+        completed: watchProgress.completed,
+      })
+      .from(watchProgress)
+      .where(
+        and(
+          eq(watchProgress.userId, userId),
+          eq(watchProgress.animeId, animeId),
+        ),
+      );
+
+    const states: Record<string, EpisodeWatchState> = {};
+    for (const row of rows) {
+      const duration = row.durationSeconds ?? 0;
+      const progress =
+        duration > 0
+          ? Math.min(1, Math.max(0, row.positionSeconds / duration))
+          : row.completed
+            ? 1
+            : 0;
+      states[row.episodeId] = { completed: row.completed, progress };
+    }
+    return states;
+  } catch (error) {
+    console.error(
+      "[watch] getAnimeWatchStates failed:",
+      (error as Error).message,
+    );
+    return {};
+  }
+}
+
 /** Default number of items in the profile watch-history quick view. */
 export const WATCH_HISTORY_LIMIT = 12;
 

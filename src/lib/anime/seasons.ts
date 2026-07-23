@@ -34,12 +34,18 @@ export interface AnimeSeason {
   /** 1-based position within its own kind (Season 1, Movie 2, …). */
   index: number;
   episodeCount: number | null;
+  /** Cover art for the poster card, or null when AniList has none. */
+  image: string | null;
   /** True for the entry whose detail page is currently open. */
   isCurrent: boolean;
 }
 
 /** Cap the outward walk so a long or cyclic relation graph can't run away. */
 const MAX_SEASON_HOPS = 12;
+
+/** Bumped when the cached {@link AnimeSeason} shape changes (v2 adds `image`)
+ * so stale poster-less entries don't linger until their long TTL expires. */
+const SEASONS_CACHE_VERSION = "v2";
 
 /** Media formats we treat as a watchable season (excludes MANGA/NOVEL/MUSIC). */
 const ANIME_FORMATS = new Set([
@@ -57,6 +63,7 @@ interface SeasonNode {
   title: string;
   type: string | null;
   episodeCount: number | null;
+  image: string | null;
 }
 
 function episodeCountOf(a: {
@@ -80,6 +87,7 @@ function toNode(detail: AnimeDetail): SeasonNode {
     title: detail.title,
     type: detail.type,
     episodeCount: episodeCountOf(detail),
+    image: detail.image,
   };
 }
 
@@ -178,6 +186,7 @@ function label(nodes: SeasonNode[], currentId: string): AnimeSeason[] {
       kind,
       index: counters[kind],
       episodeCount: node.episodeCount,
+      image: node.image,
       isCurrent: node.id === currentId,
     };
   });
@@ -206,7 +215,7 @@ async function buildSeasons(detail: AnimeDetail): Promise<AnimeSeason[]> {
  */
 export const getAnimeSeasons = cache(
   async (detail: AnimeDetail): Promise<AnimeSeason[]> => {
-    const key = cacheKey("anime", "seasons", detail.id);
+    const key = cacheKey("anime", "seasons", SEASONS_CACHE_VERSION, detail.id);
     const cached = await cacheGet<AnimeSeason[]>(key);
     if (cached) return cached;
 

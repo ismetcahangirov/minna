@@ -33,6 +33,15 @@ export function animeHref(id: string, title?: string | null): string {
 }
 
 /**
+ * Builds the canonical episodes-list path for an anime,
+ * `/anime/{id}-{slug}/episodes`. This is where a season card and the detail
+ * page's watch button lead — the full episode grid with infinite scroll.
+ */
+export function animeEpisodesHref(id: string, title?: string | null): string {
+  return `${animeHref(id, title)}/episodes`;
+}
+
+/**
  * Extracts the AniList id from an `/anime/[id]` route param that may be a bare
  * id (`"140960"`) or the canonical slug form (`"140960-jujutsu-kaisen"`).
  * Returns the raw param when it has no leading digits so an invalid URL falls
