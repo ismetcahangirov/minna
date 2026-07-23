@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 
 import { EpisodeList } from "@/components/anime/episode-list";
 import { FavoriteButton } from "@/components/anime/favorite-button";
+import { ParallaxBanner } from "@/components/anime/parallax-banner";
 import { SeasonSwitcher } from "@/components/anime/season-tabs";
 import { Button } from "@/components/ui/button";
 import { stripHtml } from "@/lib/anime/text";
@@ -73,16 +74,7 @@ export async function AnimeDetailView({
     <article className="flex flex-col">
       {/* Hero */}
       <section className="relative w-full overflow-hidden bg-black">
-        {backdrop && (
-          <Image
-            src={backdrop}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-top opacity-60"
-          />
-        )}
+        {backdrop && <ParallaxBanner src={backdrop} />}
         {/* Flat legibility layers — no gradient (design system). */}
         <div className="absolute inset-0 bg-black/50" />
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-black/70" />
