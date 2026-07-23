@@ -259,12 +259,12 @@ export function EmbedPlayer({
           type="button"
           onClick={toggleFullscreen}
           aria-label={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
-          className="text-muted-foreground hover:text-foreground absolute right-2 bottom-2 z-40 flex items-center border border-black/40 bg-black/70 p-2 transition-colors"
+          className="text-muted-foreground hover:text-foreground absolute right-2 bottom-2 z-40 flex items-center border border-black/40 bg-black/70 p-2.5 transition-colors"
         >
           {isFullscreen ? (
-            <Minimize className="size-4" />
+            <Minimize className="size-5" strokeWidth={2.5} />
           ) : (
-            <Maximize className="size-4" />
+            <Maximize className="size-5" strokeWidth={2.5} />
           )}
         </button>
       )}
