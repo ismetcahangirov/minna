@@ -12,6 +12,19 @@ import {
 } from "@/lib/anime/types";
 
 /**
+ * Version tag baked into the detail cache key. Bump it whenever the cached
+ * {@link AnimeDetail} shape changes so pre-existing entries are ignored rather
+ * than served with missing fields. v2 added `relations` (season switcher) —
+ * v1 entries lacked it, which silently disabled seasons until their TTL.
+ */
+const DETAIL_CACHE_VERSION = "v2";
+
+/** The Redis key for one anime's cached detail record. */
+export function animeDetailCacheKey(id: string): string {
+  return cacheKey("anime", "detail", DETAIL_CACHE_VERSION, id);
+}
+
+/**
  * Builds a playable episode list from AniList metadata when the streaming
  * sub-provider returned none — its scrapers are blocked from datacenter IPs
  * (see `@/lib/consumet/anilist`), so on Vercel the scraped list is always
@@ -64,7 +77,7 @@ export const getAnimeInfo = cache(
     const cleanId = id.trim();
     if (!cleanId) return null;
 
-    const key = cacheKey("anime", "detail", cleanId);
+    const key = animeDetailCacheKey(cleanId);
 
     const cached = await cacheGet<AnimeDetail>(key);
     if (cached) return cached;
