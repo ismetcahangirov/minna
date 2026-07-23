@@ -8,9 +8,11 @@ import { EpisodeList } from "@/components/anime/episode-list";
 import { FavoriteButton } from "@/components/anime/favorite-button";
 import { ParallaxBanner } from "@/components/anime/parallax-banner";
 import { SeasonSwitcher } from "@/components/anime/season-tabs";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeDetail } from "@/lib/anime/types";
+import { buildAnimeJsonLd } from "@/lib/seo/anime-jsonld";
 
 interface AnimeDetailViewProps {
   detail: AnimeDetail;
@@ -72,6 +74,7 @@ export async function AnimeDetailView({
 
   return (
     <article className="flex flex-col">
+      <JsonLd data={buildAnimeJsonLd(detail)} />
       {/* Hero */}
       <section className="relative w-full overflow-hidden bg-black">
         {backdrop && <ParallaxBanner src={backdrop} />}

@@ -1,13 +1,16 @@
 import type { MetadataRoute } from "next";
 
+import { animeHref } from "@/lib/anime/href";
+import { listAnimeSitemapEntries } from "@/lib/anime/sitemap";
 import { listBlogSitemapEntries } from "@/lib/blog/queries";
 import { absoluteUrl } from "@/lib/seo/site";
 
 /**
- * Refresh the sitemap hourly. Anime detail routes are intentionally omitted:
- * they are sourced from the (currently unavailable) Consumet API and have no
- * stable canonical set to enumerate. Auth-only and admin routes are excluded
- * by design — see {@link ./robots}.
+ * Refresh the sitemap hourly. Anime detail routes are enumerated from the
+ * popular feed plus every favorited/watched title (see
+ * {@link listAnimeSitemapEntries}); AniList has no "list all" endpoint, so the
+ * popular head is a deliberate, logged bound. Auth-only and admin routes are
+ * excluded by design — see {@link ./robots}.
  */
 export const revalidate = 3600;
 
@@ -37,7 +40,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route.priority,
   }));
 
-  const posts = await listBlogSitemapEntries();
+  const [anime, posts] = await Promise.all([
+    listAnimeSitemapEntries(),
+    listBlogSitemapEntries(),
+  ]);
+
+  const animeEntries: MetadataRoute.Sitemap = anime.map((entry) => ({
+    url: absoluteUrl(animeHref(entry.id, entry.title)),
+    lastModified: now,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+
   const blogEntries: MetadataRoute.Sitemap = posts.map((post) => ({
     url: absoluteUrl(`/blogs/${post.slug}`),
     lastModified: post.updatedAt,
@@ -45,5 +59,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticEntries, ...blogEntries];
+  return [...staticEntries, ...animeEntries, ...blogEntries];
 }

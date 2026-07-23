@@ -7,7 +7,9 @@ import "./globals.css";
 import { WebVitals } from "@/components/analytics/web-vitals";
 import { SiteHeader } from "@/components/header";
 import { HeaderGate } from "@/components/header/header-gate";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getSiteUrlObject } from "@/lib/seo/site";
+import { buildSiteJsonLd } from "@/lib/seo/site-jsonld";
 import { StoreProvider } from "@/store/provider";
 
 const inter = Inter({
@@ -66,6 +68,7 @@ export default async function RootLayout({
       className={`${inter.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <JsonLd data={buildSiteJsonLd()} />
         <WebVitals />
         <NextIntlClientProvider>
           <StoreProvider>
