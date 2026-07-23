@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { animeHref } from "@/lib/anime/href";
 import type { AnimeSummary } from "@/lib/anime/types";
 import { cn } from "@/lib/utils";
 import { useGetAnimeSectionQuery } from "@/store/api/anime-api";
@@ -147,7 +148,7 @@ export function HeroCarousel({
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Button
                       size="lg"
-                      render={<Link href={`/anime/${anime.id}`} />}
+                      render={<Link href={animeHref(anime.id, anime.title)} />}
                     >
                       <Play className="fill-current" aria-hidden />
                       {t("watchNow")}
@@ -155,7 +156,7 @@ export function HeroCarousel({
                     <Button
                       size="lg"
                       variant="outline"
-                      render={<Link href={`/anime/${anime.id}`} />}
+                      render={<Link href={animeHref(anime.id, anime.title)} />}
                     >
                       <Info aria-hidden />
                       {t("moreInfo")}
