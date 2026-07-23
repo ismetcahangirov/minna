@@ -1,3 +1,5 @@
+import { Film } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -37,24 +39,48 @@ async function SeasonTabs({ seasons }: { seasons: AnimeSeason[] }) {
       <h2 className="text-foreground mb-3 text-lg font-bold tracking-tight sm:text-xl">
         {t("heading")}
       </h2>
-      <ul className="flex [scrollbar-width:none] gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
+      <ul className="flex [scrollbar-width:none] gap-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
         {seasons.map((season) => (
           <li key={season.id} className="shrink-0">
             <Link
               href={animeHref(season.id, season.title)}
               aria-current={season.isCurrent ? "page" : undefined}
-              className={cn(
-                "focus-visible:ring-ring flex min-w-max flex-col border px-2.5 py-1.5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
-                season.isCurrent
-                  ? "border-primary text-primary"
-                  : "border-border text-foreground hover:border-primary/60 hover:text-primary",
-              )}
+              className="group focus-visible:ring-ring block w-28 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:w-32"
             >
-              <span className="text-xs font-semibold whitespace-nowrap">
+              <div
+                className={cn(
+                  "bg-surface relative aspect-[2/3] overflow-hidden border transition-colors",
+                  season.isCurrent
+                    ? "border-primary"
+                    : "border-border group-hover:border-primary/60",
+                )}
+              >
+                {season.image ? (
+                  <Image
+                    src={season.image}
+                    alt=""
+                    fill
+                    sizes="128px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="text-muted-foreground flex h-full w-full items-center justify-center">
+                    <Film className="size-6" aria-hidden />
+                  </div>
+                )}
+              </div>
+              <span
+                className={cn(
+                  "mt-1.5 block text-xs font-semibold whitespace-nowrap",
+                  season.isCurrent
+                    ? "text-primary"
+                    : "text-foreground group-hover:text-primary",
+                )}
+              >
                 {labelFor(season)}
               </span>
               {season.episodeCount !== null && (
-                <span className="text-[11px] whitespace-nowrap opacity-70">
+                <span className="text-muted-foreground block text-[11px] whitespace-nowrap">
                   {t("episodes", { count: season.episodeCount })}
                 </span>
               )}
@@ -69,11 +95,15 @@ async function SeasonTabs({ seasons }: { seasons: AnimeSeason[] }) {
 /** Fixed-height placeholder so streaming the tabs in causes minimal layout shift. */
 function SeasonTabsSkeleton() {
   return (
-    <div className="h-[60px] w-full">
+    <div className="w-full">
       <div className="bg-surface mb-3 h-6 w-28 animate-pulse" />
-      <div className="flex gap-2">
-        <div className="border-border h-[38px] w-20 animate-pulse border" />
-        <div className="border-border h-[38px] w-20 animate-pulse border" />
+      <div className="flex gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="w-28 shrink-0 sm:w-32">
+            <div className="bg-surface aspect-[2/3] w-full animate-pulse border-transparent" />
+            <div className="bg-surface mt-1.5 h-3 w-16 animate-pulse" />
+          </div>
+        ))}
       </div>
     </div>
   );
