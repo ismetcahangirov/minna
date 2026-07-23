@@ -37,24 +37,24 @@ async function SeasonTabs({ seasons }: { seasons: AnimeSeason[] }) {
       <h2 className="text-foreground mb-3 text-lg font-bold tracking-tight sm:text-xl">
         {t("heading")}
       </h2>
-      <ul className="flex gap-2 overflow-x-auto pb-1">
+      <ul className="flex [scrollbar-width:none] gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
         {seasons.map((season) => (
           <li key={season.id} className="shrink-0">
             <Link
               href={animeHref(season.id, season.title)}
               aria-current={season.isCurrent ? "page" : undefined}
               className={cn(
-                "focus-visible:ring-ring flex min-w-max flex-col border px-3 py-2 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+                "focus-visible:ring-ring flex min-w-max flex-col border px-2.5 py-1.5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
                 season.isCurrent
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-surface text-foreground hover:border-primary/60",
+                  ? "border-primary text-primary"
+                  : "border-border text-foreground hover:border-primary/60 hover:text-primary",
               )}
             >
-              <span className="text-sm font-semibold whitespace-nowrap">
+              <span className="text-xs font-semibold whitespace-nowrap">
                 {labelFor(season)}
               </span>
               {season.episodeCount !== null && (
-                <span className="text-xs whitespace-nowrap opacity-80">
+                <span className="text-[11px] whitespace-nowrap opacity-70">
                   {t("episodes", { count: season.episodeCount })}
                 </span>
               )}
@@ -69,11 +69,11 @@ async function SeasonTabs({ seasons }: { seasons: AnimeSeason[] }) {
 /** Fixed-height placeholder so streaming the tabs in causes minimal layout shift. */
 function SeasonTabsSkeleton() {
   return (
-    <div className="h-[68px] w-full">
+    <div className="h-[60px] w-full">
       <div className="bg-surface mb-3 h-6 w-28 animate-pulse" />
       <div className="flex gap-2">
-        <div className="bg-surface h-[42px] w-24 animate-pulse" />
-        <div className="bg-surface h-[42px] w-24 animate-pulse" />
+        <div className="border-border h-[38px] w-20 animate-pulse border" />
+        <div className="border-border h-[38px] w-20 animate-pulse border" />
       </div>
     </div>
   );
