@@ -47,6 +47,10 @@
     "seeAll": "See all",
     "card": {
       "episode": "Ep"
+    },
+    "carousel": {
+      "prev": "Previous",
+      "next": "Next"
     }
   },
   "detail": {
