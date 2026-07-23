@@ -76,7 +76,7 @@ export async function AnimeDetailView({
     <article className="flex flex-col">
       <JsonLd data={buildAnimeJsonLd(detail)} />
       {/* Hero */}
-      <section className="relative w-full overflow-hidden bg-black">
+      <section className="relative flex min-h-[62vh] w-full items-end overflow-hidden bg-black lg:min-h-[78vh]">
         {backdrop && <ParallaxBanner src={backdrop} />}
         {/* Flat legibility layers — no gradient (design system). */}
         <div className="absolute inset-0 bg-black/50" />
