@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, Play } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -47,6 +47,12 @@ export function EmbedPlayer({
 }: EmbedPlayerProps) {
   const t = useTranslations("player");
   const [lang, setLang] = useState<AudioLang>("sub");
+  // Facade gate (EPIC-06): the embed is not mounted until the viewer presses our
+  // own play button. That first click lands on us — not inside the third-party
+  // player, whose in-frame click is what opens its pop-up/redirect ads. Once
+  // activated we load the embed with `autostart`, so playback begins from our
+  // gesture and the viewer never has to click into the ad-serving frame to start.
+  const [activated, setActivated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errored, setErrored] = useState(false);
   // Remembers the last src we already reported "ended" for, so `complete` fires
@@ -55,7 +61,7 @@ export function EmbedPlayer({
 
   const src = `${EMBED_ORIGIN}/stream/ani/${encodeURIComponent(
     animeId,
-  )}/${episodeNumber}/${lang}`;
+  )}/${episodeNumber}/${lang}?autostart=true`;
 
   // Reset transient UI state when the source changes (episode or audio switch)
   // via the render-phase "adjust state" pattern — this repo forbids setState in
@@ -112,18 +118,45 @@ export function EmbedPlayer({
           </p>
         </div>
       ) : (
-        <iframe
-          key={src}
-          src={src}
-          title={`${animeTitle} — ${t("episodeLabel", { number: episodeNumber })}`}
-          className="absolute inset-0 size-full border-0"
-          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-          allowFullScreen
-          onLoad={() => setLoading(false)}
-        />
+        activated && (
+          <iframe
+            key={src}
+            src={src}
+            title={`${animeTitle} — ${t("episodeLabel", { number: episodeNumber })}`}
+            className="absolute inset-0 size-full border-0"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            allowFullScreen
+            onLoad={() => setLoading(false)}
+          />
+        )
       )}
 
-      {loading && !errored && (
+      {/* Facade: the poster + our own play button, shown until the viewer starts
+          playback. Clicking it (not the embed) is what avoids the first-click ad;
+          see the `activated` state above. */}
+      {!activated && !errored && (
+        <button
+          type="button"
+          onClick={() => setActivated(true)}
+          aria-label={t("play")}
+          className="group absolute inset-0 z-20 flex items-center justify-center bg-black"
+        >
+          {poster && (
+            <Image
+              src={poster}
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover opacity-40 transition-opacity group-hover:opacity-55"
+            />
+          )}
+          <span className="bg-primary text-primary-foreground group-hover:bg-primary/90 relative flex size-16 items-center justify-center transition-colors">
+            <Play className="size-7 fill-current" />
+          </span>
+        </button>
+      )}
+
+      {activated && loading && !errored && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black">
           {poster && (
             <Image
@@ -143,7 +176,7 @@ export function EmbedPlayer({
 
       {/* Audio-language toggle. Overlaid top-right; the embed's own controls sit
           along the bottom, so this stays clear of them. */}
-      <div className="absolute top-2 right-2 z-10 flex border border-black/40 bg-black/70">
+      <div className="absolute top-2 right-2 z-30 flex border border-black/40 bg-black/70">
         <LangButton
           active={lang === "sub"}
           onClick={() => selectLang("sub")}
