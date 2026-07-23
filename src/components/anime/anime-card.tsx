@@ -12,6 +12,8 @@ interface AnimeCardProps {
   priority?: boolean;
   /** Localized "Ep" prefix (e.g. from `home.card.episode`), only for recents. */
   episodeLabel?: string;
+  /** Wider 2:1 image box for the home carousel; default is 16:9. */
+  wide?: boolean;
 }
 
 /**
@@ -22,7 +24,12 @@ interface AnimeCardProps {
  * Design system: sharp corners, flat overlays (no gradient/glassmorphism),
  * Netflix-red accent, lucide icons — never emoji.
  */
-export function AnimeCard({ anime, priority, episodeLabel }: AnimeCardProps) {
+export function AnimeCard({
+  anime,
+  priority,
+  episodeLabel,
+  wide,
+}: AnimeCardProps) {
   const artwork = anime.banner ?? anime.image;
   const score = anime.rating !== null ? (anime.rating / 10).toFixed(1) : null;
 
@@ -42,7 +49,10 @@ export function AnimeCard({ anime, priority, episodeLabel }: AnimeCardProps) {
       className="group focus-visible:ring-ring block w-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
     >
       <div
-        className="border-border bg-surface group-hover:border-primary/60 relative aspect-video overflow-hidden border transition-[transform,border-color] duration-300 group-hover:z-10 group-hover:scale-[1.03] group-hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.9)]"
+        className={cn(
+          "border-border bg-surface group-hover:border-primary/60 relative overflow-hidden border transition-[transform,border-color] duration-300 group-hover:z-10 group-hover:scale-[1.03] group-hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.9)]",
+          wide ? "aspect-[2/1]" : "aspect-video",
+        )}
         style={anime.color ? { backgroundColor: anime.color } : undefined}
       >
         {artwork ? (
@@ -99,10 +109,15 @@ export function AnimeCard({ anime, priority, episodeLabel }: AnimeCardProps) {
 }
 
 /** Loading placeholder matching {@link AnimeCard}'s footprint (no CLS). */
-export function AnimeCardSkeleton() {
+export function AnimeCardSkeleton({ wide }: { wide?: boolean }) {
   return (
     <div className="w-full">
-      <div className="bg-surface border-border aspect-video w-full animate-pulse border" />
+      <div
+        className={cn(
+          "bg-surface border-border w-full animate-pulse border",
+          wide ? "aspect-[2/1]" : "aspect-video",
+        )}
+      />
       <div className="bg-surface mt-2 h-4 w-4/5 animate-pulse" />
       <div className="bg-surface mt-1.5 h-3 w-2/5 animate-pulse" />
     </div>

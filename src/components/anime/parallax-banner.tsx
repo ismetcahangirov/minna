@@ -30,11 +30,11 @@ export function ParallaxBanner({ src }: { src: string }) {
       raf = 0;
       const top = frame.getBoundingClientRect().top;
       const scrolledPast = Math.max(-top, 0);
-      // Drift at ~30% of scroll, clamped to the scale-120 overhang (~10% of the
+      // Drift at ~35% of scroll, clamped to the scale-125 overhang (~11% of the
       // hero height) so the top edge of the image never lifts into view.
-      const maxDrift = frame.offsetHeight * 0.1;
-      const drift = Math.min(scrolledPast * 0.3, maxDrift);
-      layer.style.transform = `translate3d(0, ${drift}px, 0) scale(1.2)`;
+      const maxDrift = frame.offsetHeight * 0.11;
+      const drift = Math.min(scrolledPast * 0.35, maxDrift);
+      layer.style.transform = `translate3d(0, ${drift}px, 0) scale(1.25)`;
     };
 
     const onScroll = () => {
@@ -59,7 +59,7 @@ export function ParallaxBanner({ src }: { src: string }) {
     >
       <div
         ref={layerRef}
-        className="absolute inset-0 scale-[1.2] will-change-transform"
+        className="absolute inset-0 scale-[1.25] will-change-transform"
       >
         <Image
           src={src}
@@ -67,7 +67,7 @@ export function ParallaxBanner({ src }: { src: string }) {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-top opacity-60"
+          className="object-cover object-top opacity-70"
         />
       </div>
     </div>

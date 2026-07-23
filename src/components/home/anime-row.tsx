@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { AnimeCard, AnimeCardSkeleton } from "@/components/anime/anime-card";
+import { AnimeCarousel } from "@/components/home/anime-carousel";
 import { getAnimeSection } from "@/lib/anime/catalog";
 import type { AnimeSection } from "@/lib/anime/types";
 
@@ -18,9 +19,14 @@ interface AnimeRowProps {
   priority?: boolean;
 }
 
-const rowScrollClass =
-  "flex snap-x gap-3 overflow-x-auto px-4 py-4 sm:gap-4 sm:px-6 lg:px-8 [scrollbar-width:thin]";
-const cardWidthClass = "w-[68vw] shrink-0 snap-start sm:w-56 lg:w-64 xl:w-72";
+// Carousel slides sit ~30% wider than the old rail cards; paired with the
+// {@link AnimeCard} `wide` (2:1) ratio this lands them ~15% taller too.
+const cardWidthClass =
+  "w-[82vw] shrink-0 snap-start sm:w-72 lg:w-[21rem] xl:w-[23rem]";
+// Static rail for the streaming skeleton (no drag/arrows), mirroring the
+// carousel's spacing so streaming the real row in causes no layout shift.
+const skeletonRailClass =
+  "flex snap-x gap-4 overflow-x-auto px-4 py-4 sm:gap-5 sm:px-6 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 /**
  * A titled, horizontally scrollable row of {@link AnimeCard}s (HOME-02..05).
@@ -57,17 +63,21 @@ export async function AnimeRow({
         )}
       </div>
 
-      <div className={rowScrollClass}>
+      <AnimeCarousel
+        prevLabel={t("carousel.prev")}
+        nextLabel={t("carousel.next")}
+      >
         {items.map((anime, index) => (
           <div key={`${anime.id}-${index}`} className={cardWidthClass}>
             <AnimeCard
               anime={anime}
               episodeLabel={episodeLabel}
+              wide
               priority={priority && index < 3}
             />
           </div>
         ))}
-      </div>
+      </AnimeCarousel>
     </section>
   );
 }
@@ -79,10 +89,10 @@ export function AnimeRowSkeleton() {
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="bg-surface h-6 w-40 animate-pulse" />
       </div>
-      <div className={rowScrollClass}>
+      <div className={skeletonRailClass}>
         {Array.from({ length: 6 }).map((_, index) => (
           <div key={index} className={cardWidthClass}>
-            <AnimeCardSkeleton />
+            <AnimeCardSkeleton wide />
           </div>
         ))}
       </div>

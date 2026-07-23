@@ -47,6 +47,10 @@
     "seeAll": "Tümünü gör",
     "card": {
       "episode": "Böl."
+    },
+    "carousel": {
+      "prev": "Önceki",
+      "next": "Sonraki"
     }
   },
   "detail": {
