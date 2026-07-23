@@ -3,8 +3,8 @@ import "server-only";
 import { cache } from "react";
 
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
-import { fetchAnimeMeta } from "@/lib/consumet/anilist";
 
+import { fetchAniListSeasonNode } from "@/lib/anime/anilist-graphql";
 import { animeDetailCacheKey } from "@/lib/anime/detail";
 import {
   type AnimeDetail,
@@ -105,8 +105,8 @@ function pickRelation(
 
 /**
  * Fetches a neighbour's metadata, preferring an already-warm full detail, then
- * a cached lightweight meta, then a fresh metadata-only fetch. Never scrapes
- * episodes — traversal only needs titles/formats/relations.
+ * a cached lightweight meta, then a fresh AniList GraphQL fetch. Pure metadata
+ * (no streaming provider) — traversal only needs titles/formats/relations.
  */
 async function fetchNode(id: string): Promise<AnimeDetail | null> {
   const warm = await cacheGet<AnimeDetail>(animeDetailCacheKey(id));
@@ -116,7 +116,7 @@ async function fetchNode(id: string): Promise<AnimeDetail | null> {
   const cached = await cacheGet<AnimeDetail>(metaKey);
   if (cached) return cached;
 
-  const node = toAnimeDetail(await fetchAnimeMeta(id));
+  const node = toAnimeDetail(await fetchAniListSeasonNode(id));
   if (node) await cacheSet(metaKey, node, CACHE_TTL.long);
   return node;
 }
