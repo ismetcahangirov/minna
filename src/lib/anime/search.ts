@@ -3,6 +3,7 @@ import "server-only";
 import { advancedSearchAnime } from "@/lib/consumet/anilist";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 
+import { hasPlayableEpisodes } from "@/lib/anime/episodes";
 import { type AnimeSummary, toAnimeSummary } from "@/lib/anime/types";
 
 /** How many results one search page requests from the AniList provider. */
@@ -90,7 +91,9 @@ export async function searchAnime({
 
     const results = (Array.isArray(data?.results) ? data.results : [])
       .map(toAnimeSummary)
-      .filter((entry): entry is AnimeSummary => entry !== null);
+      .filter((entry): entry is AnimeSummary => entry !== null)
+      // Drop titles with no playable episodes — their detail page would be empty.
+      .filter(hasPlayableEpisodes);
 
     const result: SearchResult = {
       results,

@@ -2,6 +2,7 @@ import { Film, Play, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { animeHref } from "@/lib/anime/href";
 import type { AnimeSummary } from "@/lib/anime/types";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +38,7 @@ export function AnimeCard({ anime, priority, episodeLabel }: AnimeCardProps) {
 
   return (
     <Link
-      href={`/anime/${anime.id}`}
+      href={animeHref(anime.id, anime.title)}
       className="group focus-visible:ring-ring block w-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
     >
       <div

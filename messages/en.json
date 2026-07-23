@@ -60,6 +60,14 @@
     "noEpisodes": "Episodes are not available yet.",
     "sortAsc": "Oldest first",
     "sortDesc": "Newest first",
+    "seasons": {
+      "heading": "Seasons",
+      "season": "Season {number}",
+      "movie": "Movie",
+      "ova": "OVA",
+      "special": "Specials",
+      "episodes": "{count} ep"
+    },
     "info": {
       "type": "Type",
       "status": "Status",

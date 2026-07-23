@@ -60,6 +60,14 @@
     "noEpisodes": "Bölümler henüz mevcut değil.",
     "sortAsc": "Önce eskiler",
     "sortDesc": "Önce yeniler",
+    "seasons": {
+      "heading": "Sezonlar",
+      "season": "Sezon {number}",
+      "movie": "Film",
+      "ova": "OVA",
+      "special": "Özel bölümler",
+      "episodes": "{count} bölüm"
+    },
     "info": {
       "type": "Tür",
       "status": "Durum",

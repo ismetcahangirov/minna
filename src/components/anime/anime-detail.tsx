@@ -6,9 +6,13 @@ import type { ReactNode } from "react";
 
 import { EpisodeList } from "@/components/anime/episode-list";
 import { FavoriteButton } from "@/components/anime/favorite-button";
+import { ParallaxBanner } from "@/components/anime/parallax-banner";
+import { SeasonSwitcher } from "@/components/anime/season-tabs";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeDetail } from "@/lib/anime/types";
+import { buildAnimeJsonLd } from "@/lib/seo/anime-jsonld";
 
 interface AnimeDetailViewProps {
   detail: AnimeDetail;
@@ -70,18 +74,10 @@ export async function AnimeDetailView({
 
   return (
     <article className="flex flex-col">
+      <JsonLd data={buildAnimeJsonLd(detail)} />
       {/* Hero */}
       <section className="relative w-full overflow-hidden bg-black">
-        {backdrop && (
-          <Image
-            src={backdrop}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-top opacity-60"
-          />
-        )}
+        {backdrop && <ParallaxBanner src={backdrop} />}
         {/* Flat legibility layers — no gradient (design system). */}
         <div className="absolute inset-0 bg-black/50" />
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-black/70" />
@@ -201,6 +197,8 @@ export async function AnimeDetailView({
                 </p>
               </section>
             )}
+
+            <SeasonSwitcher detail={detail} />
 
             <EpisodeList animeId={detail.id} episodes={detail.episodes} />
           </div>

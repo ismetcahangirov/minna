@@ -6,6 +6,7 @@ import { EpisodeList } from "@/components/anime/episode-list";
 import { WatchExperience } from "@/components/watch/watch-experience";
 import { getActivePreRollAd } from "@/lib/ads/queries";
 import { getAnimeInfo } from "@/lib/anime/detail";
+import { parseAnimeParam } from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeEpisode } from "@/lib/anime/types";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -66,7 +67,7 @@ export async function generateMetadata({
   params,
 }: WatchRouteProps): Promise<Metadata> {
   const { animeId, episodeId } = await params;
-  const detail = await getAnimeInfo(animeId);
+  const detail = await getAnimeInfo(parseAnimeParam(animeId));
 
   if (!detail) return { title: "Episode not found — Minna" };
 
@@ -105,7 +106,7 @@ export async function generateMetadata({
 export default async function WatchPage({ params }: WatchRouteProps) {
   const { animeId, episodeId } = await params;
 
-  const detail = await getAnimeInfo(animeId);
+  const detail = await getAnimeInfo(parseAnimeParam(animeId));
   if (!detail) notFound();
 
   const located = locateEpisode(detail.episodes, episodeId);

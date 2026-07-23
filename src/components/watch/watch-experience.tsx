@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { animeHref } from "@/lib/anime/href";
 import type { PreRollAd as PreRollAdData } from "@/lib/ads/queries";
 import { saveWatchProgress } from "@/lib/watch/actions";
 import { cn } from "@/lib/utils";
@@ -180,7 +181,7 @@ export function WatchExperience({
         />
 
         <Link
-          href={`/anime/${animeId}`}
+          href={animeHref(animeId, animeTitle)}
           className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm font-medium transition-colors"
         >
           <ListVideo className="size-4" aria-hidden />

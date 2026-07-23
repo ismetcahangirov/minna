@@ -2,6 +2,7 @@ import { Film, Play } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { animeHref } from "@/lib/anime/href";
 import type { FavoriteItem } from "@/lib/favorites/types";
 
 interface FavoriteCardProps {
@@ -20,7 +21,7 @@ interface FavoriteCardProps {
 export function FavoriteCard({ favorite, priority }: FavoriteCardProps) {
   return (
     <Link
-      href={`/anime/${favorite.animeId}`}
+      href={animeHref(favorite.animeId, favorite.title)}
       className="group focus-visible:ring-ring block w-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
     >
       <div className="border-border bg-surface group-hover:border-primary/60 relative aspect-[2/3] overflow-hidden border transition-[transform,border-color] duration-300 group-hover:z-10 group-hover:scale-[1.03] group-hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.9)]">

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import { AnimeDetailView } from "@/components/anime/anime-detail";
 import { getAnimeInfo } from "@/lib/anime/detail";
+import { animeHref, parseAnimeParam } from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isFavorite } from "@/lib/favorites/queries";
@@ -20,7 +21,7 @@ export async function generateMetadata({
   params,
 }: AnimeDetailRouteProps): Promise<Metadata> {
   const { id } = await params;
-  const detail = await getAnimeInfo(id);
+  const detail = await getAnimeInfo(parseAnimeParam(id));
 
   if (!detail) {
     return { title: "Anime not found — Minna" };
@@ -36,7 +37,7 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `/anime/${detail.id}` },
+    alternates: { canonical: animeHref(detail.id, detail.title) },
     openGraph: {
       title,
       description,
@@ -61,12 +62,18 @@ export default async function AnimeDetailPage({
   params,
 }: AnimeDetailRouteProps) {
   const { id } = await params;
-  const detail = await getAnimeInfo(id);
+  const detail = await getAnimeInfo(parseAnimeParam(id));
   if (!detail) notFound();
+
+  // Consolidate SEO on one canonical URL: a bare id or a stale/wrong slug is
+  // 301'd (308) to `/anime/{id}-{slug}`. Old links and DB-stored id links keep
+  // working via this redirect.
+  const canonical = animeHref(detail.id, detail.title);
+  if (`/anime/${id}` !== canonical) permanentRedirect(canonical);
 
   const user = await getCurrentUser();
   const favorited = user?.id ? await isFavorite(user.id, detail.id) : false;
-  const loginHref = `/login?callbackUrl=${encodeURIComponent(`/anime/${detail.id}`)}`;
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(canonical)}`;
 
   return (
     <main className="flex flex-1 flex-col pb-8">
