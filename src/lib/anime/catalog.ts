@@ -10,6 +10,7 @@ import {
 } from "@/lib/consumet/anilist";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 
+import { hasPlayableEpisodes } from "@/lib/anime/episodes";
 import {
   type AnimeSection,
   type AnimeSummary,
@@ -54,10 +55,14 @@ async function fetchSection(
   }
 
   const results = Array.isArray(data?.results) ? data.results : [];
-  return results
-    .map(toAnimeSummary)
-    .filter((entry): entry is AnimeSummary => entry !== null)
-    .slice(0, limit);
+  return (
+    results
+      .map(toAnimeSummary)
+      .filter((entry): entry is AnimeSummary => entry !== null)
+      // Drop titles with no playable episodes — their detail page would be empty.
+      .filter(hasPlayableEpisodes)
+      .slice(0, limit)
+  );
 }
 
 /**

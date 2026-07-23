@@ -4,6 +4,7 @@ import { advancedSearchAnime } from "@/lib/consumet/anilist";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 import { BROWSE_PAGE_SIZE, type PagedResult } from "@/lib/browse/types";
 
+import { hasPlayableEpisodes } from "@/lib/anime/episodes";
 import { type AnimeSummary, toAnimeSummary } from "@/lib/anime/types";
 
 /** Guards the cache key and upstream call against absurd deep-link pages. */
@@ -44,7 +45,9 @@ export async function listPopularAnime(
 
     const items = (Array.isArray(data?.results) ? data.results : [])
       .map(toAnimeSummary)
-      .filter((entry): entry is AnimeSummary => entry !== null);
+      .filter((entry): entry is AnimeSummary => entry !== null)
+      // Drop titles with no playable episodes — their detail page would be empty.
+      .filter(hasPlayableEpisodes);
 
     const result: PagedResult<AnimeSummary> = {
       items,
