@@ -236,37 +236,38 @@ export function EmbedPlayer({
         />
       )}
 
-      {/* Top-right controls: our own fullscreen toggle (the embed's is disabled)
-          plus the audio-language toggle. Kept above the shield so they stay
-          usable in fullscreen, and clear of the embed's bottom control bar. */}
-      <div className="absolute top-2 right-2 z-40 flex items-stretch gap-2">
-        {activated && (
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            aria-label={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
-            className="text-muted-foreground hover:text-foreground flex items-center border border-black/40 bg-black/70 px-3 transition-colors"
-          >
-            {isFullscreen ? (
-              <Minimize className="size-4" />
-            ) : (
-              <Maximize className="size-4" />
-            )}
-          </button>
-        )}
-        <div className="flex border border-black/40 bg-black/70">
-          <LangButton
-            active={lang === "sub"}
-            onClick={() => selectLang("sub")}
-            label={t("subbed")}
-          />
-          <LangButton
-            active={lang === "dub"}
-            onClick={() => selectLang("dub")}
-            label={t("dubbed")}
-          />
-        </div>
+      {/* Audio-language toggle, top-right and clear of the embed's bottom
+          controls. z-40 keeps it above the fullscreen shield. */}
+      <div className="absolute top-2 right-2 z-40 flex border border-black/40 bg-black/70">
+        <LangButton
+          active={lang === "sub"}
+          onClick={() => selectLang("sub")}
+          label={t("subbed")}
+        />
+        <LangButton
+          active={lang === "dub"}
+          onClick={() => selectLang("dub")}
+          label={t("dubbed")}
+        />
       </div>
+
+      {/* Fullscreen toggle at the conventional bottom-right, placed over the
+          embed's own (now-disabled) fullscreen button so that corner works
+          again. z-40 keeps it above the fullscreen shield so it can also exit. */}
+      {activated && (
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          aria-label={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
+          className="text-muted-foreground hover:text-foreground absolute right-2 bottom-2 z-40 flex items-center border border-black/40 bg-black/70 p-2 transition-colors"
+        >
+          {isFullscreen ? (
+            <Minimize className="size-4" />
+          ) : (
+            <Maximize className="size-4" />
+          )}
+        </button>
+      )}
 
       {/* Recovery guard: covers the whole frame after an ad stole focus, so the
           return mouse move can't reach the embed's stuck seek bar and scrub. The
