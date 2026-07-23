@@ -62,6 +62,7 @@
     "episodes": "Эпизоды",
     "episodeLabel": "Эпизод {number}",
     "back": "Назад",
+    "watched": "Просмотрено",
     "noEpisodes": "Эпизоды пока недоступны.",
     "sortAsc": "Сначала старые",
     "sortDesc": "Сначала новые",

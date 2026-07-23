@@ -12,6 +12,8 @@ import {
   animeHref,
   parseAnimeParam,
 } from "@/lib/anime/href";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getAnimeWatchStates } from "@/lib/watch/queries";
 
 interface EpisodesRouteProps {
   params: Promise<{ id: string }>;
@@ -51,6 +53,10 @@ export default async function AnimeEpisodesPage({
   if (`/anime/${id}/episodes` !== canonical) permanentRedirect(canonical);
 
   const t = await getTranslations("detail");
+  const user = await getCurrentUser();
+  const watchStates = user?.id
+    ? await getAnimeWatchStates(user.id, detail.id)
+    : {};
 
   return (
     <main className="flex flex-1 flex-col pb-10">
@@ -73,6 +79,7 @@ export default async function AnimeEpisodesPage({
             animeId={detail.id}
             episodes={detail.episodes}
             thumbnail={detail.banner ?? detail.image}
+            watchStates={watchStates}
           />
         </div>
       </div>
