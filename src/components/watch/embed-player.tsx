@@ -60,6 +60,11 @@ export function EmbedPlayer({
   // through us — that's what lets the click-shield below sit in the fullscreen
   // layer and swallow stray clicks that would otherwise open the embed's ads.
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // Raised after a pop-up ad steals focus. The embed can be left mid-drag on its
+  // seek bar (its mouseup is lost when a new tab takes over), so the first mouse
+  // move on return scrubs the video. A guard over the frame absorbs that stray
+  // move until the viewer clicks to resume — the click never reaches the embed.
+  const [recovering, setRecovering] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   // Remembers the last src we already reported "ended" for, so `complete` fires
   // onEnded once per episode. Written from the message callback (never render).
@@ -77,6 +82,7 @@ export function EmbedPlayer({
     setTrackedSrc(src);
     setLoading(true);
     setErrored(false);
+    setRecovering(false);
   }
 
   // Bridge the embed's postMessage telemetry. The exact envelope isn't
@@ -120,6 +126,20 @@ export function EmbedPlayer({
     return () =>
       document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, []);
+
+  // When a pop-up ad opens a new tab, ours goes hidden — that's the moment the
+  // embed's seek-bar drag gets orphaned. Raise the recovery guard so the return
+  // mouse move can't scrub. (Only while playing; a plain tab switch just shows
+  // the "click to resume" guard, which is harmless.)
+  useEffect(() => {
+    if (!activated) return;
+    function onVisibilityChange() {
+      if (document.hidden) setRecovering(true);
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [activated]);
 
   const selectLang = useCallback((next: AudioLang) => setLang(next), []);
 
@@ -247,6 +267,21 @@ export function EmbedPlayer({
           />
         </div>
       </div>
+
+      {/* Recovery guard: covers the whole frame after an ad stole focus, so the
+          return mouse move can't reach the embed's stuck seek bar and scrub. The
+          click that dismisses it is absorbed here, never reaching the embed. */}
+      {activated && recovering && !errored && (
+        <button
+          type="button"
+          onClick={() => setRecovering(false)}
+          className="absolute inset-0 z-50 flex items-center justify-center bg-black/60"
+        >
+          <span className="border border-white/20 bg-black/80 px-4 py-2 text-sm font-semibold text-white">
+            {t("resumePlayback")}
+          </span>
+        </button>
+      )}
     </div>
   );
 }
