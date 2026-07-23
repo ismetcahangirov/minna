@@ -76,11 +76,13 @@ export async function AnimeDetailView({
     <article className="flex flex-col">
       <JsonLd data={buildAnimeJsonLd(detail)} />
       {/* Hero */}
-      <section className="relative flex min-h-[62vh] w-full items-end overflow-hidden bg-black lg:min-h-[78vh]">
+      <section className="relative flex min-h-[64vh] w-full items-end overflow-hidden bg-black lg:min-h-[82vh]">
         {backdrop && <ParallaxBanner src={backdrop} />}
         {/* Flat legibility layers — no gradient (design system). */}
         <div className="absolute inset-0 bg-black/50" />
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-black/70" />
+        {/* Soft shadow seam where the banner meets the details below. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-px shadow-[0_-1px_28px_10px_rgba(0,0,0,0.85),0_1px_0_0_rgba(255,255,255,0.06)]" />
 
         <div className="relative mx-auto w-full max-w-[1600px] px-4 pt-24 pb-10 sm:px-6 lg:px-8 lg:pt-28">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:gap-8">

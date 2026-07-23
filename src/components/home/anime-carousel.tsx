@@ -19,7 +19,7 @@ interface AnimeCarouselProps {
 }
 
 const railClass =
-  "flex snap-x snap-proximity gap-4 overflow-x-auto scroll-smooth px-4 py-4 sm:gap-5 sm:px-6 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+  "flex snap-x snap-proximity gap-4 overflow-x-auto scroll-smooth scroll-pl-4 px-4 py-4 sm:gap-5 sm:scroll-pl-6 sm:px-6 lg:scroll-pl-8 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 /**
  * Swipeable card carousel for the home rows (HOME-02..05). Wraps a native
