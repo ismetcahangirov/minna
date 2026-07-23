@@ -5,6 +5,7 @@ import { cache } from "react";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 import { fetchAnimeMeta } from "@/lib/consumet/anilist";
 
+import { animeDetailCacheKey } from "@/lib/anime/detail";
 import {
   type AnimeDetail,
   type AnimeRelation,
@@ -108,7 +109,7 @@ function pickRelation(
  * episodes — traversal only needs titles/formats/relations.
  */
 async function fetchNode(id: string): Promise<AnimeDetail | null> {
-  const warm = await cacheGet<AnimeDetail>(cacheKey("anime", "detail", id));
+  const warm = await cacheGet<AnimeDetail>(animeDetailCacheKey(id));
   if (warm) return warm;
 
   const metaKey = cacheKey("anime", "seasons-meta", id);
@@ -132,7 +133,9 @@ async function walk(
   budget: { hops: number },
 ): Promise<SeasonNode[]> {
   const nodes: SeasonNode[] = [];
-  let relations = start.relations;
+  // `?? []` guards against an older cached node that predates the `relations`
+  // field, so a stale neighbour degrades to "chain ends here" not a throw.
+  let relations = start.relations ?? [];
 
   while (budget.hops > 0) {
     const next = pickRelation(relations, relationType, visited);
@@ -143,7 +146,7 @@ async function walk(
     const node = await fetchNode(next.id);
     if (!node) break;
     nodes.push(toNode(node));
-    relations = node.relations;
+    relations = node.relations ?? [];
   }
 
   return nodes;
