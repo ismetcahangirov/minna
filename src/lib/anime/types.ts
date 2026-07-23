@@ -94,6 +94,20 @@ export interface AnimeEpisode {
 }
 
 /**
+ * A related anime entry (AniList relation). AniList models seasons as separate
+ * entries linked by {@link relationType} (`PREQUEL`/`SEQUEL`/`SIDE_STORY`…);
+ * the season switcher walks these. `type` carries the media format
+ * (`TV`/`MOVIE`/`OVA`…).
+ */
+export interface AnimeRelation {
+  id: string;
+  title: string;
+  type: string | null;
+  relationType: string | null;
+  image: string | null;
+}
+
+/**
  * Full anime record backing the detail page (DETAIL-01). Extends the card
  * {@link AnimeSummary} with the extra fields the detail view and its dynamic
  * SEO metadata need (DETAIL-04).
@@ -107,6 +121,8 @@ export interface AnimeDetail extends AnimeSummary {
   /** Average episode runtime in minutes. */
   duration: number | null;
   episodes: AnimeEpisode[];
+  /** Related entries (prequels/sequels/side stories) for the season switcher. */
+  relations: AnimeRelation[];
 }
 
 // --- Raw Consumet AniList info shapes (permissive on purpose) ---------------
@@ -119,12 +135,17 @@ export interface ConsumetEpisode {
   airDate?: string | null;
 }
 
+export interface ConsumetRelation extends ConsumetAnimeResult {
+  relationType?: string | null;
+}
+
 export interface ConsumetInfoResponse extends ConsumetAnimeResult {
   synonyms?: string[] | null;
   season?: string | null;
   studios?: string[] | null;
   duration?: number | null;
   episodes?: ConsumetEpisode[] | null;
+  relations?: ConsumetRelation[] | null;
 }
 
 // --- Episode streaming sources (EPIC-06) -----------------------------------
@@ -308,6 +329,30 @@ function toAnimeEpisode(
 }
 
 /**
+ * Narrows raw Consumet relation edges into {@link AnimeRelation}s, dropping any
+ * without a usable id.
+ */
+function toRelations(
+  raw: ConsumetRelation[] | null | undefined,
+): AnimeRelation[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((entry): AnimeRelation | null => {
+      if (entry?.id === undefined || entry?.id === null) return null;
+      const id = String(entry.id).trim();
+      if (!id) return null;
+      return {
+        id,
+        title: pickTitle(entry.title),
+        type: entry.type?.trim() || null,
+        relationType: entry.relationType?.trim() || null,
+        image: entry.image?.trim() || entry.cover?.trim() || null,
+      };
+    })
+    .filter((entry): entry is AnimeRelation => entry !== null);
+}
+
+/**
  * Narrows a raw Consumet info payload into a strict {@link AnimeDetail}, reusing
  * {@link toAnimeSummary} for the shared card fields. Returns `null` when the
  * entry has no usable id (the detail page treats that as a 404).
@@ -336,5 +381,6 @@ export function toAnimeDetail(
     studios: toStringList(raw.studios),
     duration: typeof raw.duration === "number" ? raw.duration : null,
     episodes,
+    relations: toRelations(raw.relations),
   };
 }

@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 
 import { EpisodeList } from "@/components/anime/episode-list";
 import { FavoriteButton } from "@/components/anime/favorite-button";
+import { SeasonSwitcher } from "@/components/anime/season-tabs";
 import { Button } from "@/components/ui/button";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeDetail } from "@/lib/anime/types";
@@ -201,6 +202,8 @@ export async function AnimeDetailView({
                 </p>
               </section>
             )}
+
+            <SeasonSwitcher detail={detail} />
 
             <EpisodeList animeId={detail.id} episodes={detail.episodes} />
           </div>

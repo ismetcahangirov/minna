@@ -60,6 +60,14 @@
     "noEpisodes": "Эпизоды пока недоступны.",
     "sortAsc": "Сначала старые",
     "sortDesc": "Сначала новые",
+    "seasons": {
+      "heading": "Сезоны",
+      "season": "Сезон {number}",
+      "movie": "Фильм",
+      "ova": "OVA",
+      "special": "Спецвыпуски",
+      "episodes": "{count} эп."
+    },
     "info": {
       "type": "Тип",
       "status": "Статус",
