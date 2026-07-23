@@ -61,6 +61,7 @@
     "synopsis": "Описание",
     "episodes": "Эпизоды",
     "episodeLabel": "Эпизод {number}",
+    "back": "Назад",
     "noEpisodes": "Эпизоды пока недоступны.",
     "sortAsc": "Сначала старые",
     "sortDesc": "Сначала новые",

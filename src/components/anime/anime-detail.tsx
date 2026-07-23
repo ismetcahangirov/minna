@@ -4,12 +4,12 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
-import { EpisodeList } from "@/components/anime/episode-list";
 import { FavoriteButton } from "@/components/anime/favorite-button";
 import { ParallaxBanner } from "@/components/anime/parallax-banner";
 import { SeasonSwitcher } from "@/components/anime/season-tabs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
+import { animeEpisodesHref } from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeDetail } from "@/lib/anime/types";
 import { buildAnimeJsonLd } from "@/lib/seo/anime-jsonld";
@@ -57,9 +57,7 @@ export async function AnimeDetailView({
   const backdrop = detail.banner ?? detail.image;
   const score = detail.rating !== null ? (detail.rating / 10).toFixed(1) : null;
   const episodeCount = detail.totalEpisodes ?? (detail.episodes.length || null);
-  const firstEpisode = [...detail.episodes].sort(
-    (a, b) => a.number - b.number,
-  )[0];
+  const hasEpisodes = detail.episodes.length > 0;
   const synopsis = detail.description ? stripHtml(detail.description) : null;
 
   const metaItems = [
@@ -157,14 +155,12 @@ export async function AnimeDetailView({
               )}
 
               <div className="mt-6 flex flex-wrap gap-3">
-                {firstEpisode && (
+                {hasEpisodes && (
                   <Button
                     size="lg"
                     nativeButton={false}
                     render={
-                      <Link
-                        href={`/watch/${detail.id}/${encodeURIComponent(firstEpisode.id)}`}
-                      />
+                      <Link href={animeEpisodesHref(detail.id, detail.title)} />
                     }
                   >
                     <Play className="fill-current" aria-hidden />
@@ -201,8 +197,6 @@ export async function AnimeDetailView({
             )}
 
             <SeasonSwitcher detail={detail} />
-
-            <EpisodeList animeId={detail.id} episodes={detail.episodes} />
           </div>
 
           <aside className="md:col-span-1">

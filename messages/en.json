@@ -61,6 +61,7 @@
     "synopsis": "Synopsis",
     "episodes": "Episodes",
     "episodeLabel": "Episode {number}",
+    "back": "Back",
     "noEpisodes": "Episodes are not available yet.",
     "sortAsc": "Oldest first",
     "sortDesc": "Newest first",

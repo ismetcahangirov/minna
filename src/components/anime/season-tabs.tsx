@@ -4,16 +4,16 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
-import { animeHref } from "@/lib/anime/href";
+import { animeEpisodesHref } from "@/lib/anime/href";
 import { type AnimeSeason, getAnimeSeasons } from "@/lib/anime/seasons";
 import type { AnimeDetail } from "@/lib/anime/types";
 import { cn } from "@/lib/utils";
 
 /**
- * Season switcher (DETAIL-02). A horizontal strip of season tabs, the current
- * one active. Each tab is a plain `<Link>` to that season's own detail page —
- * navigation, not client state — so the whole thing is server-rendered HTML,
- * good for SEO and the internal link graph.
+ * Season switcher (DETAIL-02). A horizontal strip of season poster cards, the
+ * current one accented. Each card is a plain `<Link>` to that season's episodes
+ * page — navigation, not client state — so the whole thing is server-rendered
+ * HTML, good for SEO and the internal link graph.
  *
  * Design system: black base, flat surfaces (no gradient/glassmorphism), sharp
  * corners, Netflix-red accent for the active tab.
@@ -43,7 +43,7 @@ async function SeasonTabs({ seasons }: { seasons: AnimeSeason[] }) {
         {seasons.map((season) => (
           <li key={season.id} className="shrink-0">
             <Link
-              href={animeHref(season.id, season.title)}
+              href={animeEpisodesHref(season.id, season.title)}
               aria-current={season.isCurrent ? "page" : undefined}
               className="group focus-visible:ring-ring block w-28 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:w-32"
             >

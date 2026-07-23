@@ -61,6 +61,7 @@
     "synopsis": "Özet",
     "episodes": "Bölümler",
     "episodeLabel": "{number}. Bölüm",
+    "back": "Geri",
     "noEpisodes": "Bölümler henüz mevcut değil.",
     "sortAsc": "Önce eskiler",
     "sortDesc": "Önce yeniler",
