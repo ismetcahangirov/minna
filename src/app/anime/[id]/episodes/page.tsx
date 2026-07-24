@@ -77,6 +77,7 @@ export default async function AnimeEpisodesPage({
           <SeasonSwitcher detail={detail} />
           <EpisodeCards
             animeId={detail.id}
+            animeTitle={detail.title}
             episodes={detail.episodes}
             thumbnail={detail.banner ?? detail.image}
             watchStates={watchStates}
