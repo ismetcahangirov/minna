@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { watchHref } from "@/lib/anime/href";
 import type { AnimeEpisode } from "@/lib/anime/types";
 
 /** Per-episode watched/resume state, keyed by episode id. */
@@ -14,6 +15,8 @@ type WatchState = { completed: boolean; progress: number };
 
 interface EpisodeCardsProps {
   animeId: string;
+  /** Anime title — slugged into the readable watch URL. */
+  animeTitle: string;
   episodes: AnimeEpisode[];
   /** Anime cover used as each card's thumbnail (episodes carry no art). */
   thumbnail: string | null;
@@ -35,6 +38,7 @@ const PAGE_SIZE = 24;
  */
 export function EpisodeCards({
   animeId,
+  animeTitle,
   episodes,
   thumbnail,
   watchStates = {},
@@ -106,7 +110,7 @@ export function EpisodeCards({
           return (
             <li key={episode.id}>
               <Link
-                href={`/watch/${animeId}/${encodeURIComponent(episode.id)}`}
+                href={watchHref(animeId, episode.number, animeTitle)}
                 className="group border-border bg-surface hover:border-primary/60 flex items-center gap-4 border p-3 transition-colors"
               >
                 <div className="border-border bg-muted relative aspect-video w-32 shrink-0 overflow-hidden border sm:w-44">

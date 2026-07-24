@@ -6,10 +6,13 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { watchHref } from "@/lib/anime/href";
 import type { AnimeEpisode } from "@/lib/anime/types";
 
 interface EpisodeListProps {
   animeId: string;
+  /** Anime title — slugged into the readable watch URL. */
+  animeTitle: string;
   episodes: AnimeEpisode[];
 }
 
@@ -19,7 +22,11 @@ interface EpisodeListProps {
  * (built in EPIC-06). Design system: sharp corners, flat surfaces, red accent
  * on hover, lucide icons.
  */
-export function EpisodeList({ animeId, episodes }: EpisodeListProps) {
+export function EpisodeList({
+  animeId,
+  animeTitle,
+  episodes,
+}: EpisodeListProps) {
   const t = useTranslations("detail");
   const [descending, setDescending] = useState(false);
 
@@ -65,7 +72,7 @@ export function EpisodeList({ animeId, episodes }: EpisodeListProps) {
         {ordered.map((episode) => (
           <li key={episode.id}>
             <Link
-              href={`/watch/${animeId}/${encodeURIComponent(episode.id)}`}
+              href={watchHref(animeId, episode.number, animeTitle)}
               className="group border-border bg-surface hover:border-primary/60 hover:bg-muted flex items-center gap-3 border p-3 transition-colors"
             >
               <span className="bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground flex size-9 shrink-0 items-center justify-center text-sm font-bold transition-colors">

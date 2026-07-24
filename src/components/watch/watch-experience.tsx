@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { animeHref } from "@/lib/anime/href";
+import { animeHref, watchHref } from "@/lib/anime/href";
 import type { PreRollAd as PreRollAdData } from "@/lib/ads/queries";
 import { saveWatchProgress } from "@/lib/watch/actions";
 import { cn } from "@/lib/utils";
@@ -75,7 +75,7 @@ export function WatchExperience({
   // Latest playback position, kept in a ref so timeupdate never re-renders.
   const latest = useRef({ position: initialTime, duration: 0 });
   const nextHref = nextEpisode
-    ? `/watch/${animeId}/${encodeURIComponent(nextEpisode.id)}`
+    ? watchHref(animeId, nextEpisode.number, animeTitle)
     : null;
 
   const flushProgress = useCallback(() => {
@@ -173,7 +173,7 @@ export function WatchExperience({
         <EpisodeNavButton
           href={
             prevEpisode
-              ? `/watch/${animeId}/${encodeURIComponent(prevEpisode.id)}`
+              ? watchHref(animeId, prevEpisode.number, animeTitle)
               : null
           }
           label={t("prevEpisode")}

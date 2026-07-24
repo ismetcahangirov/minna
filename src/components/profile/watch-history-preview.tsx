@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
+import { animeSlug, watchHref } from "@/lib/anime/href";
 import type { WatchHistoryItem } from "@/lib/watch/types";
 
 /**
@@ -39,7 +40,11 @@ export async function WatchHistoryPreview({
           {items.map((item, index) => (
             <li key={item.episodeId}>
               <Link
-                href={`/watch/${item.animeId}/${encodeURIComponent(item.episodeId)}`}
+                href={
+                  item.episodeNumber != null
+                    ? watchHref(item.animeId, item.episodeNumber, item.title)
+                    : `/watch/${animeSlug(item.animeId, item.title)}/${encodeURIComponent(item.episodeId)}`
+                }
                 className="group focus-visible:ring-ring block w-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
               >
                 <div className="border-border bg-surface group-hover:border-primary/60 relative aspect-[2/3] overflow-hidden border transition-[transform,border-color] duration-300 group-hover:z-10 group-hover:scale-[1.03]">

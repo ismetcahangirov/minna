@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { EpisodeList } from "@/components/anime/episode-list";
 import { WatchExperience } from "@/components/watch/watch-experience";
 import { getActivePreRollAd } from "@/lib/ads/queries";
 import { getAnimeInfo } from "@/lib/anime/detail";
-import { parseAnimeParam } from "@/lib/anime/href";
+import {
+  parseAnimeParam,
+  parseEpisodeNumber,
+  watchHref,
+} from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeEpisode } from "@/lib/anime/types";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -32,7 +36,18 @@ function locateEpisode(
   known: boolean;
 } | null {
   const ordered = [...episodes].sort((a, b) => a.number - b.number);
-  const index = ordered.findIndex((episode) => episode.id === episodeId);
+
+  // Prefer the readable `episode-{n}` slug; fall back to a legacy opaque id so
+  // old bookmarks and denormalized ids keep resolving (they then 308 to the
+  // canonical slug form below).
+  const number = parseEpisodeNumber(episodeId);
+  let index =
+    number != null
+      ? ordered.findIndex((episode) => episode.number === number)
+      : -1;
+  if (index === -1) {
+    index = ordered.findIndex((episode) => episode.id === episodeId);
+  }
 
   if (index === -1) {
     if (ordered.length > 0) return null; // id not part of this anime → 404
@@ -83,7 +98,7 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `/watch/${detail.id}/${episodeId}` },
+    alternates: { canonical: watchHref(detail.id, number, detail.title) },
     openGraph: { title, description, type: "video.episode", images },
     twitter: {
       card: "summary_large_image",
@@ -112,11 +127,27 @@ export default async function WatchPage({ params }: WatchRouteProps) {
   const located = locateEpisode(detail.episodes, episodeId);
   if (!located) notFound();
 
+  // Keep SEO on one canonical URL: a bare id, stale anime slug, legacy opaque
+  // episode id or bare number 308s to `/watch/{id}-{slug}/episode-{n}`.
+  if (located.known) {
+    const canonical = watchHref(
+      detail.id,
+      located.current.number,
+      detail.title,
+    );
+    if (`/watch/${animeId}/${episodeId}` !== canonical) {
+      permanentRedirect(canonical);
+    }
+  }
+
   const user = await getCurrentUser();
 
   const [ad, progress, t] = await Promise.all([
     getActivePreRollAd(),
-    user?.id ? getWatchProgress(user.id, episodeId) : Promise.resolve(null),
+    // Progress rows are keyed by the resolved episode id, not the URL slug.
+    user?.id
+      ? getWatchProgress(user.id, located.current.id)
+      : Promise.resolve(null),
     getTranslations("player"),
   ]);
 
@@ -163,7 +194,11 @@ export default async function WatchPage({ params }: WatchRouteProps) {
       {/* Full episode list for jumping around (DETAIL-02 reuse). */}
       {detail.episodes.length > 0 && (
         <div className="mt-10">
-          <EpisodeList animeId={detail.id} episodes={detail.episodes} />
+          <EpisodeList
+            animeId={detail.id}
+            animeTitle={detail.title}
+            episodes={detail.episodes}
+          />
         </div>
       )}
     </main>
