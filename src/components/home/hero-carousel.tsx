@@ -4,7 +4,7 @@ import { Info, Play, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { animeHref } from "@/lib/anime/href";
@@ -47,6 +47,21 @@ export function HeroCarousel({
 
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
+  const heroRef = useRef<HTMLElement>(null);
+
+  // On first load the tall hero (min-h 96/123vh) pushes its content below the
+  // fold, so nudge the page down until the hero's bottom (where the title and
+  // actions sit) reaches the viewport bottom. Instant, mount-only.
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el) return;
+    const heroBottom =
+      el.getBoundingClientRect().top + window.scrollY + el.offsetHeight;
+    window.scrollTo({
+      top: Math.max(0, heroBottom - window.innerHeight),
+      behavior: "auto",
+    });
+  }, []);
 
   // Clamp during render (not via an effect) so the index stays valid if the
   // slide list shrinks after a refetch. The interval self-corrects via modulo.
@@ -67,9 +82,10 @@ export function HeroCarousel({
 
   return (
     <section
+      ref={heroRef}
       aria-roledescription="carousel"
       aria-label={t("carouselLabel")}
-      className="relative h-[68vh] max-h-[760px] min-h-[440px] w-full overflow-hidden bg-black"
+      className="relative min-h-[96vh] w-full overflow-hidden bg-black lg:min-h-[123vh]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -94,13 +110,16 @@ export function HeroCarousel({
                 alt=""
                 fill
                 priority={index === 0}
+                quality={90}
                 sizes="100vw"
                 className="object-cover object-top"
               />
             )}
-            {/* Flat legibility layers (no gradient). */}
-            <div className="absolute inset-0 bg-black/40" />
-            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-black/60" />
+            {/* Legibility scrim + seam — matched to the detail hero: a scrim
+                that ramps gradually to solid black at the bottom, plus a soft
+                shadow seam where the hero meets the sections below. */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[72%] bg-[linear-gradient(to_top,#000_0%,rgba(0,0,0,0.82)_32%,rgba(0,0,0,0.35)_62%,transparent_100%)]" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-px shadow-[0_-1px_28px_10px_rgba(0,0,0,0.85),0_1px_0_0_rgba(255,255,255,0.06)]" />
 
             <div className="relative flex h-full flex-col justify-end">
               <div className="mx-auto w-full max-w-[1600px] px-4 pb-16 sm:px-6 lg:px-8 lg:pb-20">
@@ -148,6 +167,7 @@ export function HeroCarousel({
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Button
                       size="lg"
+                      nativeButton={false}
                       render={<Link href={animeHref(anime.id, anime.title)} />}
                     >
                       <Play className="fill-current" aria-hidden />
@@ -156,6 +176,7 @@ export function HeroCarousel({
                     <Button
                       size="lg"
                       variant="outline"
+                      nativeButton={false}
                       render={<Link href={animeHref(anime.id, anime.title)} />}
                     >
                       <Info aria-hidden />
