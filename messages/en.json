@@ -72,7 +72,8 @@
       "movie": "Movie",
       "ova": "OVA",
       "special": "Specials",
-      "episodes": "{count} ep"
+      "episodes": "{count} ep",
+      "viewEpisodes": "View all episodes"
     },
     "info": {
       "type": "Type",

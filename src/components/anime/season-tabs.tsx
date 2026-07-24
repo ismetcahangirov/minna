@@ -1,9 +1,10 @@
-import { Film } from "lucide-react";
+import { Film, ListVideo } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
+import { Button } from "@/components/ui/button";
 import { animeEpisodesHref } from "@/lib/anime/href";
 import { type AnimeSeason, getAnimeSeasons } from "@/lib/anime/seasons";
 import type { AnimeDetail } from "@/lib/anime/types";
@@ -109,13 +110,34 @@ function SeasonTabsSkeleton() {
   );
 }
 
-/** Resolves the season chain and renders the switcher, or nothing when the
- * title stands alone. Fetching is deferred behind {@link Suspense} so the slow
- * relation walk never blocks the detail page's first paint. */
+/**
+ * Standalone-title fallback: when the anime has no related seasons the switcher
+ * would leave an empty gap, so instead surface a button straight to this
+ * title's episodes page. Rendered only when there are episodes to show.
+ */
+async function EpisodesLink({ detail }: { detail: AnimeDetail }) {
+  const t = await getTranslations("detail.seasons");
+  return (
+    <Button
+      size="lg"
+      nativeButton={false}
+      render={<Link href={animeEpisodesHref(detail.id, detail.title)} />}
+    >
+      <ListVideo aria-hidden />
+      {t("viewEpisodes")}
+    </Button>
+  );
+}
+
+/** Resolves the season chain and renders the switcher. A title with fewer than
+ * two related seasons stands alone, so it falls back to a direct episodes-page
+ * button (or nothing when it has no episodes). Fetching is deferred behind
+ * {@link Suspense} so the slow relation walk never blocks the first paint. */
 async function SeasonTabsResolver({ detail }: { detail: AnimeDetail }) {
   const seasons = await getAnimeSeasons(detail);
-  if (seasons.length < 2) return null;
-  return <SeasonTabs seasons={seasons} />;
+  if (seasons.length >= 2) return <SeasonTabs seasons={seasons} />;
+  if (detail.episodes.length === 0) return null;
+  return <EpisodesLink detail={detail} />;
 }
 
 /** Public entry: the streamed season switcher for the detail page. */

@@ -72,7 +72,8 @@
       "movie": "Film",
       "ova": "OVA",
       "special": "Özel bölümler",
-      "episodes": "{count} bölüm"
+      "episodes": "{count} bölüm",
+      "viewEpisodes": "Tüm bölümler"
     },
     "info": {
       "type": "Tür",
