@@ -72,7 +72,8 @@
       "movie": "Фильм",
       "ova": "OVA",
       "special": "Спецвыпуски",
-      "episodes": "{count} эп."
+      "episodes": "{count} эп.",
+      "viewEpisodes": "Все эпизоды"
     },
     "info": {
       "type": "Тип",
