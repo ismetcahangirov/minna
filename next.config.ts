@@ -17,6 +17,9 @@ const nextConfig: NextConfig = {
     // format for unsupported browsers (PERF-02). AVIF/WebP shrink the
     // poster/banner artwork substantially versus the source JPEG/PNG.
     formats: ["image/avif", "image/webp"],
+    // Allow the hero banners to request a higher quality than the default 75.
+    // Next 16 rejects any `quality` prop not listed here and falls back to 75.
+    qualities: [75, 90],
     // Cache optimized remote images for a day; the AniList CDN artwork is
     // effectively immutable, so re-optimizing on every revalidation is waste.
     minimumCacheTTL: 86_400,

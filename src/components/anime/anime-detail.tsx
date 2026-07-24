@@ -5,7 +5,8 @@ import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
 import { FavoriteButton } from "@/components/anime/favorite-button";
-import { ParallaxBanner } from "@/components/anime/parallax-banner";
+import { DetailBanner } from "@/components/anime/detail-banner";
+import { HeroInitialScroll } from "@/components/anime/hero-initial-scroll";
 import { SeasonSwitcher } from "@/components/anime/season-tabs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
@@ -73,16 +74,20 @@ export async function AnimeDetailView({
   return (
     <article className="flex flex-col">
       <JsonLd data={buildAnimeJsonLd(detail)} />
+      <HeroInitialScroll targetId="detail-body" viewportRatio={0.62} />
       {/* Hero */}
-      <section className="relative flex min-h-[64vh] w-full items-end overflow-hidden bg-black lg:min-h-[82vh]">
-        {backdrop && <ParallaxBanner src={backdrop} />}
-        {/* Flat legibility layers — no gradient (design system). */}
-        <div className="absolute inset-0 bg-black/50" />
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-black/70" />
+      <section className="relative flex min-h-[96vh] w-full items-end overflow-hidden bg-black lg:min-h-[123vh]">
+        {backdrop && <DetailBanner src={backdrop} />}
+        {/* Legibility scrim: transparent up top, ramping gradually to solid black
+            at the bottom where the title/actions sit — no hard seam on the banner. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[72%] bg-[linear-gradient(to_top,#000_0%,rgba(0,0,0,0.82)_32%,rgba(0,0,0,0.35)_62%,transparent_100%)]" />
         {/* Soft shadow seam where the banner meets the details below. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-px shadow-[0_-1px_28px_10px_rgba(0,0,0,0.85),0_1px_0_0_rgba(255,255,255,0.06)]" />
 
-        <div className="relative mx-auto w-full max-w-[1600px] px-4 pt-24 pb-10 sm:px-6 lg:px-8 lg:pt-28">
+        <div
+          id="hero-info"
+          className="relative mx-auto w-full max-w-[1600px] px-4 pt-48 pb-10 sm:px-6 lg:px-8 lg:pt-64"
+        >
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:gap-8">
             {/* Poster */}
             <div className="border-border bg-surface relative aspect-[2/3] w-36 shrink-0 self-start overflow-hidden border sm:w-44 lg:w-52">
@@ -182,7 +187,10 @@ export async function AnimeDetailView({
       </section>
 
       {/* Body */}
-      <div className="mx-auto w-full max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8">
+      <div
+        id="detail-body"
+        className="mx-auto w-full max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8"
+      >
         <div className="grid gap-10 md:grid-cols-3">
           <div className="flex flex-col gap-10 md:col-span-2">
             {synopsis && (

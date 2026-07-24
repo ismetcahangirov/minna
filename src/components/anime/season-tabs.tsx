@@ -39,7 +39,7 @@ async function SeasonTabs({ seasons }: { seasons: AnimeSeason[] }) {
       <h2 className="text-foreground mb-3 text-lg font-bold tracking-tight sm:text-xl">
         {t("heading")}
       </h2>
-      <ul className="flex [scrollbar-width:none] gap-3 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
+      <ul className="flex flex-wrap gap-3 pb-1">
         {seasons.map((season) => (
           <li key={season.id} className="shrink-0">
             <Link

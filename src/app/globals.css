@@ -149,6 +149,24 @@
   html {
     @apply font-sans;
   }
+
+  /* Global scrollbars: very thin, no track background, Netflix-red thumb.
+     Kept in `base` so `scrollbar-*` / `::-webkit-scrollbar` utilities (e.g.
+     intentionally hidden strips) still override these defaults. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--primary);
+  }
 }
 
 /* Atmospheric background — search page (SEARCH-03). A slow teal "breathing"
