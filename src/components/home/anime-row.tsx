@@ -2,7 +2,10 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
-import { AnimeCard, AnimeCardSkeleton } from "@/components/anime/anime-card";
+import {
+  AnimePosterCard,
+  AnimePosterCardSkeleton,
+} from "@/components/anime/anime-poster-card";
 import { AnimeCarousel } from "@/components/home/anime-carousel";
 import { getAnimeSection } from "@/lib/anime/catalog";
 import type { AnimeSection } from "@/lib/anime/types";
@@ -19,17 +22,17 @@ interface AnimeRowProps {
   priority?: boolean;
 }
 
-// Carousel slides sit ~30% wider than the old rail cards; paired with the
-// {@link AnimeCard} `wide` (2:1) ratio this lands them ~15% taller too.
+// Portrait (2:3) slides sized to match the Popular grid's poster cards, so the
+// home rows and the Popular listing share one card footprint (~180–190px wide).
 const cardWidthClass =
-  "w-[82vw] shrink-0 snap-start sm:w-72 lg:w-[21rem] xl:w-[23rem]";
+  "w-[40vw] shrink-0 snap-start sm:w-44 lg:w-48 xl:w-[11.75rem]";
 // Static rail for the streaming skeleton (no drag/arrows), mirroring the
 // carousel's spacing so streaming the real row in causes no layout shift.
 const skeletonRailClass =
   "flex snap-x gap-4 overflow-x-auto px-4 py-4 sm:gap-5 sm:px-6 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 /**
- * A titled, horizontally scrollable row of {@link AnimeCard}s (HOME-02..05).
+ * A titled, horizontally scrollable row of {@link AnimePosterCard}s (HOME-02..05).
  * Async server component: fetches its own Redis-cached section (SSR) so each
  * row streams independently when wrapped in `<Suspense>`. Renders nothing when
  * the section is empty (e.g. Consumet unavailable) rather than an empty rail.
@@ -44,7 +47,6 @@ export async function AnimeRow({
   if (items.length === 0) return null;
 
   const t = await getTranslations("home");
-  const episodeLabel = t("card.episode");
 
   return (
     <section className="mx-auto w-full max-w-[1600px]">
@@ -69,12 +71,7 @@ export async function AnimeRow({
       >
         {items.map((anime, index) => (
           <div key={`${anime.id}-${index}`} className={cardWidthClass}>
-            <AnimeCard
-              anime={anime}
-              episodeLabel={episodeLabel}
-              wide
-              priority={priority && index < 3}
-            />
+            <AnimePosterCard anime={anime} priority={priority && index < 3} />
           </div>
         ))}
       </AnimeCarousel>
@@ -92,7 +89,7 @@ export function AnimeRowSkeleton() {
       <div className={skeletonRailClass}>
         {Array.from({ length: 6 }).map((_, index) => (
           <div key={index} className={cardWidthClass}>
-            <AnimeCardSkeleton wide />
+            <AnimePosterCardSkeleton />
           </div>
         ))}
       </div>
