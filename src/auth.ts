@@ -35,10 +35,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     // Deny sign-in to blocked accounts (ADMIN-06) before any session is issued.
     // Returning false sends the user to the Auth.js error page. The db is
     // imported dynamically to keep DATABASE_URL out of the build-time graph.
-    async signIn({ user }) {
+    async signIn({ user, account }) {
       const { isBlockedUser } = await import("@/lib/auth/blocked");
       const blocked = await isBlockedUser({
-        googleId: user?.id,
+        // `account.providerAccountId` is the stable Google `sub`; `user.id` is
+        // a per-login value and must not be treated as the external identity.
+        googleId: account?.providerAccountId,
         email: user?.email,
       });
       return !blocked;
@@ -48,11 +50,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     // requests `user` is undefined and the token already holds them, so there
     // is no DB round-trip. The db is imported dynamically so its DATABASE_URL
     // requirement stays out of the build-time module graph.
-    async jwt({ token, user }) {
-      if (user?.id && user.email && user.name) {
+    async jwt({ token, user, account }) {
+      // `account` is only present on sign-in, and `account.providerAccountId`
+      // is the stable Google `sub`. `user.id` here is a per-login random value,
+      // so it must NOT be used as the external identity (doing so made every
+      // returning user collide on the unique `email` and 500 the sign-in).
+      if (account?.providerAccountId && user?.email && user.name) {
         const { syncUser } = await import("@/lib/auth/sync-user");
         const dbUser = await syncUser({
-          googleId: user.id,
+          googleId: account.providerAccountId,
           email: user.email,
           name: user.name,
           image: user.image,

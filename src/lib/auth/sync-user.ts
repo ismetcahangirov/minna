@@ -13,10 +13,15 @@ export interface GoogleProfile {
 
 /**
  * Mirrors the Google user into Neon on every sign-in (AUTH-02): inserts the
- * row on first login and refreshes email/name/image on subsequent logins.
- * Keyed on `google_id` — the stable external identity — so the internal uuid
- * and role stay put across logins. Returns the row so the Auth.js `jwt`
- * callback can cache the internal id + role on the session token.
+ * row on first login and refreshes google_id/name/image on subsequent logins.
+ *
+ * Keyed on `email`, not `google_id`. Both columns are unique, and `email` is
+ * the value that stays stable for a Google account across logins, so it is the
+ * safe conflict target: matching an existing row updates it (and repairs its
+ * `google_id`) instead of attempting an INSERT that the `email` unique
+ * constraint would reject. `role` is intentionally left out of the update set
+ * so an admin promotion survives every future login. Returns the row so the
+ * Auth.js `jwt` callback can cache the internal id + role on the session token.
  */
 export async function syncUser(profile: GoogleProfile): Promise<User> {
   const [user] = await db
@@ -28,9 +33,9 @@ export async function syncUser(profile: GoogleProfile): Promise<User> {
       image: profile.image ?? null,
     })
     .onConflictDoUpdate({
-      target: users.googleId,
+      target: users.email,
       set: {
-        email: profile.email,
+        googleId: profile.googleId,
         name: profile.name,
         image: profile.image ?? null,
         updatedAt: new Date(),
