@@ -1,5 +1,5 @@
 import { BackgroundVideoLayer } from "@/components/backgrounds/background-video-layer";
-import { getBackgroundSources } from "@/lib/backgrounds/queries";
+import { getResolvedBackgroundSources } from "@/lib/backgrounds/queries";
 
 /**
  * Atmospheric search background (SEARCH-03).
@@ -14,7 +14,7 @@ import { getBackgroundSources } from "@/lib/backgrounds/queries";
  * only on this photographic background layer; the search UI on top stays flat.
  */
 export async function SearchBackground() {
-  const sources = await getBackgroundSources("search");
+  const sources = await getResolvedBackgroundSources("search");
 
   return (
     <div
