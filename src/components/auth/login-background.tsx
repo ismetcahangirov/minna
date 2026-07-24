@@ -1,5 +1,5 @@
 import { BackgroundVideoLayer } from "@/components/backgrounds/background-video-layer";
-import { getBackgroundSources } from "@/lib/backgrounds/queries";
+import { getResolvedBackgroundSources } from "@/lib/backgrounds/queries";
 
 /**
  * Atmospheric login background (LOGIN-02).
@@ -20,7 +20,7 @@ import { getBackgroundSources } from "@/lib/backgrounds/queries";
  * only on this photographic background layer; the login card on top stays flat.
  */
 export async function LoginBackground() {
-  const sources = await getBackgroundSources("login");
+  const sources = await getResolvedBackgroundSources("login");
 
   return (
     <div

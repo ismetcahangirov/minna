@@ -10,9 +10,10 @@ import {
   cacheKey,
   cacheSet,
 } from "@/lib/cache";
-import type {
-  BackgroundPage,
-  BackgroundSources,
+import {
+  DEFAULT_BACKGROUNDS,
+  type BackgroundPage,
+  type BackgroundSources,
 } from "@/lib/backgrounds/config";
 
 function key(page: BackgroundPage): string {
@@ -53,6 +54,20 @@ export async function getBackgroundSources(
     console.error("[backgrounds] load failed:", (error as Error).message);
     return {};
   }
+}
+
+/**
+ * Background sources a page actually renders: the code-level Cloudinary
+ * {@link DEFAULT_BACKGROUNDS} for the page, with any active admin override
+ * layered on top per breakpoint variant. This is what the public background
+ * components use — the admin panel still reads raw overrides separately, so an
+ * unset slot correctly shows as "on default" there.
+ */
+export async function getResolvedBackgroundSources(
+  page: BackgroundPage,
+): Promise<BackgroundSources> {
+  const overrides = await getBackgroundSources(page);
+  return { ...DEFAULT_BACKGROUNDS[page], ...overrides };
 }
 
 /** Drops the cached override set for a page so an admin edit surfaces at once. */

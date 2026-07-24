@@ -1,5 +1,5 @@
 import { BackgroundVideoLayer } from "@/components/backgrounds/background-video-layer";
-import { getBackgroundSources } from "@/lib/backgrounds/queries";
+import { getResolvedBackgroundSources } from "@/lib/backgrounds/queries";
 
 /**
  * Atmospheric profile background (PROFILE-02).
@@ -18,7 +18,7 @@ import { getBackgroundSources } from "@/lib/backgrounds/queries";
  * only on this photographic background layer; the profile UI on top stays flat.
  */
 export async function ProfileBackground() {
-  const sources = await getBackgroundSources("profile");
+  const sources = await getResolvedBackgroundSources("profile");
 
   return (
     <div

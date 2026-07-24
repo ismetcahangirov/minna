@@ -1,5 +1,5 @@
 import { BackgroundVideoLayer } from "@/components/backgrounds/background-video-layer";
-import { getBackgroundSources } from "@/lib/backgrounds/queries";
+import { getResolvedBackgroundSources } from "@/lib/backgrounds/queries";
 
 /**
  * Atmospheric 404 background (404-02).
@@ -20,7 +20,7 @@ import { getBackgroundSources } from "@/lib/backgrounds/queries";
  * hard-cornered and glow-free (DESIGN-SPEC.md §6.4).
  */
 export async function NotFoundBackground() {
-  const sources = await getBackgroundSources("not_found");
+  const sources = await getResolvedBackgroundSources("not_found");
 
   return (
     <div

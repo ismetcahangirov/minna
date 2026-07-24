@@ -1,5 +1,5 @@
 import { BackgroundVideoLayer } from "@/components/backgrounds/background-video-layer";
-import { getBackgroundSources } from "@/lib/backgrounds/queries";
+import { getResolvedBackgroundSources } from "@/lib/backgrounds/queries";
 
 /**
  * Default atmospheric background for the admin panel (ADMIN-07). Deliberately
@@ -16,7 +16,7 @@ import { getBackgroundSources } from "@/lib/backgrounds/queries";
  * to this background layer; the dashboard UI on top stays flat and hard-cornered.
  */
 export async function AdminBackground() {
-  const sources = await getBackgroundSources("admin");
+  const sources = await getResolvedBackgroundSources("admin");
 
   return (
     <div
