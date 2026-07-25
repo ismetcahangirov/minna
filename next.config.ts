@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   // dynamic requires). Keep it out of the Server Components bundle and let it
   // load via native require at runtime. See src/lib/consumet/anilist.ts.
   serverExternalPackages: ["@consumet/extensions"],
+  experimental: {
+    // The app rejects files over 10 MB; leave multipart envelope headroom.
+    serverActions: { bodySizeLimit: "11mb" },
+  },
   images: {
     // Consumet's AniList meta provider returns artwork on the AniList CDN.
     // Only these hosts are allowed for next/image optimization (HOME-06/07).

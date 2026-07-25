@@ -49,29 +49,22 @@ page reads only the active pool.
 ### Background videos (`/admin/backgrounds`)
 
 Atmospheric background loops behind the login, profile, search, 404, and admin
-pages. Each page ships a **built-in default in code** — the database only stores
-overrides.
+pages. Each page ships a **built-in default in code**; the database only stores
+admin overrides.
 
 - Each `(page, variant)` slot holds at most one override. Variants are
   `desktop` (default), `mobile`, and `tablet`; the profile page is authored per
   breakpoint, other pages use `desktop`.
-- **Set** an override by providing a `videoUrl` for a slot; **activate /
-  deactivate** it; or **clear** it to fall back to the built-in default. The
-  default can never be destroyed.
-- **Format gate (ADMIN-03):** every supplied video is validated before it can
-  be activated. Constraints:
-
-  | Constraint     | Limit                |
-  | -------------- | -------------------- |
-  | Max file size  | 10 MB                |
-  | Max duration   | 60 seconds           |
-  | Max bitrate    | 5000 kbps            |
-  | Max resolution | 1920 × 1080          |
-  | Containers     | `mp4`, `webm`        |
-  | Codecs         | H.264, VP9, VP8, AV1 |
-
-  You can pre-check an asset from the CLI with `npm run validate:video`, which
-  shares the same constraints as the runtime gate.
+- Choose a video file in the admin panel, then upload it. Direct URLs are not
+  accepted. Files larger than 10 MB are rejected before upload.
+- The server sends the file to Cloudinary as a signed upload, requests an
+  animated WebP derivative, and stores only that WebP URL. Public pages render
+  the converted WebP asset.
+- Set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and
+  `CLOUDINARY_API_SECRET` in `.env.local`. Optionally set
+  `CLOUDINARY_BACKGROUND_FOLDER` to control the source asset folder.
+- Activate / deactivate an existing override, or clear it to fall back to the
+  built-in default. The default can never be destroyed.
 
 ### Blogs (`/admin/blogs`)
 

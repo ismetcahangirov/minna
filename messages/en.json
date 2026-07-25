@@ -138,6 +138,13 @@
       "signedOutTitle": "Sign in to see your favorites",
       "signedOutHint": "Your saved anime are tied to your account. Sign in to view and manage them.",
       "signIn": "Continue with Google"
+    },
+    "genre": {
+      "title": "{genre} Anime",
+      "heading": "{genre} anime",
+      "subtitle": "Popular {genre} titles from the catalog.",
+      "empty": "Nothing in this genre yet",
+      "emptyHint": "Try another category or check back later."
     }
   },
   "profile": {
@@ -280,7 +287,7 @@
     },
     "backgrounds": {
       "title": "Backgrounds",
-      "subtitle": "Set a custom background video per page. Videos are format-checked before they go live; clearing one restores the built-in default.",
+      "subtitle": "Upload a custom background video per page. It is converted to animated WebP while Cloudinary processes it; clearing one restores the built-in default.",
       "pages": {
         "login": "Login",
         "profile": "Profile",
@@ -303,7 +310,7 @@
       "confirmClear": "Reset this background to the built-in default?",
       "videoUrlHint": "Direct mp4/webm URL. Must pass the format check.",
       "errors": {
-        "required": "Enter a video URL.",
+        "required": "Choose a video file.",
         "unreachable": "Couldn't reach that URL.",
         "unsupportedContainer": "Use an mp4 or webm video.",
         "unsupportedCodec": "Unsupported codec. Use H.264 or WebM (VP8/VP9/AV1).",
@@ -311,8 +318,14 @@
         "bitrateTooHigh": "Bitrate is too high for a background.",
         "dimensionsTooLarge": "Resolution is too high (max 1920x1080).",
         "tooLong": "Video is too long for a background loop (max 60s).",
-        "saveFailed": "Couldn't save. Please try again."
-      }
+        "saveFailed": "Couldn't save. Please try again.",
+        "invalidFile": "Upload a video file.",
+        "cloudinaryMissing": "Cloudinary upload is not configured.",
+        "uploadFailed": "Upload failed. Please try again."
+      },
+      "upload": "Upload video",
+      "uploading": "Uploading...",
+      "videoUploadHint": "Choose a video file. It is converted to animated WebP before it goes live."
     },
     "blogs": {
       "title": "Blogs",
