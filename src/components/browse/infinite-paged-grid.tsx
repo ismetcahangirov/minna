@@ -15,14 +15,16 @@ export interface PageQueryState<T> {
   refetch: () => void;
 }
 
-interface InfinitePagedGridProps<T> {
+interface InfinitePagedGridProps<T, TPageArg = number> {
   /**
    * A React Query hook (passed by reference, e.g. `useGetPopularPageQuery`),
    * called once per render with the current page. Passing the hook itself keeps
    * pagination state inside this shared component while each page supplies its
    * own endpoint — and, being a bare `use…` reference, satisfies rules-of-hooks.
    */
-  usePage: (page: number, options: { skip: boolean }) => PageQueryState<T>;
+  usePage: (page: TPageArg, options: { skip: boolean }) => PageQueryState<T>;
+  /** Maps the page counter to this endpoint query argument. */
+  getPageArg?: (page: number) => TPageArg;
   /** First page rendered on the server (SSR/SEO); client continues from here. */
   initialPage: PagedResult<T>;
   renderItem: (item: T, index: number) => ReactNode;
@@ -51,8 +53,9 @@ interface InfinitePagedGridProps<T> {
  * Pagination is advanced with the render-phase "adjust state on prop change"
  * pattern (no `setState` in effects — an ESLint hard error in this repo).
  */
-export function InfinitePagedGrid<T>({
+export function InfinitePagedGrid<T, TPageArg = number>({
   usePage,
+  getPageArg,
   initialPage,
   renderItem,
   renderSkeleton,
@@ -61,7 +64,7 @@ export function InfinitePagedGrid<T>({
   skeletonCount = 12,
   labels,
   statusIcon,
-}: InfinitePagedGridProps<T>) {
+}: InfinitePagedGridProps<T, TPageArg>) {
   const seedPage = initialPage.page;
   const [page, setPage] = useState(seedPage);
   const [items, setItems] = useState<T[]>(initialPage.items);
@@ -69,7 +72,8 @@ export function InfinitePagedGrid<T>({
   const [hasNextPage, setHasNextPage] = useState(initialPage.hasNextPage);
 
   // Skip the query while showing the server-seeded page; fetch only page N+1 on.
-  const { data, isFetching, isError, refetch } = usePage(page, {
+  const queryArg = getPageArg ? getPageArg(page) : (page as TPageArg);
+  const { data, isFetching, isError, refetch } = usePage(queryArg, {
     skip: page === seedPage,
   });
 

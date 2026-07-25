@@ -1,21 +1,55 @@
 import type { BackgroundSources } from "@/lib/backgrounds/config";
 
+function isAnimatedImageSource(src: string | undefined): src is string {
+  if (!src) return false;
+  const normalized = src.toLowerCase();
+  return (
+    normalized.includes("f_webp") ||
+    normalized.includes("fl_awebp") ||
+    normalized.includes("fl_animated") ||
+    normalized.split("?")[0].endsWith(".webp")
+  );
+}
+
+function BackgroundMedia({
+  src,
+  className,
+}: {
+  src: string;
+  className: string;
+}) {
+  if (isAnimatedImageSource(src)) {
+    return (
+      <span
+        aria-hidden
+        className={`${className} bg-cover bg-center`}
+        style={{ backgroundImage: `url("${src}")` }}
+      />
+    );
+  }
+
+  return (
+    <video
+      className={className}
+      src={src}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+    />
+  );
+}
+
 /**
- * Renders an admin-supplied atmospheric background video over a page's built-in
- * CSS default (ADMIN-04). Full-bleed, `object-cover`, and — per the atmospheric
- * skill — always `muted`, `loop`, `playsinline` and autoplaying so it behaves as
- * a silent decorative layer. Returns `null` when no override exists, leaving the
- * default visible underneath.
+ * Renders an admin-supplied atmospheric background asset over a page's built-in
+ * CSS default (ADMIN-04). Default and legacy overrides remain videos; newly
+ * uploaded admin overrides are stored as animated WebP Cloudinary derivatives
+ * and rendered as a CSS background image.
  *
  * When a page authors separate mobile and desktop sources (profile), both are
  * rendered and toggled by breakpoint; a single source covers every breakpoint,
- * and a missing breakpoint falls back to the other (e.g. login mobile reuses the
- * desktop/tablet video — atmospheric skill rule 5).
- *
- * Videos use `preload="metadata"` rather than `auto` (PERF-02): the browser
- * still fetches enough to autoplay, but the off-breakpoint hidden `<video>` no
- * longer eagerly downloads its full payload, and the visible one does not race
- * the LCP image for bandwidth on first paint.
+ * and a missing breakpoint falls back to the other.
  */
 export function BackgroundVideoLayer({
   sources,
@@ -23,46 +57,19 @@ export function BackgroundVideoLayer({
   sources: BackgroundSources;
 }) {
   const desktop = sources.desktop ?? sources.tablet ?? sources.mobile;
+  if (!desktop) return null;
+
   const mobile = sources.mobile ?? desktop;
-
-  if (!desktop && !mobile) return null;
-
   const common = "absolute inset-0 h-full w-full object-cover";
 
   if (desktop === mobile) {
-    return (
-      <video
-        className={common}
-        src={desktop}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-      />
-    );
+    return <BackgroundMedia className={common} src={desktop} />;
   }
 
   return (
     <>
-      <video
-        className={`${common} lg:hidden`}
-        src={mobile}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-      />
-      <video
-        className={`${common} hidden lg:block`}
-        src={desktop}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-      />
+      <BackgroundMedia className={`${common} lg:hidden`} src={mobile} />
+      <BackgroundMedia className={`${common} hidden lg:block`} src={desktop} />
     </>
   );
 }

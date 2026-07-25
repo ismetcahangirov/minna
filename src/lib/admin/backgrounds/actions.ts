@@ -4,7 +4,11 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { backgroundVideos } from "@/db/schema";
-import { validateBackgroundVideoUrl } from "@/lib/admin/video/validate";
+import {
+  CloudinaryConfigError,
+  uploadBackgroundVideoAsWebp,
+} from "@/lib/admin/backgrounds/cloudinary";
+import { VIDEO_CONSTRAINTS } from "@/lib/admin/video/constraints";
 import { requireAdmin } from "@/lib/auth/admin";
 import {
   isBackgroundPage,
@@ -30,9 +34,9 @@ function guard(page: string, variant: string): boolean {
 }
 
 /**
- * Sets (or replaces) a page/variant background override (ADMIN-04). The url must
- * clear the ADMIN-03 format gate before it is written — an unvalidated video can
- * never be activated. Defaults are untouched; this only upserts the override.
+ * Uploads, converts, and sets a page/variant background override (ADMIN-04).
+ * The original file never becomes a public application asset: only its animated
+ * WebP Cloudinary derivative is stored. Defaults remain untouched.
  */
 export async function setBackgroundVideoAction(
   page: BackgroundPage,
@@ -43,13 +47,19 @@ export async function setBackgroundVideoAction(
   await requireAdmin();
   if (!guard(page, variant)) return { error: "saveFailed" };
 
-  const url = String(formData.get("videoUrl") ?? "").trim();
-  if (!url) return { error: "required" };
-
-  const validation = await validateBackgroundVideoUrl(url);
-  if (!validation.ok) return { error: validation.errors[0] ?? "saveFailed" };
+  const uploaded = formData.get("video");
+  if (!(uploaded instanceof File) || uploaded.size === 0) {
+    return { error: "required" };
+  }
+  if (uploaded.type && !uploaded.type.startsWith("video/")) {
+    return { error: "invalidFile" };
+  }
+  if (uploaded.size > VIDEO_CONSTRAINTS.maxSizeBytes) {
+    return { error: "tooLarge" };
+  }
 
   try {
+    const url = await uploadBackgroundVideoAsWebp(uploaded, page, variant);
     const { db } = await import("@/db");
     await db
       .insert(backgroundVideos)
@@ -59,8 +69,11 @@ export async function setBackgroundVideoAction(
         set: { videoUrl: url, active: true, updatedAt: new Date() },
       });
   } catch (error) {
+    if (error instanceof CloudinaryConfigError) {
+      return { error: "cloudinaryMissing" };
+    }
     console.error("[admin] setBackground failed:", (error as Error).message);
-    return { error: "saveFailed" };
+    return { error: "uploadFailed" };
   }
 
   await invalidateBackground(page);

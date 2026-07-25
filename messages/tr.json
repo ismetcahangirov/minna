@@ -138,6 +138,13 @@
       "signedOutTitle": "Favorilerini görmek için giriş yap",
       "signedOutHint": "Kaydettiğin animeler hesabına bağlıdır. Görüntülemek ve yönetmek için giriş yap.",
       "signIn": "Google ile devam et"
+    },
+    "genre": {
+      "title": "{genre} Anime",
+      "heading": "{genre} animesi",
+      "subtitle": "Katalogdaki popüler {genre} yapımları.",
+      "empty": "Bu türde henüz bir şey yok",
+      "emptyHint": "Başka bir kategori deneyin veya daha sonra tekrar bakın."
     }
   },
   "profile": {
@@ -280,7 +287,7 @@
     },
     "backgrounds": {
       "title": "Arka planlar",
-      "subtitle": "Her sayfa için özel bir arka plan videosu ayarlayın. Videolar yayına girmeden önce format kontrolünden geçer; birini temizlemek yerleşik varsayılanı geri getirir.",
+      "subtitle": "Her sayfa için özel bir arka plan videosu yükleyin. Video Cloudinary işlenirken animasyonlu WebP formatına dönüştürülür; temizlemek yerleşik varsayılanı geri getirir.",
       "pages": {
         "login": "Giriş",
         "profile": "Profil",
@@ -303,7 +310,7 @@
       "confirmClear": "Bu arka plan yerleşik varsayılana sıfırlansın mı?",
       "videoUrlHint": "Doğrudan mp4/webm URL. Format kontrolünden geçmeli.",
       "errors": {
-        "required": "Bir video URL'si girin.",
+        "required": "Bir video dosyası seçin.",
         "unreachable": "URL'ye ulaşılamadı.",
         "unsupportedContainer": "mp4 veya webm video kullanın.",
         "unsupportedCodec": "Desteklenmeyen kodek. H.264 veya WebM (VP8/VP9/AV1) kullanın.",
@@ -311,8 +318,14 @@
         "bitrateTooHigh": "Arka plan için bit hızı çok yüksek.",
         "dimensionsTooLarge": "Çözünürlük çok yüksek (en fazla 1920x1080).",
         "tooLong": "Arka plan döngüsü için video çok uzun (en fazla 60sn).",
-        "saveFailed": "Kaydedilemedi. Lütfen tekrar deneyin."
-      }
+        "saveFailed": "Kaydedilemedi. Lütfen tekrar deneyin.",
+        "invalidFile": "Bir video dosyası yükleyin.",
+        "cloudinaryMissing": "Cloudinary yükleme ayarları eksik.",
+        "uploadFailed": "Yükleme başarısız. Lütfen tekrar deneyin."
+      },
+      "upload": "Video yükle",
+      "uploading": "Yükleniyor...",
+      "videoUploadHint": "Bir video dosyası seçin. Yayına alınmadan önce animasyonlu WebP formatına dönüştürülür."
     },
     "blogs": {
       "title": "Bloglar",
