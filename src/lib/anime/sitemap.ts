@@ -10,6 +10,13 @@ export interface AnimeSitemapEntry {
   title: string;
 }
 
+/** One watch/episode entry for the sitemap. */
+export interface EpisodeSitemapEntry {
+  animeId: string;
+  animeTitle: string;
+  episodeNumber: number;
+}
+
 /**
  * How much of the popular feed to enumerate. AniList exposes no "list all"
  * endpoint, so the sitemap covers the popular head (this many pages) plus every
@@ -97,4 +104,50 @@ export async function listAnimeSitemapEntries(): Promise<AnimeSitemapEntry[]> {
   for (const [id, title] of saved) if (!merged.has(id)) merged.set(id, title);
 
   return [...merged].map(([id, title]) => ({ id, title }));
+}
+
+/**
+ * Enumerates episode watch pages for the sitemap: every distinct
+ * (animeId, episodeNumber) pair recorded in watch_progress. Uses the
+ * denormalized `title` column so no extra Consumet round-trip is needed.
+ * Never throws — a DB outage yields an empty list, not a broken sitemap.
+ */
+export async function listEpisodeSitemapEntries(): Promise<
+  EpisodeSitemapEntry[]
+> {
+  try {
+    const { db } = await import("@/db");
+    const { watchProgress } = await import("@/db/schema");
+
+    const rows = await db
+      .selectDistinct({
+        animeId: watchProgress.animeId,
+        animeTitle: watchProgress.title,
+        episodeNumber: watchProgress.episodeNumber,
+      })
+      .from(watchProgress)
+      .limit(200_000);
+
+    return rows
+      .filter(
+        (
+          r,
+        ): r is {
+          animeId: string;
+          animeTitle: string | null;
+          episodeNumber: number;
+        } => r.episodeNumber !== null,
+      )
+      .map((r) => ({
+        animeId: r.animeId,
+        animeTitle: r.animeTitle ?? "",
+        episodeNumber: r.episodeNumber,
+      }));
+  } catch (error) {
+    console.error(
+      "[sitemap] episode enumeration failed:",
+      (error as Error).message,
+    );
+    return [];
+  }
 }

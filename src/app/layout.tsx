@@ -52,6 +52,9 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "Minna — Watch Anime Online",
       description,
     },
+    verification: {
+      google: "r2Z9CII6sLiZcDu8WO5InBtVXyLJPDet3UoB-jqwVbY",
+    },
   };
 }
 

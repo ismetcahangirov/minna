@@ -1,7 +1,10 @@
 import type { MetadataRoute } from "next";
 
-import { animeHref } from "@/lib/anime/href";
-import { listAnimeSitemapEntries } from "@/lib/anime/sitemap";
+import { animeHref, watchHref } from "@/lib/anime/href";
+import {
+  listAnimeSitemapEntries,
+  listEpisodeSitemapEntries,
+} from "@/lib/anime/sitemap";
 import { listBlogSitemapEntries } from "@/lib/blog/queries";
 import { absoluteUrl } from "@/lib/seo/site";
 
@@ -40,9 +43,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route.priority,
   }));
 
-  const [anime, posts] = await Promise.all([
+  const [anime, posts, episodes] = await Promise.all([
     listAnimeSitemapEntries(),
     listBlogSitemapEntries(),
+    listEpisodeSitemapEntries(),
   ]);
 
   const animeEntries: MetadataRoute.Sitemap = anime.map((entry) => ({
@@ -59,5 +63,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticEntries, ...animeEntries, ...blogEntries];
+  const watchEntries: MetadataRoute.Sitemap = episodes.map((ep) => ({
+    url: absoluteUrl(watchHref(ep.animeId, ep.episodeNumber, ep.animeTitle)),
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  return [...staticEntries, ...animeEntries, ...blogEntries, ...watchEntries];
 }
