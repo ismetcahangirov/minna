@@ -4,6 +4,11 @@ import type { FavoriteItem } from "@/lib/favorites/types";
 import type { PagedResult } from "@/lib/browse/types";
 import { baseApi } from "@/store/api/base-api";
 
+interface GenrePageArg {
+  slug: string;
+  page: number;
+}
+
 /**
  * Client-side pagination endpoints for the infinite-scroll pages (EPIC-08):
  * Popular, Blogs and Favorites. All extend the single app-wide `baseApi` (never
@@ -20,6 +25,15 @@ export const browseApi = baseApi.injectEndpoints({
       query: (page) => ({ url: `/anime/popular`, params: { page } }),
       providesTags: (_result, _error, page) => [
         { type: "Anime" as const, id: `popular:${page}` },
+      ],
+    }),
+    getGenrePage: builder.query<PagedResult<AnimeSummary>, GenrePageArg>({
+      query: ({ slug, page }) => ({
+        url: `/anime/genre/${encodeURIComponent(slug)}`,
+        params: { page },
+      }),
+      providesTags: (_result, _error, { slug, page }) => [
+        { type: "Anime" as const, id: `genre:${slug}:${page}` },
       ],
     }),
     getBlogPage: builder.query<PagedResult<BlogSummary>, number>({
@@ -39,6 +53,7 @@ export const browseApi = baseApi.injectEndpoints({
 
 export const {
   useGetPopularPageQuery,
+  useGetGenrePageQuery,
   useGetBlogPageQuery,
   useGetFavoritesPageQuery,
 } = browseApi;

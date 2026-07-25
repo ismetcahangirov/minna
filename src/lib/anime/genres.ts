@@ -51,3 +51,13 @@ export function toCategories(names: readonly string[]): Category[] {
     .filter(Boolean)
     .map((name) => ({ name, slug: toSlug(name) }));
 }
+
+/** Resolves a category slug back to the canonical AniList genre entry. */
+export function findCategoryBySlug(slug: string): Category | null {
+  const normalized = toSlug(slug);
+  return (
+    toCategories(ANIME_GENRES).find(
+      (category) => category.slug === normalized,
+    ) ?? null
+  );
+}
