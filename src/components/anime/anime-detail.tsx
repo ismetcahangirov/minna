@@ -192,7 +192,7 @@ export async function AnimeDetailView({
         className="mx-auto w-full max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8"
       >
         <div className="grid gap-10 md:grid-cols-3">
-          <div className="flex flex-col gap-10 md:col-span-2">
+          <div className="flex min-w-0 flex-col gap-10 md:col-span-2">
             {synopsis && (
               <section>
                 <h2 className="text-foreground mb-3 text-lg font-bold tracking-tight sm:text-xl">
