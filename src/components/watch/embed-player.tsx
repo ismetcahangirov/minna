@@ -5,6 +5,9 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+/** Seconds to wait for the embed to load before showing the unavailable state. */
+const EMBED_LOAD_TIMEOUT_MS = 20_000;
+
 import { cn } from "@/lib/utils";
 
 /** Audio track the embed serves: original-with-subtitles or dubbed. */
@@ -55,11 +58,7 @@ export function EmbedPlayer({
   const [activated, setActivated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errored, setErrored] = useState(false);
-  // Raised after a pop-up ad steals focus. The embed can be left mid-drag on its
-  // seek bar (its mouseup is lost when a new tab takes over), so the first mouse
-  // move on return scrubs the video. A guard over the frame absorbs that stray
-  // move until the viewer clicks to resume — the click never reaches the embed.
-  const [recovering, setRecovering] = useState(false);
+  const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Remembers the last src we already reported "ended" for, so `complete` fires
   // onEnded once per episode. Written from the message callback (never render).
   const endedForSrc = useRef<string | null>(null);
@@ -70,13 +69,12 @@ export function EmbedPlayer({
 
   // Reset transient UI state when the source changes (episode or audio switch)
   // via the render-phase "adjust state" pattern — this repo forbids setState in
-  // effects (react-hooks/set-state-in-effect) and ref writes during render.
+  // effects (react-hooks/set-state-in-effect).
   const [trackedSrc, setTrackedSrc] = useState(src);
   if (trackedSrc !== src) {
     setTrackedSrc(src);
     setLoading(true);
     setErrored(false);
-    setRecovering(false);
   }
 
   // Bridge the embed's postMessage telemetry. The exact envelope isn't
@@ -110,24 +108,28 @@ export function EmbedPlayer({
     return () => window.removeEventListener("message", handleMessage);
   }, [onProgress, onEnded, src]);
 
-  // When a pop-up ad opens a new tab, ours goes hidden — that's the moment the
-  // embed's seek-bar drag gets orphaned. Raise the recovery guard so the return
-  // mouse move can't scrub. (Only while playing; a plain tab switch just shows
-  // the "click to resume" guard, which is harmless.)
+  // Start a load timeout whenever the iframe becomes active and loading.
+  // Cross-origin iframes don't propagate 404s to onLoad/onError, so a timeout
+  // is the only reliable way to detect a broken/missing embed.
   useEffect(() => {
-    if (!activated) return;
-    function onVisibilityChange() {
-      if (document.hidden) setRecovering(true);
-    }
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [activated]);
+    if (!activated || !loading || errored) return;
+
+    const timer = setTimeout(() => {
+      setErrored(true);
+      setLoading(false);
+    }, EMBED_LOAD_TIMEOUT_MS);
+    loadTimerRef.current = timer;
+
+    return () => {
+      clearTimeout(timer);
+      loadTimerRef.current = null;
+    };
+  }, [activated, loading, errored, src]);
 
   const selectLang = useCallback((next: AudioLang) => setLang(next), []);
 
   return (
-    <div className="relative aspect-video w-full bg-black">
+    <div className="relative aspect-[16/6.75] w-full bg-black">
       {errored ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center">
           <p className="text-foreground text-base font-semibold">
@@ -146,7 +148,14 @@ export function EmbedPlayer({
             className="absolute inset-0 size-full border-0"
             allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
             allowFullScreen
-            onLoad={() => setLoading(false)}
+            onLoad={() => {
+              // Clear the timeout — embed loaded successfully.
+              if (loadTimerRef.current !== null) {
+                clearTimeout(loadTimerRef.current);
+                loadTimerRef.current = null;
+              }
+              setLoading(false);
+            }}
           />
         )
       )}
@@ -208,21 +217,6 @@ export function EmbedPlayer({
           label={t("dubbed")}
         />
       </div>
-
-      {/* Recovery guard: covers the whole frame after an ad stole focus, so the
-          return mouse move can't reach the embed's stuck seek bar and scrub. The
-          click that dismisses it is absorbed here, never reaching the embed. */}
-      {activated && recovering && !errored && (
-        <button
-          type="button"
-          onClick={() => setRecovering(false)}
-          className="absolute inset-0 z-50 flex items-center justify-center bg-black/60"
-        >
-          <span className="border border-white/20 bg-black/80 px-4 py-2 text-sm font-semibold text-white">
-            {t("resumePlayback")}
-          </span>
-        </button>
-      )}
     </div>
   );
 }

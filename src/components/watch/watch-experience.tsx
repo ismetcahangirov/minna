@@ -145,7 +145,7 @@ export function WatchExperience({
             onEnded={handleEnded}
           />
         ) : (
-          <div className="relative aspect-video w-full bg-black">
+          <div className="relative aspect-[16/6.75] w-full bg-black">
             {poster && (
               <Image
                 src={poster}

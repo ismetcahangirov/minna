@@ -19,7 +19,7 @@ interface AnimeCarouselProps {
 }
 
 const railClass =
-  "flex snap-x snap-proximity gap-4 overflow-x-auto scroll-smooth scroll-pl-4 px-4 py-4 sm:gap-5 sm:scroll-pl-6 sm:px-6 lg:scroll-pl-8 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+  "flex snap-x snap-proximity gap-4 overflow-x-auto scroll-smooth py-4 sm:gap-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 /**
  * Swipeable card carousel for the home rows (HOME-02..05). Wraps a native
@@ -110,6 +110,18 @@ export function AnimeCarousel({
     }
   };
 
+  const handlePrev = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    page(-1);
+  };
+
+  const handleNext = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    page(1);
+  };
+
   return (
     <div className="relative">
       <div
@@ -127,14 +139,15 @@ export function AnimeCarousel({
       <button
         type="button"
         aria-label={prevLabel}
-        onClick={() => page(-1)}
+        onClick={handlePrev}
+        onPointerDown={(e) => e.stopPropagation()}
         className={cn(
-          "absolute top-1/2 left-0 z-20 hidden -translate-y-1/2 items-center justify-center px-1 text-white/50 transition-opacity duration-200 hover:text-white sm:flex",
+          "group absolute inset-y-0 left-0 z-20 hidden w-12 items-center justify-center bg-gradient-to-r from-black/70 via-black/30 to-transparent px-2 text-white/70 transition-all duration-200 hover:from-black/85 hover:via-black/50 hover:text-white sm:flex sm:w-14 lg:w-16",
           canLeft ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       >
         <ChevronLeft
-          className="size-10 lg:size-12"
+          className="size-8 transition-transform duration-200 group-hover:scale-110 sm:size-10 lg:size-11"
           strokeWidth={2.5}
           aria-hidden
         />
@@ -143,14 +156,15 @@ export function AnimeCarousel({
       <button
         type="button"
         aria-label={nextLabel}
-        onClick={() => page(1)}
+        onClick={handleNext}
+        onPointerDown={(e) => e.stopPropagation()}
         className={cn(
-          "absolute top-1/2 right-0 z-20 hidden -translate-y-1/2 items-center justify-center px-1 text-white/50 transition-opacity duration-200 hover:text-white sm:flex",
+          "group absolute inset-y-0 right-0 z-20 hidden w-12 items-center justify-center bg-gradient-to-l from-black/70 via-black/30 to-transparent px-2 text-white/70 transition-all duration-200 hover:from-black/85 hover:via-black/50 hover:text-white sm:flex sm:w-14 lg:w-16",
           canRight ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       >
         <ChevronRight
-          className="size-10 lg:size-12"
+          className="size-8 transition-transform duration-200 group-hover:scale-110 sm:size-10 lg:size-11"
           strokeWidth={2.5}
           aria-hidden
         />

@@ -121,6 +121,13 @@
       "empty": "Henüz gösterilecek bir şey yok",
       "emptyHint": "Katalog kullanılabilir olduğunda popüler animeler burada görünecek."
     },
+    "new": {
+      "title": "Yeni",
+      "heading": "Yeni animeler",
+      "subtitle": "En son eklenenler — en yeni yayınlar, önce yeniler.",
+      "empty": "Henüz gösterilecek bir şey yok",
+      "emptyHint": "Katalog kullanılabilir olduğunda yeni animeler burada görünecek."
+    },
     "blogs": {
       "title": "Blog",
       "heading": "Blogdan",
