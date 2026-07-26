@@ -18,13 +18,29 @@ type AudioLang = "sub" | "dub";
  * deliberately not a server-side scrape: the anime source sites block datacenter
  * IPs (Cloudflare 403), so any host-side fetch fails, but the same request from
  * a real browser succeeds. Addressing by AniList id + episode number matches the
- * synthesized episode list (see `@/lib/anime/detail`).
+ * synthesized episode list (see `@/lib/anime/detail`). MegaPlay's AniList-id
+ * mapping isn't fully synced with its underlying catalog, so a title can 410/404
+ * on `ani/` while it's actually available — the MAL-id `mal/` route is a second,
+ * independently-synced mapping to the same catalog and recovers those cases.
  */
 const EMBED_ORIGIN = "https://megaplay.buzz";
+
+/**
+ * One embed address to try: MegaPlay resolves a stream from either an AniList
+ * id or a MyAnimeList id, and the two mappings are synced independently — a
+ * title missing from one often still resolves via the other (see the `ani`
+ * vs `mal` route docs at megaplay.buzz/api).
+ */
+interface EmbedCandidate {
+  scheme: "ani" | "mal";
+  value: string;
+}
 
 interface EmbedPlayerProps {
   /** AniList id — the embed maps this + episode number to a stream. */
   animeId: string;
+  /** MyAnimeList id, when AniList has it mapped — the fallback embed key. */
+  malId: number | null;
   episodeNumber: number;
   animeTitle: string;
   poster: string | null;
@@ -42,6 +58,7 @@ interface EmbedPlayerProps {
  */
 export function EmbedPlayer({
   animeId,
+  malId,
   episodeNumber,
   animeTitle,
   poster,
@@ -63,19 +80,49 @@ export function EmbedPlayer({
   // onEnded once per episode. Written from the message callback (never render).
   const endedForSrc = useRef<string | null>(null);
 
-  const src = `${EMBED_ORIGIN}/stream/ani/${encodeURIComponent(
-    animeId,
+  // Candidate embed addresses to try in order (ani id, then MAL id). The two
+  // mappings are synced independently on MegaPlay's side, so a title 410/404ing
+  // on one often still resolves on the other.
+  const candidates: EmbedCandidate[] = [{ scheme: "ani", value: animeId }];
+  if (malId != null) candidates.push({ scheme: "mal", value: String(malId) });
+
+  const [attemptIndex, setAttemptIndex] = useState(0);
+  const attempt = candidates[Math.min(attemptIndex, candidates.length - 1)];
+  const src = `${EMBED_ORIGIN}/stream/${attempt.scheme}/${encodeURIComponent(
+    attempt.value,
   )}/${episodeNumber}/${lang}?autostart=true`;
 
-  // Reset transient UI state when the source changes (episode or audio switch)
-  // via the render-phase "adjust state" pattern — this repo forbids setState in
-  // effects (react-hooks/set-state-in-effect).
+  // Reset the fallback attempt when the episode or audio track changes — a new
+  // episode should always start over from the primary (`ani`) address rather
+  // than inheriting a fallback an earlier episode landed on.
+  const identity = `${animeId}:${episodeNumber}:${lang}`;
+  const [trackedIdentity, setTrackedIdentity] = useState(identity);
+  if (trackedIdentity !== identity) {
+    setTrackedIdentity(identity);
+    setAttemptIndex(0);
+  }
+
+  // Reset transient UI state when the source changes (episode/audio switch, or
+  // a fallback advancing to the next candidate) via the render-phase "adjust
+  // state" pattern — this repo forbids setState in effects
+  // (react-hooks/set-state-in-effect).
   const [trackedSrc, setTrackedSrc] = useState(src);
   if (trackedSrc !== src) {
     setTrackedSrc(src);
     setLoading(true);
     setErrored(false);
   }
+
+  // Advances to the next candidate address, or gives up (shows the unavailable
+  // state) once every candidate has failed.
+  const advanceOrFail = useCallback(() => {
+    setAttemptIndex((current) => {
+      if (current < candidates.length - 1) return current + 1;
+      setErrored(true);
+      setLoading(false);
+      return current;
+    });
+  }, [candidates.length]);
 
   // Bridge the embed's postMessage telemetry. The exact envelope isn't
   // contractual, so parse defensively — playback never depends on this, only
@@ -101,12 +148,12 @@ export function EmbedPlayer({
           onEnded();
         }
       }
-      if (type === "error") setErrored(true);
+      if (type === "error") advanceOrFail();
     }
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [onProgress, onEnded, src]);
+  }, [onProgress, onEnded, src, advanceOrFail]);
 
   // Start a load timeout whenever the iframe becomes active and loading.
   // Cross-origin iframes don't propagate 404s to onLoad/onError, so a timeout
@@ -114,17 +161,14 @@ export function EmbedPlayer({
   useEffect(() => {
     if (!activated || !loading || errored) return;
 
-    const timer = setTimeout(() => {
-      setErrored(true);
-      setLoading(false);
-    }, EMBED_LOAD_TIMEOUT_MS);
+    const timer = setTimeout(advanceOrFail, EMBED_LOAD_TIMEOUT_MS);
     loadTimerRef.current = timer;
 
     return () => {
       clearTimeout(timer);
       loadTimerRef.current = null;
     };
-  }, [activated, loading, errored, src]);
+  }, [activated, loading, errored, src, advanceOrFail]);
 
   const selectLang = useCallback((next: AudioLang) => setLang(next), []);
 
