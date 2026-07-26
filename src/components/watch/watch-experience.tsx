@@ -31,6 +31,8 @@ export interface EpisodeRef {
 
 interface WatchExperienceProps {
   animeId: string;
+  /** MyAnimeList id, when known — threaded to the embed's MAL-route fallback. */
+  malId: number | null;
   /** Anime title, denormalized into saved progress for the profile history. */
   animeTitle: string;
   episode: { id: string; number: number; title: string | null };
@@ -56,6 +58,7 @@ const SAVE_INTERVAL_MS = 15_000;
  */
 export function WatchExperience({
   animeId,
+  malId,
   animeTitle,
   episode,
   prevEpisode,
@@ -138,6 +141,7 @@ export function WatchExperience({
         {adDone ? (
           <EmbedPlayer
             animeId={animeId}
+            malId={malId}
             episodeNumber={episode.number}
             animeTitle={animeTitle}
             poster={poster}

@@ -162,6 +162,7 @@ export default async function WatchPage({ params }: WatchRouteProps) {
     <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 pt-20 pb-10 sm:px-6 lg:px-8">
       <WatchExperience
         animeId={detail.id}
+        malId={detail.malId}
         animeTitle={detail.title}
         episode={{
           id: current.id,
