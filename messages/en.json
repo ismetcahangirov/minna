@@ -121,6 +121,13 @@
       "empty": "Nothing to show yet",
       "emptyHint": "Popular anime will appear here once the catalog is available."
     },
+    "new": {
+      "title": "New",
+      "heading": "New anime",
+      "subtitle": "The latest additions — freshly airing titles, newest first.",
+      "empty": "Nothing to show yet",
+      "emptyHint": "New anime will appear here once the catalog is available."
+    },
     "blogs": {
       "title": "Blog",
       "heading": "From the blog",

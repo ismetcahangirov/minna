@@ -27,6 +27,12 @@ export const browseApi = baseApi.injectEndpoints({
         { type: "Anime" as const, id: `popular:${page}` },
       ],
     }),
+    getNewPage: builder.query<PagedResult<AnimeSummary>, number>({
+      query: (page) => ({ url: `/anime/new`, params: { page } }),
+      providesTags: (_result, _error, page) => [
+        { type: "Anime" as const, id: `new:${page}` },
+      ],
+    }),
     getGenrePage: builder.query<PagedResult<AnimeSummary>, GenrePageArg>({
       query: ({ slug, page }) => ({
         url: `/anime/genre/${encodeURIComponent(slug)}`,
@@ -53,6 +59,7 @@ export const browseApi = baseApi.injectEndpoints({
 
 export const {
   useGetPopularPageQuery,
+  useGetNewPageQuery,
   useGetGenrePageQuery,
   useGetBlogPageQuery,
   useGetFavoritesPageQuery,

@@ -29,7 +29,7 @@ const cardWidthClass =
 // Static rail for the streaming skeleton (no drag/arrows), mirroring the
 // carousel's spacing so streaming the real row in causes no layout shift.
 const skeletonRailClass =
-  "flex snap-x gap-4 overflow-x-auto px-4 py-4 sm:gap-5 sm:px-6 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+  "flex snap-x gap-4 overflow-x-auto py-4 sm:gap-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
 /**
  * A titled, horizontally scrollable row of {@link AnimePosterCard}s (HOME-02..05).
@@ -49,8 +49,8 @@ export async function AnimeRow({
   const t = await getTranslations("home");
 
   return (
-    <section className="mx-auto w-full max-w-[1600px]">
-      <div className="flex items-end justify-between px-4 sm:px-6 lg:px-8">
+    <section className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+      <div className="flex items-end justify-between">
         <h2 className="text-foreground text-lg font-bold tracking-tight sm:text-xl">
           {t(`sections.${titleKey}`)}
         </h2>
@@ -82,8 +82,8 @@ export async function AnimeRow({
 /** Streaming fallback for {@link AnimeRow}; mirrors its layout to avoid CLS. */
 export function AnimeRowSkeleton() {
   return (
-    <section className="mx-auto w-full max-w-[1600px]">
-      <div className="px-4 sm:px-6 lg:px-8">
+    <section className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+      <div>
         <div className="bg-surface h-6 w-40 animate-pulse" />
       </div>
       <div className={skeletonRailClass}>

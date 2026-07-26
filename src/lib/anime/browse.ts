@@ -69,6 +69,52 @@ export async function listPopularAnime(
 }
 
 /**
+ * One page of the New/Recent listing for the infinite-scroll /new page.
+ *
+ * Uses the AniList `advancedSearch` provider with `START_DATE_DESC` and
+ * `RELEASING` status so only currently-airing titles appear, newest first.
+ * Read-through Redis cache with a short TTL — new episodes change frequently.
+ */
+export async function listRecentAnime(
+  page: number = 1,
+): Promise<PagedResult<AnimeSummary>> {
+  const current = safePage(page);
+  const key = cacheKey("anime", "recent-page", current, BROWSE_PAGE_SIZE);
+
+  const cached = await cacheGet<PagedResult<AnimeSummary>>(key);
+  if (cached) return cached;
+
+  try {
+    const data = await advancedSearchAnime({
+      sort: ["START_DATE_DESC"],
+      page: current,
+      perPage: BROWSE_PAGE_SIZE,
+    });
+
+    const items = (Array.isArray(data?.results) ? data.results : [])
+      .map(toAnimeSummary)
+      .filter((entry): entry is AnimeSummary => entry !== null)
+      .filter(hasPlayableEpisodes);
+
+    const result: PagedResult<AnimeSummary> = {
+      items,
+      page: current,
+      hasNextPage: data?.hasNextPage === true && items.length > 0,
+    };
+
+    if (items.length > 0) await cacheSet(key, result, CACHE_TTL.short);
+    return result;
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : ((error as { message?: string })?.message ?? String(error));
+    console.error(`[anime] new/recent page ${current} unavailable:`, message);
+    return cached ?? { items: [], page: current, hasNextPage: false };
+  }
+}
+
+/**
  * One genre-filtered listing page for /genre/[slug]. The category slug is
  * resolved to AniList's canonical genre name before calling advancedSearch.
  */
