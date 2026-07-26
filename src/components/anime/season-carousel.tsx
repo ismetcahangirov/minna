@@ -16,6 +16,13 @@ import { animeEpisodesHref } from "@/lib/anime/href";
 import type { AnimeSeason } from "@/lib/anime/seasons";
 import { cn } from "@/lib/utils";
 
+/** How far (px) the peek nudge scrolls before bouncing back. */
+const PEEK_PX = 72;
+/** Delay (ms) before the nudge starts — let the page settle first. */
+const PEEK_DELAY_MS = 600;
+/** How long (ms) before the nudge scrolls back. */
+const PEEK_HOLD_MS = 450;
+
 interface SeasonCarouselProps {
   seasons: AnimeSeason[];
 }
@@ -24,6 +31,9 @@ interface SeasonCarouselProps {
  * Responsive season switcher (DETAIL-02). On mobile and tablet (< lg), renders
  * a horizontal slider rail with touch swipe, mouse drag, and side navigation
  * arrows matching the home page rows. On desktop (lg+), wraps neatly in a grid.
+ *
+ * On first render (mobile/tablet only), performs a short peek nudge so the user
+ * can see at a glance that there are more seasons to scroll through.
  */
 export function SeasonCarousel({ seasons }: SeasonCarouselProps) {
   const t = useTranslations("detail.seasons");
@@ -51,6 +61,7 @@ export function SeasonCarousel({ seasons }: SeasonCarouselProps) {
     return counts[season.kind] > 1 ? `${word} ${season.index}` : word;
   }
 
+  /** Sync left/right overflow indicators with the current scroll position. */
   useEffect(() => {
     const rail = railRef.current;
     if (!rail) return;
@@ -70,6 +81,37 @@ export function SeasonCarousel({ seasons }: SeasonCarouselProps) {
     };
   }, [seasons]);
 
+  /**
+   * Peek nudge: on mobile/tablet, scroll slightly right then bounce back so the
+   * user immediately understands the list is horizontally scrollable.
+   */
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+
+    // Only nudge when there is overflow and we are below the lg breakpoint.
+    const nudgeIfNeeded = () => {
+      if (window.innerWidth >= 1024) return;
+      if (rail.scrollWidth <= rail.clientWidth) return;
+
+      const t1 = setTimeout(() => {
+        rail.scrollTo({ left: PEEK_PX, behavior: "smooth" });
+
+        const t2 = setTimeout(() => {
+          rail.scrollTo({ left: 0, behavior: "smooth" });
+        }, PEEK_HOLD_MS);
+
+        return () => clearTimeout(t2);
+      }, PEEK_DELAY_MS);
+
+      return () => clearTimeout(t1);
+    };
+
+    // Run after layout so scrollWidth is accurate.
+    const raf = requestAnimationFrame(nudgeIfNeeded);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   const page = useCallback((direction: 1 | -1) => {
     const rail = railRef.current;
     if (!rail) return;
@@ -79,6 +121,10 @@ export function SeasonCarousel({ seasons }: SeasonCarouselProps) {
     });
   }, []);
 
+  /**
+   * Mouse-drag handler (pointer type "mouse" only).
+   * Touch scrolling is handled natively via touch-pan-x on the rail.
+   */
   const onPointerDown = (e: PointerEvent<HTMLUListElement>) => {
     if (e.pointerType === "touch" || !railRef.current) return;
     drag.current = {
@@ -127,10 +173,15 @@ export function SeasonCarousel({ seasons }: SeasonCarouselProps) {
         {t("heading")}
       </h2>
 
-      <div className="relative">
+      {/*
+       * Wrapper is strictly bounded to max-w-full with overflow-hidden on mobile/tablet
+       * so the internal flex scroll rail cannot stretch the page layout width.
+       * On lg+ desktop, overflow is visible to allow flex-wrap cards to flow naturally.
+       */}
+      <div className="relative w-full max-w-full overflow-hidden lg:overflow-visible">
         <ul
           ref={railRef}
-          className="flex cursor-grab touch-pan-y snap-x snap-proximity [scrollbar-width:none] gap-3 overflow-x-auto scroll-smooth py-1 select-none [-ms-overflow-style:none] active:cursor-grabbing lg:flex-wrap lg:overflow-visible [&::-webkit-scrollbar]:hidden"
+          className="flex w-full cursor-grab touch-pan-x snap-x snap-proximity [scrollbar-width:none] gap-3 overflow-x-auto scroll-smooth py-1 select-none [-ms-overflow-style:none] active:cursor-grabbing lg:flex-wrap lg:overflow-visible [&::-webkit-scrollbar]:hidden"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
@@ -186,17 +237,16 @@ export function SeasonCarousel({ seasons }: SeasonCarouselProps) {
           ))}
         </ul>
 
-        {/* Right-edge gradient: visible when there is more content to scroll,
-            tells the user at a glance that they can swipe/drag to see more seasons. */}
+        {/* Right-edge gradient fade — indicates more seasons to the right. */}
         <div
           aria-hidden
           className={cn(
-            "pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-black/70 to-transparent transition-opacity duration-300 lg:hidden",
+            "pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-black/80 to-transparent transition-opacity duration-300 lg:hidden",
             canRight ? "opacity-100" : "opacity-0",
           )}
         />
 
-        {/* Side navigation arrows for mobile/tablet slider (< lg) */}
+        {/* Side navigation arrows for mobile/tablet slider (< lg) with pulse animation when more content exists */}
         <button
           type="button"
           aria-label={tHome("prev")}
@@ -221,12 +271,14 @@ export function SeasonCarousel({ seasons }: SeasonCarouselProps) {
           onPointerDown={(e) => e.stopPropagation()}
           className={cn(
             "group absolute inset-y-0 right-0 z-20 flex w-10 items-center justify-center bg-gradient-to-l from-black/80 via-black/40 to-transparent px-1 text-white/70 transition-all duration-200 hover:from-black/90 hover:text-white lg:hidden",
-            canRight ? "opacity-100" : "pointer-events-none opacity-0",
+            canRight
+              ? "animate-pulse opacity-100"
+              : "pointer-events-none opacity-0",
           )}
         >
           <ChevronRight
-            className="size-7 transition-transform duration-200 group-hover:scale-110"
-            strokeWidth={2.5}
+            className="size-7 transition-transform duration-200 group-hover:scale-120"
+            strokeWidth={3}
             aria-hidden
           />
         </button>
