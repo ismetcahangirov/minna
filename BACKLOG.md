@@ -121,7 +121,7 @@ epics → sub-issues → state so the next task is always obvious.
 
 ## Upcoming
 
-### EPIC-08 · Popular / Blogs / Favorites — infinite scroll (#50)
+### EPIC-08 · Popular / Blogs / Favorites / New — infinite scroll (#50)
 
 - [ ] LIST-01 `IntersectionObserver` infinite-scroll hook (shared)
 - [ ] LIST-02 Popular page (vertical cards)
@@ -129,6 +129,18 @@ epics → sub-issues → state so the next task is always obvious.
 - [ ] LIST-04 Favorites page (logged-in only) — consumes the EPIC-05
       `favorites` table / `isFavorite`
 - [ ] LIST-05 Blog detail page
+- [x] LIST-06 New page (vertical cards with infinite scroll) — `/new` route,
+      `listRecentAnime`, `/api/anime/new` API endpoint & `useGetNewPageQuery`
+
+### Recent UI & Player Enhancements
+
+- [x] Home Hero Carousel: Touch drag + pointer swipe gestures, 460x650 mobile
+      portrait cover art, and 40% taller desktop banner height.
+- [x] Home Section Rows: Fixed left-side overflow alignment in `AnimeRow` and
+      `AnimeCarousel`.
+- [x] Embed Player Fallback: Added 20s timeout fallback to `EmbedPlayer` for
+      unresponsive third-party streams and adjusted watch player height by 25%
+      (`aspect-[16/6.75]`).
 
 ### EPIC-09 · Profile Page (#56)
 
