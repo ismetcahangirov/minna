@@ -5,13 +5,12 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-/** Seconds to wait for the embed to load before showing the unavailable state. */
+/** Seconds to wait for a resolved embed to actually load before giving up. */
 const EMBED_LOAD_TIMEOUT_MS = 20_000;
 
+import { resolveEmbedSource } from "@/lib/embed/actions";
+import type { AudioLang, EmbedCandidate } from "@/lib/embed/megaplay";
 import { cn } from "@/lib/utils";
-
-/** Audio track the embed serves: original-with-subtitles or dubbed. */
-type AudioLang = "sub" | "dub";
 
 /**
  * Embed host that resolves a playable stream in the *viewer's* browser. This is
@@ -22,19 +21,14 @@ type AudioLang = "sub" | "dub";
  * mapping isn't fully synced with its underlying catalog, so a title can 410/404
  * on `ani/` while it's actually available — the MAL-id `mal/` route is a second,
  * independently-synced mapping to the same catalog and recovers those cases.
+ *
+ * Which address actually works is resolved server-side (`resolveEmbedSource`)
+ * rather than guessed client-side: MegaPlay's 404 page is a fully valid
+ * document, so a cross-origin iframe's `onLoad` fires for it exactly as it
+ * would for a real player, and no `postMessage` error follows — there is no
+ * client-observable signal that the embed actually failed.
  */
 const EMBED_ORIGIN = "https://megaplay.buzz";
-
-/**
- * One embed address to try: MegaPlay resolves a stream from either an AniList
- * id or a MyAnimeList id, and the two mappings are synced independently — a
- * title missing from one often still resolves via the other (see the `ani`
- * vs `mal` route docs at megaplay.buzz/api).
- */
-interface EmbedCandidate {
-  scheme: "ani" | "mal";
-  value: string;
-}
 
 interface EmbedPlayerProps {
   /** AniList id — the embed maps this + episode number to a stream. */
@@ -73,6 +67,12 @@ export function EmbedPlayer({
   // activated we load the embed with `autostart`, so playback begins from our
   // gesture and the viewer never has to click into the ad-serving frame to start.
   const [activated, setActivated] = useState(false);
+  // The confirmed-working embed address, resolved server-side. `undefined`
+  // while resolving, `null` once resolution comes back empty (neither MegaPlay
+  // id mapping serves this episode).
+  const [candidate, setCandidate] = useState<EmbedCandidate | null | undefined>(
+    undefined,
+  );
   const [loading, setLoading] = useState(true);
   const [errored, setErrored] = useState(false);
   const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -80,49 +80,54 @@ export function EmbedPlayer({
   // onEnded once per episode. Written from the message callback (never render).
   const endedForSrc = useRef<string | null>(null);
 
-  // Candidate embed addresses to try in order (ani id, then MAL id). The two
-  // mappings are synced independently on MegaPlay's side, so a title 410/404ing
-  // on one often still resolves on the other.
-  const candidates: EmbedCandidate[] = [{ scheme: "ani", value: animeId }];
-  if (malId != null) candidates.push({ scheme: "mal", value: String(malId) });
+  const src = candidate
+    ? `${EMBED_ORIGIN}/stream/${candidate.scheme}/${encodeURIComponent(
+        candidate.value,
+      )}/${episodeNumber}/${lang}?autostart=true`
+    : null;
 
-  const [attemptIndex, setAttemptIndex] = useState(0);
-  const attempt = candidates[Math.min(attemptIndex, candidates.length - 1)];
-  const src = `${EMBED_ORIGIN}/stream/${attempt.scheme}/${encodeURIComponent(
-    attempt.value,
-  )}/${episodeNumber}/${lang}?autostart=true`;
-
-  // Reset the fallback attempt when the episode or audio track changes — a new
-  // episode should always start over from the primary (`ani`) address rather
-  // than inheriting a fallback an earlier episode landed on.
-  const identity = `${animeId}:${episodeNumber}:${lang}`;
-  const [trackedIdentity, setTrackedIdentity] = useState(identity);
-  if (trackedIdentity !== identity) {
-    setTrackedIdentity(identity);
-    setAttemptIndex(0);
-  }
-
-  // Reset transient UI state when the source changes (episode/audio switch, or
-  // a fallback advancing to the next candidate) via the render-phase "adjust
-  // state" pattern — this repo forbids setState in effects
-  // (react-hooks/set-state-in-effect).
-  const [trackedSrc, setTrackedSrc] = useState(src);
-  if (trackedSrc !== src) {
-    setTrackedSrc(src);
+  // Reset to "resolving" the moment the episode/audio track changes, via the
+  // render-phase "adjust state" pattern (this repo forbids synchronous
+  // setState in effects — react-hooks/set-state-in-effect) — the effect below
+  // only ever calls setState from its async callback.
+  const resolveKey = `${animeId}:${malId ?? "none"}:${episodeNumber}:${lang}`;
+  const [trackedResolveKey, setTrackedResolveKey] = useState(resolveKey);
+  if (trackedResolveKey !== resolveKey) {
+    setTrackedResolveKey(resolveKey);
+    setCandidate(undefined);
     setLoading(true);
     setErrored(false);
   }
 
-  // Advances to the next candidate address, or gives up (shows the unavailable
-  // state) once every candidate has failed.
-  const advanceOrFail = useCallback(() => {
-    setAttemptIndex((current) => {
-      if (current < candidates.length - 1) return current + 1;
-      setErrored(true);
-      setLoading(false);
-      return current;
-    });
-  }, [candidates.length]);
+  // Resolve which embed address actually works whenever the episode or audio
+  // track changes, but only once the viewer has activated the player — no
+  // point probing MegaPlay for a page view that never presses play.
+  useEffect(() => {
+    if (!activated) return;
+    let cancelled = false;
+
+    resolveEmbedSource(animeId, malId, episodeNumber, lang)
+      .then((resolved) => {
+        if (cancelled) return;
+        if (resolved) {
+          setCandidate(resolved);
+        } else {
+          setCandidate(null);
+          setErrored(true);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCandidate(null);
+        setErrored(true);
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activated, animeId, malId, episodeNumber, lang]);
 
   // Bridge the embed's postMessage telemetry. The exact envelope isn't
   // contractual, so parse defensively — playback never depends on this, only
@@ -148,27 +153,33 @@ export function EmbedPlayer({
           onEnded();
         }
       }
-      if (type === "error") advanceOrFail();
+      if (type === "error") {
+        setErrored(true);
+        setLoading(false);
+      }
     }
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [onProgress, onEnded, src, advanceOrFail]);
+  }, [onProgress, onEnded, src]);
 
-  // Start a load timeout whenever the iframe becomes active and loading.
-  // Cross-origin iframes don't propagate 404s to onLoad/onError, so a timeout
-  // is the only reliable way to detect a broken/missing embed.
+  // Once a resolved candidate is mounted, a load timeout is a pure network-
+  // level safety net (the provider-doesn't-have-it case was already ruled out
+  // server-side) — e.g. the embed is unreachable or hangs mid-load.
   useEffect(() => {
-    if (!activated || !loading || errored) return;
+    if (!activated || !candidate || !loading || errored) return;
 
-    const timer = setTimeout(advanceOrFail, EMBED_LOAD_TIMEOUT_MS);
+    const timer = setTimeout(() => {
+      setErrored(true);
+      setLoading(false);
+    }, EMBED_LOAD_TIMEOUT_MS);
     loadTimerRef.current = timer;
 
     return () => {
       clearTimeout(timer);
       loadTimerRef.current = null;
     };
-  }, [activated, loading, errored, src, advanceOrFail]);
+  }, [activated, candidate, loading, errored]);
 
   const selectLang = useCallback((next: AudioLang) => setLang(next), []);
 
@@ -184,7 +195,8 @@ export function EmbedPlayer({
           </p>
         </div>
       ) : (
-        activated && (
+        activated &&
+        src && (
           <iframe
             key={src}
             src={src}
