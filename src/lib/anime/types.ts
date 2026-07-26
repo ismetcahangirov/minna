@@ -28,6 +28,8 @@ export function isAnimeSection(
 export interface AnimeSummary {
   /** Consumet/AniList id, always a string (used in the `/anime/[id]` route). */
   id: string;
+  /** MyAnimeList id, when known — MegaPlay's `/stream/mal/` fallback key. */
+  malId: number | null;
   title: string;
   /** Portrait cover art. */
   image: string | null;
@@ -59,6 +61,8 @@ export interface ConsumetTitle {
 
 export interface ConsumetAnimeResult {
   id?: string | number | null;
+  /** MyAnimeList id, when AniList has it mapped — a second embed-lookup key. */
+  malId?: number | null;
   title?: ConsumetTitle | string | null;
   image?: string | null;
   cover?: string | null;
@@ -272,6 +276,7 @@ export function toAnimeSummary(
 
   return {
     id,
+    malId: typeof raw.malId === "number" ? raw.malId : null,
     title: pickTitle(raw.title),
     image: raw.image?.trim() || null,
     banner: raw.cover?.trim() || null,
