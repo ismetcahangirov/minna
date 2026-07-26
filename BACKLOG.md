@@ -141,6 +141,9 @@ epics → sub-issues → state so the next task is always obvious.
 - [x] Embed Player Fallback: Added 20s timeout fallback to `EmbedPlayer` for
       unresponsive third-party streams and adjusted watch player height by 25%
       (`aspect-[16/6.75]`).
+- [x] Season Switcher Carousel: Responsive season slider for mobile & tablet
+      (`< lg`) with touch swipe, mouse drag, and side navigation arrows while
+      preserving original card dimensions (`w-28 sm:w-32 aspect-[2/3]`).
 
 ### EPIC-09 · Profile Page (#56)
 
