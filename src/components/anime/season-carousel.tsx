@@ -186,6 +186,16 @@ export function SeasonCarousel({ seasons }: SeasonCarouselProps) {
           ))}
         </ul>
 
+        {/* Right-edge gradient: visible when there is more content to scroll,
+            tells the user at a glance that they can swipe/drag to see more seasons. */}
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-black/70 to-transparent transition-opacity duration-300 lg:hidden",
+            canRight ? "opacity-100" : "opacity-0",
+          )}
+        />
+
         {/* Side navigation arrows for mobile/tablet slider (< lg) */}
         <button
           type="button"
