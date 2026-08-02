@@ -16,9 +16,11 @@ import {
  * {@link AnimeDetail} shape changes so pre-existing entries are ignored rather
  * than served with missing fields. v2 added `relations` (season switcher) —
  * v1 entries lacked it, which silently disabled seasons until their TTL. v3
- * added `malId` (MegaPlay MAL-route fallback key) — v2 entries lacked it.
+ * added `malId` (MegaPlay MAL-route fallback key) — v2 entries lacked it. v4
+ * added relations to Kitsu-sourced records; v3 entries written from Kitsu have
+ * an empty `relations`, which silently disables the season switcher.
  */
-const DETAIL_CACHE_VERSION = "v3";
+const DETAIL_CACHE_VERSION = "v4";
 
 /** The Redis key for one anime's cached detail record. */
 export function animeDetailCacheKey(id: string): string {

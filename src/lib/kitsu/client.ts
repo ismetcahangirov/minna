@@ -4,6 +4,7 @@ import type {
   ConsumetAnimeResult,
   ConsumetInfoResponse,
   ConsumetListResponse,
+  ConsumetRelation,
 } from "@/lib/anime/types";
 
 /**
@@ -503,6 +504,197 @@ export function kitsuTopRated(
   return kitsuAdvancedSearch({ sort: ["SCORE_DESC"], page, perPage });
 }
 
+// --- Relations (season chain) -----------------------------------------------
+
+/**
+ * AniList relation token for each Kitsu media-relationship role.
+ *
+ * The season switcher walks `PREQUEL`/`SEQUEL`; the rest are translated anyway
+ * so a Kitsu-sourced record carries the same vocabulary an AniList-sourced one
+ * does and nothing downstream has to know which provider produced it.
+ */
+const RELATION_ROLES: Record<string, string> = {
+  prequel: "PREQUEL",
+  sequel: "SEQUEL",
+  side_story: "SIDE_STORY",
+  parent_story: "PARENT",
+  full_story: "FULL_STORY",
+  summary: "SUMMARY",
+  alternative_setting: "ALTERNATIVE",
+  alternative_version: "ALTERNATIVE",
+  spinoff: "SPIN_OFF",
+  adaptation: "ADAPTATION",
+  character: "CHARACTER",
+  other: "OTHER",
+};
+
+/** The relations the season walk actually follows. */
+const SEASON_ROLES = new Set(["PREQUEL", "SEQUEL"]);
+
+/** A relation edge resolved far enough to still need its AniList id. */
+interface PendingRelation {
+  kitsuId: string;
+  relationType: string;
+  resource: KitsuResource<KitsuAnimeAttributes>;
+}
+
+/**
+ * Reads a title's `mediaRelationships` edges out of an already-included
+ * document, keeping only anime destinations (a manga adaptation is not a
+ * season) and ordering prequels/sequels first so the walk still works if the
+ * enrichment cap below trims the tail.
+ */
+function collectRelations(
+  resource: KitsuResource<KitsuAnimeAttributes>,
+  index: Map<string, KitsuResource<Record<string, unknown>>>,
+): PendingRelation[] {
+  const edges = relatedResources(
+    resource,
+    "mediaRelationships",
+    "mediaRelationships",
+    index,
+  );
+
+  const pending: PendingRelation[] = [];
+  for (const edge of edges) {
+    const role = edge.attributes?.role;
+    const relationType =
+      typeof role === "string" ? (RELATION_ROLES[role] ?? "OTHER") : "OTHER";
+
+    const ref = edge.relationships?.destination?.data;
+    const destination = Array.isArray(ref) ? ref[0] : ref;
+    if (destination?.type !== "anime" || !destination.id) continue;
+
+    const target = index.get(`anime:${destination.id}`) as
+      KitsuResource<KitsuAnimeAttributes> | undefined;
+    if (!target) continue;
+
+    pending.push({ kitsuId: destination.id, relationType, resource: target });
+  }
+
+  return pending.sort((a, b) => {
+    const aSeason = SEASON_ROLES.has(a.relationType) ? 0 : 1;
+    const bSeason = SEASON_ROLES.has(b.relationType) ? 0 : 1;
+    return aSeason - bSeason;
+  });
+}
+
+/**
+ * Attaches an AniList id to each relation edge.
+ *
+ * Kitsu refuses `include=destination.mappings` — `destination` is polymorphic,
+ * so it cannot be traversed one level further — which means the edges arrive
+ * carrying Kitsu ids only. One batched `filter[id]` lookup (the same trick the
+ * trending listing uses) resolves them all at once. Edges Kitsu cannot map to
+ * AniList are dropped: the app addresses every anime by AniList id, so a
+ * relation without one would link nowhere.
+ */
+async function resolveRelations(
+  pending: PendingRelation[],
+): Promise<ConsumetRelation[]> {
+  if (pending.length === 0) return [];
+
+  // Kitsu caps a page at 20, which bounds the batch; season roles sort first,
+  // so a title with more relations than that keeps the ones the walk needs.
+  const batch = pending.slice(0, KITSU_MAX_PAGE_SIZE);
+
+  const doc = await kitsuFetch<KitsuResource<KitsuAnimeAttributes>[]>(
+    `/anime?filter[id]=${batch.map((entry) => entry.kitsuId).join(",")}` +
+      "&include=mappings&fields[anime]=mappings" +
+      "&fields[mappings]=externalSite,externalId" +
+      `&page[limit]=${batch.length}`,
+  );
+
+  const index = indexIncluded(doc.included);
+  const anilistIds = new Map<string, string>();
+  for (const entry of Array.isArray(doc.data) ? doc.data : []) {
+    if (!entry?.id) continue;
+    const anilistId = externalId(
+      relatedResources(entry, "mappings", "mappings", index),
+      "anilist/anime",
+    );
+    if (anilistId) anilistIds.set(entry.id, anilistId);
+  }
+
+  const relations: ConsumetRelation[] = [];
+  for (const entry of batch) {
+    const anilistId = anilistIds.get(entry.kitsuId);
+    if (!anilistId) continue;
+
+    const attributes = entry.resource.attributes ?? {};
+    const titles = attributes.titles ?? {};
+
+    relations.push({
+      id: anilistId,
+      title: {
+        english: titles.en?.trim() || titles.en_us?.trim() || null,
+        romaji: titles.en_jp?.trim() || null,
+        native: titles.ja_jp?.trim() || null,
+        userPreferred: attributes.canonicalTitle?.trim() || null,
+      },
+      type: toAniListFormat(attributes.subtype),
+      image: pickImage(attributes.posterImage),
+      relationType: entry.relationType,
+    });
+  }
+
+  return relations;
+}
+
+/** Resolves an AniList id to Kitsu's own id through the `mappings` index. */
+async function resolveKitsuId(anilistId: string): Promise<string | null> {
+  const doc = await kitsuFetch<KitsuResource<Record<string, unknown>>[]>(
+    `/mappings?filter[externalSite]=anilist/anime&filter[externalId]=${encodeURIComponent(anilistId)}` +
+      "&include=item&page[limit]=1",
+  );
+
+  return (
+    (doc.included ?? []).find((entry) => entry?.type === "anime" && entry?.id)
+      ?.id ?? null
+  );
+}
+
+/** Sparse fieldset for the season walk: metadata + the relations to traverse. */
+const SEASON_NODE_FIELDS =
+  `fields[anime]=${ANIME_FIELDS},mediaRelationships` +
+  "&fields[mappings]=externalSite,externalId";
+
+/**
+ * One node of the season chain, addressed by its **AniList** id: the title's own
+ * metadata plus its relations, each already carrying an AniList id.
+ *
+ * The Kitsu counterpart of `fetchAniListSeasonNode` — deliberately lighter than
+ * {@link kitsuAnimeInfo} (no categories, studios or synopsis) because the walk
+ * in `@/lib/anime/seasons` only needs each neighbour's title, format, episode
+ * count, poster and its own relations to continue.
+ */
+export async function kitsuSeasonNode(
+  anilistId: string,
+): Promise<ConsumetInfoResponse | null> {
+  const id = anilistId.trim();
+  if (!id) return null;
+
+  const kitsuId = await resolveKitsuId(id);
+  if (!kitsuId) return null;
+
+  const doc = await kitsuFetch<KitsuResource<KitsuAnimeAttributes>>(
+    `/anime/${encodeURIComponent(kitsuId)}` +
+      `?include=mappings,mediaRelationships.destination&${SEASON_NODE_FIELDS}`,
+  );
+
+  const resource = doc.data;
+  if (!resource) return null;
+
+  const index = indexIncluded(doc.included);
+  const summary = toConsumetResult(resource, index, Date.now());
+  if (!summary) return null;
+
+  return {
+    ...summary,
+    relations: await resolveRelations(collectRelations(resource, index)),
+  };
+}
+
 // --- Detail -----------------------------------------------------------------
 
 /** AniList-style season token for a premiere date. */
@@ -541,8 +733,8 @@ function toStudios(
  *
  * Kitsu is keyed by its own ids, so this is a two-step lookup: the AniList id is
  * resolved to a Kitsu id through the `mappings` index, then that record is read
- * with its categories, mappings and studios. Returns `null` when Kitsu has no
- * entry mapped to the id.
+ * with its categories, mappings, studios and relations. Returns `null` when
+ * Kitsu has no entry mapped to the id.
  *
  * No episode list is fetched: on Vercel the streaming scrapers are blocked, so
  * `ensureEpisodes` in `@/lib/anime/detail` synthesizes episodes 1..N from the
@@ -554,18 +746,12 @@ export async function kitsuAnimeInfo(
   const id = anilistId.trim();
   if (!id) return null;
 
-  const mapping = await kitsuFetch<KitsuResource<Record<string, unknown>>[]>(
-    `/mappings?filter[externalSite]=anilist/anime&filter[externalId]=${encodeURIComponent(id)}` +
-      "&include=item&page[limit]=1",
-  );
-
-  const kitsuId = (mapping.included ?? []).find(
-    (entry) => entry?.type === "anime" && entry?.id,
-  )?.id;
+  const kitsuId = await resolveKitsuId(id);
   if (!kitsuId) return null;
 
   const doc = await kitsuFetch<KitsuResource<KitsuAnimeAttributes>>(
-    `/anime/${encodeURIComponent(kitsuId)}?include=mappings,categories,animeProductions.producer`,
+    `/anime/${encodeURIComponent(kitsuId)}` +
+      "?include=mappings,categories,animeProductions.producer,mediaRelationships.destination",
   );
 
   const resource = doc.data;
@@ -592,9 +778,6 @@ export async function kitsuAnimeInfo(
         ? attributes.episodeLength
         : null,
     episodes: null,
-    // Kitsu models sequels/prequels through a separate media-relationships
-    // endpoint that carries no AniList ids, so the season switcher stays empty
-    // on this source rather than linking to entries the app cannot resolve.
-    relations: null,
+    relations: await resolveRelations(collectRelations(resource, index)),
   };
 }

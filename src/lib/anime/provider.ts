@@ -13,9 +13,11 @@ import {
   kitsuAnimeInfo,
   kitsuPopular,
   kitsuRecent,
+  kitsuSeasonNode,
   kitsuTrending,
 } from "@/lib/kitsu/client";
 
+import { fetchAniListSeasonNode } from "@/lib/anime/anilist-graphql";
 import type {
   ConsumetInfoResponse,
   ConsumetListResponse,
@@ -174,6 +176,27 @@ export function fetchAnimeInfo(
     () => anilistAnimeInfo(id),
     () => kitsuAnimeInfo(id),
     (info) => info === null || info === undefined,
+  );
+}
+
+/**
+ * One node of the season chain by AniList id: the title's own metadata plus its
+ * `PREQUEL`/`SEQUEL` relations, which `@/lib/anime/seasons` walks outward.
+ *
+ * The primary here is AniList's GraphQL API directly rather than the Consumet
+ * provider — the season walk needs pure metadata, and Consumet's info call
+ * couples it to a streaming-provider episode mapping that throws on Vercel.
+ * Both sources emit AniList ids and the same relation vocabulary, so the walk
+ * can cross between them mid-chain without noticing.
+ */
+export function fetchSeasonNode(
+  id: string,
+): Promise<ConsumetInfoResponse | null> {
+  return withFallback(
+    `season(${id})`,
+    () => fetchAniListSeasonNode(id),
+    () => kitsuSeasonNode(id),
+    (node) => node === null || node === undefined,
   );
 }
 
