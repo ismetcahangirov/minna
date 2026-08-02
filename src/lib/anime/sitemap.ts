@@ -2,7 +2,7 @@ import "server-only";
 
 import { hasPlayableEpisodes } from "@/lib/anime/episodes";
 import { type AnimeSummary, toAnimeSummary } from "@/lib/anime/types";
-import { advancedSearchAnime } from "@/lib/consumet/anilist";
+import { advancedSearchAnime } from "@/lib/anime/provider";
 
 /** One anime entry for the sitemap: id + title (title builds the slug URL). */
 export interface AnimeSitemapEntry {

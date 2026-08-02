@@ -45,6 +45,10 @@
       "trending": "Trending"
     },
     "seeAll": "See all",
+    "unavailable": {
+      "title": "The catalog is temporarily unavailable",
+      "hint": "Our anime data sources aren't responding right now. Titles will come back automatically as soon as one recovers."
+    },
     "card": {
       "episode": "Ep"
     },

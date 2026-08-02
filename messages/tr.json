@@ -45,6 +45,10 @@
       "trending": "Trend olanlar"
     },
     "seeAll": "Tümünü gör",
+    "unavailable": {
+      "title": "Katalog geçici olarak kullanılamıyor",
+      "hint": "Anime veri kaynaklarımız şu anda yanıt vermiyor. Kaynaklardan biri düzelir düzelmez içerikler otomatik olarak geri gelecek."
+    },
     "card": {
       "episode": "Böl."
     },

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { advancedSearchAnime } from "@/lib/consumet/anilist";
+import { advancedSearchAnime } from "@/lib/anime/provider";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 
 import { hasPlayableEpisodes } from "@/lib/anime/episodes";
@@ -53,9 +53,9 @@ function normalizeGenres(genres: string[] | undefined): string[] {
  * page — the search space is large and volatile, so results are only briefly
  * memoized and empty pages are never cached.
  *
- * Resilient by design: anime data comes from the embedded AniList provider
- * (see `@/lib/consumet/anilist`). If a page cannot be resolved this resolves to
- * an empty page rather than throwing, keeping the search route online.
+ * Resilient by design: anime data comes from `@/lib/anime/provider`, which tries
+ * AniList and falls back to Kitsu. If neither can resolve a page this resolves
+ * to an empty page rather than throwing, keeping the search route online.
  */
 export async function searchAnime({
   query,

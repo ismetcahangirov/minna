@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { AnimeRow, AnimeRowSkeleton } from "@/components/home/anime-row";
+import { CatalogNotice } from "@/components/home/catalog-notice";
 import { HeroSection } from "@/components/home/hero-section";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -45,6 +46,11 @@ export default function Home() {
         </Suspense>
         <Suspense fallback={<AnimeRowSkeleton />}>
           <AnimeRow section="trending" titleKey="trending" />
+        </Suspense>
+
+        {/* Only renders when every section came back empty (total outage). */}
+        <Suspense fallback={null}>
+          <CatalogNotice />
         </Suspense>
       </div>
     </main>

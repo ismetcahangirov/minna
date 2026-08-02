@@ -7,7 +7,7 @@ import {
   fetchPopular,
   fetchRecent,
   fetchTrending,
-} from "@/lib/consumet/anilist";
+} from "@/lib/anime/provider";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 
 import { hasPlayableEpisodes } from "@/lib/anime/episodes";
@@ -73,11 +73,12 @@ async function fetchSection(
  * repeated calls within a single request (e.g. the hero and the trending row
  * both needing "trending") share one result and one cache round-trip.
  *
- * Resilient by design: anime data comes from the embedded AniList provider
- * (see `@/lib/consumet/anilist`). If a listing cannot be resolved this resolves
- * to stale cache (if any) or an empty list rather than throwing, keeping the
- * server-rendered home page online. Empty results are never cached, so a
- * transient outage does not pin an empty section.
+ * Resilient by design: anime data comes from `@/lib/anime/provider`, which tries
+ * AniList and falls back to Kitsu. If neither can resolve a listing this
+ * resolves to stale cache (if any) or an empty list rather than throwing,
+ * keeping the server-rendered home page online — and `CatalogNotice` turns an
+ * all-empty home into an explicit outage state. Empty results are never cached,
+ * so a transient outage does not pin an empty section.
  */
 export const getAnimeSection = cache(
   async (
