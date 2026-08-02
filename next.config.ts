@@ -11,11 +11,14 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "11mb" },
   },
   images: {
-    // Consumet's AniList meta provider returns artwork on the AniList CDN.
-    // Only these hosts are allowed for next/image optimization (HOME-06/07).
+    // Artwork hosts for next/image optimization (HOME-06/07): the AniList CDN
+    // for the primary provider, and Kitsu's for the standby one. An unlisted
+    // host makes the optimizer answer 400, so every poster renders broken while
+    // the page around it looks fine — add the host with the provider.
     remotePatterns: [
       { protocol: "https", hostname: "s4.anilist.co", pathname: "/**" },
       { protocol: "https", hostname: "img.anili.st", pathname: "/**" },
+      { protocol: "https", hostname: "media.kitsu.app", pathname: "/**" },
     ],
     // Serve AVIF first (best compression), then WebP, then the original
     // format for unsupported browsers (PERF-02). AVIF/WebP shrink the
