@@ -1,6 +1,6 @@
 import "server-only";
 
-import { advancedSearchAnime } from "@/lib/consumet/anilist";
+import { advancedSearchAnime } from "@/lib/anime/provider";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 import { BROWSE_PAGE_SIZE, type PagedResult } from "@/lib/browse/types";
 
@@ -23,10 +23,10 @@ function safePage(page: number | undefined): number {
  * listing paginates cleanly with an arbitrary `page`. Read-through Redis cache
  * with a medium TTL — the popular ranking is near-static.
  *
- * Resilient by design: anime data comes from the embedded AniList provider
- * (see `@/lib/consumet/anilist`). If a page cannot be resolved this resolves to
- * stale cache (if any) or an empty page rather than throwing, keeping the page
- * online. Empty pages are never cached.
+ * Resilient by design: anime data comes from `@/lib/anime/provider`, which tries
+ * AniList and falls back to Kitsu. If neither can resolve a page this resolves
+ * to stale cache (if any) or an empty page rather than throwing, keeping the
+ * page online. Empty pages are never cached.
  */
 export async function listPopularAnime(
   page: number = 1,

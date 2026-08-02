@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
-import { fetchAnimeInfo } from "@/lib/consumet/anilist";
+import { fetchAnimeInfo } from "@/lib/anime/provider";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 
 import {
@@ -67,11 +67,11 @@ function ensureEpisodes(detail: AnimeDetail): AnimeDetail {
  * React `cache()` so the page component and `generateMetadata` (DETAIL-04)
  * share a single fetch per request.
  *
- * Resilient by design: anime data comes from the embedded AniList provider (see
- * `@/lib/consumet/anilist`), which maps AniList metadata onto the streaming
- * sub-provider's episode list. If it cannot be resolved this resolves to stale
- * cache (if any) or `null` — the detail route turns a `null` into a 404 rather
- * than crashing the render.
+ * Resilient by design: anime data comes from `@/lib/anime/provider`, which tries
+ * AniList (metadata mapped onto the streaming sub-provider's episode list) and
+ * falls back to Kitsu, addressed by the same AniList id. If neither can resolve
+ * the id this resolves to stale cache (if any) or `null` — the detail route
+ * turns a `null` into a 404 rather than crashing the render.
  */
 export const getAnimeInfo = cache(
   async (id: string): Promise<AnimeDetail | null> => {
