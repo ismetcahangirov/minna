@@ -4,8 +4,8 @@ import { cache } from "react";
 
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 
-import { fetchAniListSeasonNode } from "@/lib/anime/anilist-graphql";
 import { animeDetailCacheKey } from "@/lib/anime/detail";
+import { fetchSeasonNode } from "@/lib/anime/provider";
 import {
   type AnimeDetail,
   type AnimeRelation,
@@ -15,8 +15,10 @@ import {
 /**
  * Season switcher data (DETAIL-02).
  *
- * AniList has no per-title season field — it models seasons as separate anime
- * entries linked by `PREQUEL`/`SEQUEL` relations. `getAnimeSeasons` reconstructs
+ * Neither catalog source has a per-title season field — both model seasons as
+ * separate anime entries linked by `PREQUEL`/`SEQUEL` relations (Kitsu names
+ * them `prequel`/`sequel`, translated in `@/lib/kitsu/client`). Since both emit
+ * AniList ids, a chain can cross sources mid-walk. `getAnimeSeasons` reconstructs
  * the ordered chain by walking those relations outward from the current title
  * (backward through prequels, forward through sequels), so the detail page can
  * render a "Season 1 / 2 / 3" switcher. Each season is its own `/anime/[id]`
@@ -112,19 +114,28 @@ function pickRelation(
 }
 
 /**
+ * Version tag on the lightweight season-meta cache key. Bump it when the node's
+ * provenance or shape changes so pre-existing entries are ignored — v2 is the
+ * first that can come from Kitsu as well as AniList, and v1 entries written
+ * while AniList was down are relation-less dead ends.
+ */
+const SEASON_META_VERSION = "v2";
+
+/**
  * Fetches a neighbour's metadata, preferring an already-warm full detail, then
- * a cached lightweight meta, then a fresh AniList GraphQL fetch. Pure metadata
- * (no streaming provider) — traversal only needs titles/formats/relations.
+ * a cached lightweight meta, then a fresh provider fetch (AniList GraphQL, or
+ * Kitsu when AniList is unavailable). Pure metadata (no streaming provider) —
+ * traversal only needs titles/formats/relations.
  */
 async function fetchNode(id: string): Promise<AnimeDetail | null> {
   const warm = await cacheGet<AnimeDetail>(animeDetailCacheKey(id));
   if (warm) return warm;
 
-  const metaKey = cacheKey("anime", "seasons-meta", id);
+  const metaKey = cacheKey("anime", "seasons-meta", SEASON_META_VERSION, id);
   const cached = await cacheGet<AnimeDetail>(metaKey);
   if (cached) return cached;
 
-  const node = toAnimeDetail(await fetchAniListSeasonNode(id));
+  const node = toAnimeDetail(await fetchSeasonNode(id));
   if (node) await cacheSet(metaKey, node, CACHE_TTL.long);
   return node;
 }
