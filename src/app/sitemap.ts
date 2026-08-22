@@ -1,6 +1,11 @@
 import type { MetadataRoute } from "next";
 
-import { animeHref, watchHref } from "@/lib/anime/href";
+import {
+  animeEpisodesPageHref,
+  animeHref,
+  episodesPageCount,
+  watchHref,
+} from "@/lib/anime/href";
 import {
   listAnimeSitemapEntries,
   listEpisodeSitemapEntries,
@@ -56,6 +61,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // The episodes list of a long series spans several `?page=` URLs — each is a
+  // distinct set of episodes, so each is listed. Titles whose episode count is
+  // unknown contribute their first page only.
+  const episodeListEntries: MetadataRoute.Sitemap = anime.flatMap((entry) => {
+    const pages = entry.episodes ? episodesPageCount(entry.episodes) : 1;
+    return Array.from({ length: pages }, (_, index) => ({
+      url: absoluteUrl(
+        animeEpisodesPageHref(entry.id, entry.title, { page: index + 1 }),
+      ),
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: index === 0 ? 0.7 : 0.5,
+    }));
+  });
+
   const blogEntries: MetadataRoute.Sitemap = posts.map((post) => ({
     url: absoluteUrl(`/blogs/${post.slug}`),
     lastModified: post.updatedAt,
@@ -70,5 +90,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticEntries, ...animeEntries, ...blogEntries, ...watchEntries];
+  return [
+    ...staticEntries,
+    ...animeEntries,
+    ...episodeListEntries,
+    ...blogEntries,
+    ...watchEntries,
+  ];
 }
