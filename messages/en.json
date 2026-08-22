@@ -71,6 +71,14 @@
     "noEpisodes": "Episodes are not available yet.",
     "sortAsc": "Oldest first",
     "sortDesc": "Newest first",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "search": {
+      "placeholder": "Search episodes",
+      "label": "Search episodes by title or number",
+      "clear": "Clear search",
+      "empty": "No episode matches \"{query}\"."
+    },
     "pagination": {
       "label": "Episode pages",
       "previous": "Previous",
@@ -228,6 +236,8 @@
     "unavailableBody": "This episode isn't available from the current source yet. Try another episode or check back soon.",
     "episodeLabel": "Episode {number}",
     "nowPlaying": "Now playing",
+    "prev": "Previous",
+    "next": "Next",
     "prevEpisode": "Previous episode",
     "nextEpisode": "Next episode",
     "backToAnime": "Back to anime",

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
+
 import type {
   ConsumetAnimeResult,
   ConsumetInfoResponse,
@@ -641,17 +643,41 @@ async function resolveRelations(
   return relations;
 }
 
-/** Resolves an AniList id to Kitsu's own id through the `mappings` index. */
+/**
+ * Process-local memo of the AniList → Kitsu id mapping. The mapping never
+ * changes, and every Kitsu call starts with it, so remembering it keeps a
+ * multi-window episode walk from re-resolving the same anime on every request.
+ */
+const kitsuIdMemo = new Map<string, string | null>();
+
+/**
+ * Resolves an AniList id to Kitsu's own id through the `mappings` index, memoized
+ * in-process and in Redis so the lookup costs one request per anime rather than
+ * one per call.
+ */
 async function resolveKitsuId(anilistId: string): Promise<string | null> {
+  const memoized = kitsuIdMemo.get(anilistId);
+  if (memoized !== undefined) return memoized;
+
+  const key = cacheKey("kitsu", "id", anilistId);
+  const cached = await cacheGet<{ id: string | null }>(key);
+  if (cached) {
+    kitsuIdMemo.set(anilistId, cached.id);
+    return cached.id;
+  }
+
   const doc = await kitsuFetch<KitsuResource<Record<string, unknown>>[]>(
     `/mappings?filter[externalSite]=anilist/anime&filter[externalId]=${encodeURIComponent(anilistId)}` +
       "&include=item&page[limit]=1",
   );
 
-  return (
+  const id =
     (doc.included ?? []).find((entry) => entry?.type === "anime" && entry?.id)
-      ?.id ?? null
-  );
+      ?.id ?? null;
+
+  kitsuIdMemo.set(anilistId, id);
+  await cacheSet(key, { id }, id ? CACHE_TTL.long : CACHE_TTL.medium);
+  return id;
 }
 
 /** Sparse fieldset for the season walk: metadata + the relations to traverse. */
@@ -789,6 +815,8 @@ export interface KitsuEpisode {
   number: number;
   title: string | null;
   description: string | null;
+  /** Episode still, when Kitsu has one for it. */
+  image: string | null;
 }
 
 /** Kitsu episode attributes (only the fields the episode cards render). */
@@ -797,6 +825,7 @@ interface KitsuEpisodeAttributes {
   canonicalTitle?: string | null;
   titles?: Record<string, string | null> | null;
   synopsis?: string | null;
+  thumbnail?: KitsuImage | null;
 }
 
 /**
@@ -851,7 +880,7 @@ export async function kitsuEpisodes(
     `/anime/${encodeURIComponent(kitsuId)}/episodes` +
       `?sort=number&page[offset]=${Math.max(0, Math.trunc(offset))}` +
       `&page[limit]=${Math.min(limit, KITSU_MAX_PAGE_SIZE)}` +
-      "&fields[episodes]=number,canonicalTitle,titles,synopsis",
+      "&fields[episodes]=number,canonicalTitle,titles,synopsis,thumbnail",
   );
 
   const resources = Array.isArray(doc.data) ? doc.data : [];
@@ -865,6 +894,7 @@ export async function kitsuEpisodes(
         number,
         title: pickEpisodeTitle(attributes),
         description: attributes.synopsis?.trim() || null,
+        image: pickImage(attributes.thumbnail),
       };
     })
     .filter((episode): episode is KitsuEpisode => episode !== null);

@@ -102,16 +102,19 @@ export function episodesPageCount(total: number): number {
 }
 
 /**
- * Builds an episodes-list URL for one page and sort order. Page 1 in ascending
- * order is the bare canonical path — a param is only added when it changes what
- * is rendered, so the default view keeps exactly one URL.
+ * Builds an episodes-list URL for one page, sort order and search term. Page 1
+ * of the unfiltered list in ascending order is the bare canonical path — a
+ * param is only added when it changes what is rendered, so the default view
+ * keeps exactly one URL.
  */
 export function animeEpisodesPageHref(
   id: string,
   title: string | null | undefined,
-  options: { page?: number; descending?: boolean } = {},
+  options: { page?: number; descending?: boolean; query?: string | null } = {},
 ): string {
   const params = new URLSearchParams();
+  const search = options.query?.trim();
+  if (search) params.set("q", search);
   if (options.page && options.page > 1)
     params.set("page", String(options.page));
   if (options.descending) params.set("order", "desc");
@@ -135,4 +138,24 @@ export function parseEpisodesPageParam(
 
   const page = Number.parseInt(raw, 10);
   return page >= 1 ? page : null;
+}
+
+/**
+ * Longest accepted episode search term. Anything longer is a crawler or a paste
+ * accident rather than a query — it is cut instead of getting its own URL.
+ */
+export const EPISODE_QUERY_MAX_LENGTH = 64;
+
+/**
+ * Reads the `?q=` episode filter: whitespace collapsed and length-capped, or
+ * `null` when nothing searchable remains (missing, blank or repeated params).
+ */
+export function parseEpisodesQueryParam(
+  raw: string | string[] | undefined,
+): string | null {
+  const query =
+    typeof raw === "string"
+      ? raw.replace(/\s+/g, " ").trim().slice(0, EPISODE_QUERY_MAX_LENGTH)
+      : "";
+  return query.length > 0 ? query : null;
 }

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
 import { EpisodeList } from "@/components/anime/episode-list";
+import { WatchEpisodeList } from "@/components/anime/watch-episode-list";
 import { WatchExperience } from "@/components/watch/watch-experience";
 import { getActivePreRollAd } from "@/lib/ads/queries";
 import { getAnimeInfo } from "@/lib/anime/detail";
@@ -58,6 +60,7 @@ function locateEpisode(
         title: null,
         description: null,
         airDate: null,
+        image: null,
       },
       prev: null,
       next: null,
@@ -195,12 +198,26 @@ export default async function WatchPage({ params }: WatchRouteProps) {
       {/* Full episode list for jumping around (DETAIL-02 reuse). */}
       {detail.episodes.length > 0 && (
         <div className="mt-10">
-          <EpisodeList
-            animeId={detail.id}
-            animeTitle={detail.title}
-            episodes={detail.episodes}
-            activeEpisodeNumber={current.number}
-          />
+          {/* Titles for a whole series can take a moment to resolve, so the
+              list streams in: the numbered version below renders at once and
+              is replaced by the titled one when the lookup lands. */}
+          <Suspense
+            fallback={
+              <EpisodeList
+                animeId={detail.id}
+                animeTitle={detail.title}
+                episodes={detail.episodes}
+                activeEpisodeNumber={current.number}
+              />
+            }
+          >
+            <WatchEpisodeList
+              animeId={detail.id}
+              animeTitle={detail.title}
+              episodes={detail.episodes}
+              activeEpisodeNumber={current.number}
+            />
+          </Suspense>
         </div>
       )}
     </main>

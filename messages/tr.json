@@ -71,6 +71,14 @@
     "noEpisodes": "Bölümler henüz mevcut değil.",
     "sortAsc": "Önce eskiler",
     "sortDesc": "Önce yeniler",
+    "showMore": "Daha fazla göster",
+    "showLess": "Daha az göster",
+    "search": {
+      "placeholder": "Bölüm ara",
+      "label": "Bölümleri başlığa veya numaraya göre ara",
+      "clear": "Aramayı temizle",
+      "empty": "\"{query}\" ile eşleşen bölüm yok."
+    },
     "pagination": {
       "label": "Bölüm sayfaları",
       "previous": "Önceki",
@@ -228,6 +236,8 @@
     "unavailableBody": "Bu bölüm şu anki kaynakta henüz mevcut değil. Başka bir bölüm deneyin ya da daha sonra tekrar bakın.",
     "episodeLabel": "Bölüm {number}",
     "nowPlaying": "Şimdi oynatılıyor",
+    "prev": "Önceki",
+    "next": "Sonraki",
     "prevEpisode": "Önceki bölüm",
     "nextEpisode": "Sonraki bölüm",
     "backToAnime": "Animeye dön",

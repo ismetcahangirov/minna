@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { EpisodePagination } from "@/components/anime/episode-pagination";
+import { EpisodeSearch } from "@/components/anime/episode-search";
 import { buttonVariants } from "@/components/ui/button";
 import { animeEpisodesPageHref, watchHref } from "@/lib/anime/href";
 import type { AnimeEpisode } from "@/lib/anime/types";
@@ -20,7 +21,11 @@ interface EpisodeCardsProps {
   episodes: AnimeEpisode[];
   /** Episodes in the whole series (the heading count, not the page's). */
   totalEpisodes: number;
-  /** Anime cover used as each card's thumbnail (episodes carry no art). */
+  /** Episodes the current filter matches (equals `totalEpisodes` when idle). */
+  matchCount: number;
+  /** Active `?q=` search term, empty when the list is unfiltered. */
+  query: string;
+  /** Anime cover, used for episodes no source has a still for. */
   thumbnail: string | null;
   /** Signed-in viewer's watched/resume state per episode id (empty if none). */
   watchStates?: Record<string, WatchState>;
@@ -46,6 +51,8 @@ export async function EpisodeCards({
   animeTitle,
   episodes,
   totalEpisodes,
+  matchCount,
+  query,
   thumbnail,
   watchStates = {},
   page,
@@ -60,33 +67,53 @@ export async function EpisodeCards({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-foreground text-lg font-bold tracking-tight sm:text-xl">
-          {t("episodes")}
-          <span className="text-muted-foreground ml-2 text-sm font-normal">
-            {totalEpisodes}
-          </span>
-        </h2>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-foreground text-lg font-bold tracking-tight sm:text-xl">
+            {t("episodes")}
+            <span className="text-muted-foreground ml-2 text-sm font-normal">
+              {query ? `${matchCount} / ${totalEpisodes}` : totalEpisodes}
+            </span>
+          </h2>
+          {totalEpisodes > 1 && (
+            // Sorting is a URL state like the page is, so the order survives a
+            // reload and pagination always slices the list the viewer sees.
+            <Link
+              href={animeEpisodesPageHref(animeId, animeTitle, {
+                descending: !descending,
+                query,
+              })}
+              scroll={false}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+            >
+              <ArrowDownUp aria-hidden />
+              {descending ? t("sortDesc") : t("sortAsc")}
+            </Link>
+          )}
+        </div>
         {totalEpisodes > 1 && (
-          // Sorting is a URL state like the page is, so the order survives a
-          // reload and pagination always slices the list the viewer sees.
-          <Link
-            href={animeEpisodesPageHref(animeId, animeTitle, {
-              descending: !descending,
-            })}
-            scroll={false}
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
-          >
-            <ArrowDownUp aria-hidden />
-            {descending ? t("sortDesc") : t("sortAsc")}
-          </Link>
+          <EpisodeSearch
+            animeId={animeId}
+            animeTitle={animeTitle}
+            query={query}
+            descending={descending}
+          />
         )}
       </div>
 
-      <ul className="flex flex-col gap-3">
+      {episodes.length === 0 && (
+        <p className="text-muted-foreground border-border bg-surface border p-4 text-sm">
+          {t("search.empty", { query })}
+        </p>
+      )}
+
+      <ul className="flex flex-col gap-3 empty:hidden">
         {episodes.map((episode) => {
           const state = watchStates[episode.id];
           const inProgress = state && !state.completed && state.progress > 0;
+          // The episode's own still when a source has one; the anime art is
+          // the stand-in, which is why every card used to look the same.
+          const art = episode.image ?? thumbnail;
           return (
             <li key={episode.id}>
               <Link
@@ -94,9 +121,9 @@ export async function EpisodeCards({
                 className="group border-border bg-surface hover:border-primary/60 flex items-center gap-4 border p-3 transition-colors"
               >
                 <div className="border-border bg-muted relative aspect-video w-32 shrink-0 overflow-hidden border sm:w-44">
-                  {thumbnail ? (
+                  {art ? (
                     <Image
-                      src={thumbnail}
+                      src={art}
                       alt=""
                       fill
                       sizes="(max-width: 640px) 128px, 176px"
@@ -172,6 +199,7 @@ export async function EpisodeCards({
         page={page}
         totalPages={totalPages}
         descending={descending}
+        query={query}
       />
     </div>
   );
