@@ -11,16 +11,31 @@ import {
   listEpisodeSitemapEntries,
 } from "@/lib/anime/sitemap";
 import { listBlogSitemapEntries } from "@/lib/blog/queries";
+import { cacheKey, getOrSet } from "@/lib/cache";
 import { absoluteUrl } from "@/lib/seo/site";
 
 /**
- * Refresh the sitemap hourly. Anime detail routes are enumerated from the
- * popular feed plus every favorited/watched title (see
- * {@link listAnimeSitemapEntries}); AniList has no "list all" endpoint, so the
- * popular head is a deliberate, logged bound. Auth-only and admin routes are
- * excluded by design — see {@link ./robots}.
+ * Built per request rather than prerendered at build time.
+ *
+ * The catalog sources this enumerates are uncacheable by design: Kitsu — the
+ * standby the whole catalog falls back to whenever AniList disables itself —
+ * fetches with `no-store` so a stale response cannot outlive its Redis entry.
+ * Prerendering a route that touches such a fetch is a build error, so whenever
+ * AniList happened to be down while a deployment built, the export failed and
+ * took the whole deployment with it. Which source answers is not something a
+ * deploy should depend on, so the route is dynamic and the enumeration itself
+ * is cached for an hour (see {@link sitemapEntries}) — a crawler hit costs one
+ * Redis read, and at most one full walk an hour.
+ *
+ * Anime routes come from the popular feed plus every favorited/watched title
+ * (see {@link listAnimeSitemapEntries}); AniList has no "list all" endpoint, so
+ * the popular head is a deliberate, logged bound. Auth-only and admin routes
+ * are excluded by design — see {@link ./robots}.
  */
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+
+/** How long one enumeration of the catalog is reused for. */
+const SITEMAP_TTL = 3600;
 
 /** The publicly crawlable static routes and their crawl hints. */
 const STATIC_ROUTES: ReadonlyArray<{
@@ -33,6 +48,25 @@ const STATIC_ROUTES: ReadonlyArray<{
   { path: "/blogs", changeFrequency: "weekly", priority: 0.7 },
   { path: "/search", changeFrequency: "monthly", priority: 0.5 },
 ];
+
+/**
+ * The three enumerations behind the sitemap, cached together for
+ * {@link SITEMAP_TTL} so a burst of crawler hits costs one walk, not one each.
+ */
+async function sitemapEntries() {
+  return getOrSet(
+    cacheKey("sitemap", "entries", "v1"),
+    SITEMAP_TTL,
+    async () => {
+      const [anime, posts, episodes] = await Promise.all([
+        listAnimeSitemapEntries(),
+        listBlogSitemapEntries(),
+        listEpisodeSitemapEntries(),
+      ]);
+      return { anime, posts, episodes };
+    },
+  );
+}
 
 /**
  * `sitemap.xml` (PERF-01): the static public pages plus every published blog
@@ -48,11 +82,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route.priority,
   }));
 
-  const [anime, posts, episodes] = await Promise.all([
-    listAnimeSitemapEntries(),
-    listBlogSitemapEntries(),
-    listEpisodeSitemapEntries(),
-  ]);
+  const { anime, posts, episodes } = await sitemapEntries();
 
   const animeEntries: MetadataRoute.Sitemap = anime.map((entry) => ({
     url: absoluteUrl(animeHref(entry.id, entry.title)),
