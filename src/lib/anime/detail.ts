@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
+import { playableEpisodeCount } from "@/lib/anime/episodes";
 import { fetchAnimeInfo } from "@/lib/anime/provider";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 
@@ -40,15 +41,7 @@ export function animeDetailCacheKey(id: string): string {
 function ensureEpisodes(detail: AnimeDetail): AnimeDetail {
   if (detail.episodes.length > 0) return detail;
 
-  const aired =
-    typeof detail.currentEpisode === "number" && detail.currentEpisode > 0
-      ? detail.currentEpisode
-      : null;
-  const total =
-    typeof detail.totalEpisodes === "number" && detail.totalEpisodes > 0
-      ? detail.totalEpisodes
-      : null;
-  const count = aired ?? total ?? 0;
+  const count = playableEpisodeCount(detail);
   if (count <= 0) return detail;
 
   const episodes: AnimeEpisode[] = Array.from({ length: count }, (_, i) => ({
