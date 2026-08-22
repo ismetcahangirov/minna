@@ -184,7 +184,7 @@ export function EmbedPlayer({
   const selectLang = useCallback((next: AudioLang) => setLang(next), []);
 
   return (
-    <div className="relative aspect-video w-full bg-black sm:aspect-[16/6.75]">
+    <div className="relative aspect-[16/8.1] w-full bg-black sm:aspect-[16/6.075]">
       {errored ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center">
           <p className="text-foreground text-base font-semibold">
