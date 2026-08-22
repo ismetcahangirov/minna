@@ -76,17 +76,17 @@ export async function AnimeDetailView({
       <JsonLd data={buildAnimeJsonLd(detail)} />
       <HeroInitialScroll targetId="detail-body" viewportRatio={0.62} />
       {/* Hero */}
-      <section className="relative flex min-h-[96vh] w-full items-end overflow-hidden bg-black lg:min-h-[123vh]">
+      <section className="relative flex min-h-[78vh] w-full items-end overflow-hidden bg-black sm:min-h-[96vh] lg:min-h-[123vh]">
         {backdrop && <DetailBanner src={backdrop} />}
         {/* Legibility scrim: transparent up top, ramping gradually to solid black
             at the bottom where the title/actions sit — no hard seam on the banner. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[72%] bg-[linear-gradient(to_top,#000_0%,rgba(0,0,0,0.82)_32%,rgba(0,0,0,0.35)_62%,transparent_100%)]" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[52%] bg-[linear-gradient(to_top,#000_0%,rgba(0,0,0,0.82)_32%,rgba(0,0,0,0.35)_62%,transparent_100%)] sm:h-[72%]" />
         {/* Soft shadow seam where the banner meets the details below. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-px shadow-[0_-1px_28px_10px_rgba(0,0,0,0.85),0_1px_0_0_rgba(255,255,255,0.06)]" />
 
         <div
           id="hero-info"
-          className="relative mx-auto w-full max-w-[1600px] px-4 pt-48 pb-10 sm:px-6 lg:px-8 lg:pt-64"
+          className="relative mx-auto w-full max-w-[1600px] px-4 pt-32 pb-10 sm:px-6 sm:pt-48 lg:px-8 lg:pt-64"
         >
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:gap-8">
             {/* Poster */}

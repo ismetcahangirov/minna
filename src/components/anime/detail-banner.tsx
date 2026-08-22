@@ -1,14 +1,20 @@
 import Image from "next/image";
 
 /**
- * Static backdrop for the anime detail hero (DETAIL-01). Fills the hero with the
- * banner via `object-cover` only — no zoom/overscale — and stays the LCP element
- * through `next/image` `priority`. Purely presentational, so no client runtime.
+ * Backdrop for the anime detail hero (DETAIL-01), the LCP element through
+ * `next/image` `priority`. Purely presentational, so no client runtime.
+ *
+ * A phone caps it to a strip across the top instead of letting it fill the
+ * hero. Covering a ~380x660 portrait box with a 1900x400 banner showed about a
+ * tenth of the artwork and scaled it up on the way — cropped and smeared. As a
+ * strip the same banner is scaled *down*, so it stays sharp and about a third
+ * of it is visible. From `sm` up the hero is wide enough for the original
+ * full-bleed treatment.
  */
 export function DetailBanner({ src }: { src: string }) {
   return (
     <div
-      className="pointer-events-none absolute inset-0 overflow-hidden"
+      className="pointer-events-none absolute inset-x-0 top-0 h-[38vh] overflow-hidden sm:inset-0 sm:h-auto"
       aria-hidden
     >
       <Image
