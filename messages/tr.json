@@ -70,6 +70,12 @@
     "noEpisodes": "Bölümler henüz mevcut değil.",
     "sortAsc": "Önce eskiler",
     "sortDesc": "Önce yeniler",
+    "pagination": {
+      "label": "Bölüm sayfaları",
+      "previous": "Önceki",
+      "next": "Sonraki",
+      "page": "Sayfa {number}"
+    },
     "seasons": {
       "heading": "Sezonlar",
       "season": "Sezon {number}",

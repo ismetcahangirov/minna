@@ -1,14 +1,13 @@
-"use client";
-
 import { ArrowDownUp, Check, Film, Play } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { getTranslations } from "next-intl/server";
 
-import { Button } from "@/components/ui/button";
-import { watchHref } from "@/lib/anime/href";
+import { EpisodePagination } from "@/components/anime/episode-pagination";
+import { buttonVariants } from "@/components/ui/button";
+import { animeEpisodesPageHref, watchHref } from "@/lib/anime/href";
 import type { AnimeEpisode } from "@/lib/anime/types";
+import { cn } from "@/lib/utils";
 
 /** Per-episode watched/resume state, keyed by episode id. */
 type WatchState = { completed: boolean; progress: number };
@@ -17,67 +16,45 @@ interface EpisodeCardsProps {
   animeId: string;
   /** Anime title — slugged into the readable watch URL. */
   animeTitle: string;
+  /** The episodes of the current page only, already in display order. */
   episodes: AnimeEpisode[];
+  /** Episodes in the whole series (the heading count, not the page's). */
+  totalEpisodes: number;
   /** Anime cover used as each card's thumbnail (episodes carry no art). */
   thumbnail: string | null;
   /** Signed-in viewer's watched/resume state per episode id (empty if none). */
   watchStates?: Record<string, WatchState>;
+  /** 1-based page being rendered. */
+  page: number;
+  totalPages: number;
+  /** Whether the list is sorted newest-first. */
+  descending: boolean;
 }
 
-/** How many cards to reveal per infinite-scroll step. */
-const PAGE_SIZE = 24;
-
 /**
- * Full-width, vertically stacked episode cards (openani-style) with
- * IntersectionObserver infinite scroll. All episodes are already in memory
- * (fetched server-side); this only paginates rendering so a long series doesn't
- * mount hundreds of rows at once. Client component: order toggle + reveal state.
+ * Full-width, vertically stacked episode cards (openani-style), paginated on
+ * the server: the route slices the episode list and this only renders the
+ * current page, with the page and sort order carried in the URL
+ * (`?page=3&order=desc`). That keeps every page crawlable and linkable, and
+ * keeps a 1000-episode series from mounting a thousand rows.
  *
  * Design system: sharp corners, flat surfaces, red accent on hover, lucide
  * icons — never emoji.
  */
-export function EpisodeCards({
+export async function EpisodeCards({
   animeId,
   animeTitle,
   episodes,
+  totalEpisodes,
   thumbnail,
   watchStates = {},
+  page,
+  totalPages,
+  descending,
 }: EpisodeCardsProps) {
-  const t = useTranslations("detail");
-  const [descending, setDescending] = useState(false);
-  const [visible, setVisible] = useState(PAGE_SIZE);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const t = await getTranslations("detail");
 
-  const ordered = useMemo(() => {
-    const sorted = [...episodes].sort((a, b) => a.number - b.number);
-    return descending ? sorted.reverse() : sorted;
-  }, [episodes, descending]);
-
-  const shown = ordered.slice(0, visible);
-  const hasMore = visible < ordered.length;
-
-  // Reveal the next page when the sentinel scrolls into view. The observer
-  // callback runs outside the effect body, so the setState is not a
-  // synchronous-in-effect update.
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel || !hasMore) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setVisible((count) => count + PAGE_SIZE);
-        }
-      },
-      { rootMargin: "600px 0px" },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-    // Re-observe after each reveal: a fresh observe() on a still-intersecting
-    // sentinel re-fires, so a tall viewport keeps filling until it scrolls off.
-  }, [hasMore, visible]);
-
-  if (episodes.length === 0) {
+  if (totalEpisodes === 0) {
     return <p className="text-muted-foreground text-sm">{t("noEpisodes")}</p>;
   }
 
@@ -87,24 +64,27 @@ export function EpisodeCards({
         <h2 className="text-foreground text-lg font-bold tracking-tight sm:text-xl">
           {t("episodes")}
           <span className="text-muted-foreground ml-2 text-sm font-normal">
-            {episodes.length}
+            {totalEpisodes}
           </span>
         </h2>
-        {episodes.length > 1 && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setDescending((value) => !value)}
+        {totalEpisodes > 1 && (
+          // Sorting is a URL state like the page is, so the order survives a
+          // reload and pagination always slices the list the viewer sees.
+          <Link
+            href={animeEpisodesPageHref(animeId, animeTitle, {
+              descending: !descending,
+            })}
+            scroll={false}
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
           >
             <ArrowDownUp aria-hidden />
             {descending ? t("sortDesc") : t("sortAsc")}
-          </Button>
+          </Link>
         )}
       </div>
 
       <ul className="flex flex-col gap-3">
-        {shown.map((episode) => {
+        {episodes.map((episode) => {
           const state = watchStates[episode.id];
           const inProgress = state && !state.completed && state.progress > 0;
           return (
@@ -186,7 +166,13 @@ export function EpisodeCards({
         })}
       </ul>
 
-      {hasMore && <div ref={sentinelRef} aria-hidden className="h-px w-full" />}
+      <EpisodePagination
+        animeId={animeId}
+        animeTitle={animeTitle}
+        page={page}
+        totalPages={totalPages}
+        descending={descending}
+      />
     </div>
   );
 }
