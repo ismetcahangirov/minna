@@ -95,6 +95,8 @@ export interface AnimeEpisode {
   description: string | null;
   /** Air date string as the provider returns it, when available. */
   airDate: string | null;
+  /** Episode still, when a source has one — otherwise the anime art stands in. */
+  image: string | null;
 }
 
 /**
@@ -137,6 +139,7 @@ export interface ConsumetEpisode {
   title?: string | null;
   description?: string | null;
   airDate?: string | null;
+  image?: string | null;
 }
 
 export interface ConsumetRelation extends ConsumetAnimeResult {
@@ -330,6 +333,7 @@ function toAnimeEpisode(
     title: raw.title?.trim() || null,
     description: raw.description?.trim() || null,
     airDate: raw.airDate?.trim() || null,
+    image: raw.image?.trim() || null,
   };
 }
 

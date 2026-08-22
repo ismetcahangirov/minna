@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "s4.anilist.co", pathname: "/**" },
       { protocol: "https", hostname: "img.anili.st", pathname: "/**" },
       { protocol: "https", hostname: "media.kitsu.app", pathname: "/**" },
+      // Episode stills: Kitsu's thumbnail host and the Crunchyroll CDN behind
+      // AniList's `streamingEpisodes` (its subdomain varies per image).
+      { protocol: "https", hostname: "media.kitsu.io", pathname: "/**" },
+      { protocol: "https", hostname: "**.crunchyroll.com", pathname: "/**" },
     ],
     // Serve AVIF first (best compression), then WebP, then the original
     // format for unsupported browsers (PERF-02). AVIF/WebP shrink the
