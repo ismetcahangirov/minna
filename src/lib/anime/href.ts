@@ -88,3 +88,51 @@ export function parseAnimeParam(param: string): string {
   const match = /^(\d+)/.exec(param.trim());
   return match ? match[1] : param.trim();
 }
+
+/**
+ * Episodes shown per page on the episodes list route. Series longer than this
+ * paginate, with the page carried in the URL (`?page=2`) so every page is a
+ * distinct, crawlable, shareable address instead of hidden behind scrolling.
+ */
+export const EPISODES_PAGE_SIZE = 20;
+
+/** How many pages an episode list of `total` episodes spans (at least one). */
+export function episodesPageCount(total: number): number {
+  return Math.max(1, Math.ceil(total / EPISODES_PAGE_SIZE));
+}
+
+/**
+ * Builds an episodes-list URL for one page and sort order. Page 1 in ascending
+ * order is the bare canonical path — a param is only added when it changes what
+ * is rendered, so the default view keeps exactly one URL.
+ */
+export function animeEpisodesPageHref(
+  id: string,
+  title: string | null | undefined,
+  options: { page?: number; descending?: boolean } = {},
+): string {
+  const params = new URLSearchParams();
+  if (options.page && options.page > 1)
+    params.set("page", String(options.page));
+  if (options.descending) params.set("order", "desc");
+
+  const query = params.toString();
+  const base = animeEpisodesHref(id, title);
+  return query ? `${base}?${query}` : base;
+}
+
+/**
+ * Reads the `?page=` param. Returns the requested page number, or `null` when
+ * the value is not a plain positive integer (`"abc"`, `"0"`, `"2.5"`, repeated
+ * params) so the route can redirect such URLs to the canonical first page
+ * rather than rendering duplicate content under a junk address.
+ */
+export function parseEpisodesPageParam(
+  raw: string | string[] | undefined,
+): number | null {
+  if (raw === undefined) return 1;
+  if (typeof raw !== "string" || !/^\d+$/.test(raw)) return null;
+
+  const page = Number.parseInt(raw, 10);
+  return page >= 1 ? page : null;
+}

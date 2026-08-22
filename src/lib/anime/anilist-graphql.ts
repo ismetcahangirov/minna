@@ -130,3 +130,73 @@ export async function fetchAniListSeasonNode(
       : null,
   };
 }
+
+/**
+ * AniList's per-episode titles, scraped from the streaming sites it links to.
+ * Entries look like `"Episode 12 - Beyond the Wall"` — the number is parsed out
+ * of the label so the episode cards can match them to their own 1..N numbering.
+ */
+const EPISODE_TITLES_QUERY = `
+query ($id: Int) {
+  Media(id: $id, type: ANIME) {
+    streamingEpisodes { title }
+  }
+}`;
+
+/** `"Episode 12 - Beyond the Wall"` → `{ number: 12, title: "Beyond the Wall" }`. */
+const EPISODE_LABEL = /^\s*episode\s+(\d+(?:\.\d+)?)\s*[-–—:]\s*(.+)$/i;
+
+/**
+ * Episode titles for one anime, keyed by episode number.
+ *
+ * A single GraphQL call returns the whole series, so no windowing is needed —
+ * unlike Kitsu, which pages at 20. Coverage is partial by nature (only episodes
+ * AniList has a streaming link for, and only those whose label carries a real
+ * name), so the caller treats a miss as "no title" rather than an error.
+ * Resolves to an empty map on any failure.
+ */
+export async function fetchAniListEpisodeTitles(
+  id: string,
+): Promise<Map<number, string>> {
+  const out = new Map<number, string>();
+
+  const numeric = Number.parseInt(id, 10);
+  if (!Number.isFinite(numeric)) return out;
+
+  let episodes: Array<{ title?: string | null }> = [];
+  try {
+    const res = await fetch(ANILIST_GRAPHQL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        query: EPISODE_TITLES_QUERY,
+        variables: { id: numeric },
+      }),
+      // Episode titles only change when a new episode airs.
+      next: { revalidate: 60 * 60 * 12 },
+    });
+    if (!res.ok) return out;
+    const json = (await res.json()) as {
+      data?: {
+        Media?: { streamingEpisodes?: Array<{ title?: string | null }> };
+      };
+    };
+    episodes = json?.data?.Media?.streamingEpisodes ?? [];
+  } catch {
+    return out;
+  }
+
+  for (const episode of episodes) {
+    const match = EPISODE_LABEL.exec(episode?.title ?? "");
+    if (!match) continue;
+    const number = Number(match[1]);
+    const title = match[2]?.trim();
+    if (!Number.isFinite(number) || !title || out.has(number)) continue;
+    out.set(number, title);
+  }
+
+  return out;
+}

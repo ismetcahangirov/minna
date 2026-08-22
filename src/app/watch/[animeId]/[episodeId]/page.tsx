@@ -199,6 +199,7 @@ export default async function WatchPage({ params }: WatchRouteProps) {
             animeId={detail.id}
             animeTitle={detail.title}
             episodes={detail.episodes}
+            activeEpisodeNumber={current.number}
           />
         </div>
       )}

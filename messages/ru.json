@@ -67,9 +67,16 @@
     "episodeLabel": "Эпизод {number}",
     "back": "Назад",
     "watched": "Просмотрено",
+    "nowPlaying": "Сейчас смотрите",
     "noEpisodes": "Эпизоды пока недоступны.",
     "sortAsc": "Сначала старые",
     "sortDesc": "Сначала новые",
+    "pagination": {
+      "label": "Страницы эпизодов",
+      "previous": "Назад",
+      "next": "Вперёд",
+      "page": "Страница {number}"
+    },
     "seasons": {
       "heading": "Сезоны",
       "season": "Сезон {number}",

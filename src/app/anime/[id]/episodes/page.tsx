@@ -1,62 +1,166 @@
 import { ChevronLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { EpisodeCards } from "@/components/anime/episode-cards";
 import { SeasonSwitcher } from "@/components/anime/season-tabs";
 import { getAnimeInfo } from "@/lib/anime/detail";
 import {
+  getEpisodeTitles,
+  withEpisodeTitles,
+} from "@/lib/anime/episode-titles";
+import {
+  EPISODES_PAGE_SIZE,
   animeEpisodesHref,
+  animeEpisodesPageHref,
   animeHref,
+  episodesPageCount,
   parseAnimeParam,
+  parseEpisodesPageParam,
 } from "@/lib/anime/href";
 import { getCurrentUser } from "@/lib/auth/session";
+import type { AnimeEpisode } from "@/lib/anime/types";
 import { getAnimeWatchStates } from "@/lib/watch/queries";
 
 interface EpisodesRouteProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{
+    page?: string | string[];
+    order?: string | string[];
+  }>;
 }
 
-/** SEO metadata for the episodes list; canonicalises to the slugged path. */
+/**
+ * The page actually rendered for a requested page number: the first page when
+ * the request is invalid (`null`) or points past the end, matching the redirect
+ * the route issues for those URLs so the canonical tag never disagrees with it.
+ */
+function resolvePage(requested: number | null, totalPages: number): number {
+  if (requested === null || requested < 1 || requested > totalPages) return 1;
+  return requested;
+}
+
+/** True when the `?order=` param asks for the newest-first listing. */
+function isDescending(order: string | string[] | undefined): boolean {
+  return order === "desc";
+}
+
+/**
+ * The episodes rendered on `page`, in display order, together with the range of
+ * episode numbers they cover (used to fetch just that window's titles).
+ */
+function pageSlice(
+  episodes: AnimeEpisode[],
+  page: number,
+  descending: boolean,
+): { slice: AnimeEpisode[]; from: number; to: number } {
+  const ordered = [...episodes].sort((a, b) => a.number - b.number);
+  if (descending) ordered.reverse();
+
+  const start = (page - 1) * EPISODES_PAGE_SIZE;
+  const slice = ordered.slice(start, start + EPISODES_PAGE_SIZE);
+  const numbers = slice.map((episode) => episode.number);
+
+  return {
+    slice,
+    from: numbers.length ? Math.min(...numbers) : 0,
+    to: numbers.length ? Math.max(...numbers) : 0,
+  };
+}
+
+/**
+ * SEO metadata for the episodes list. Each page self-canonicalises to its own
+ * `?page=` URL so paginated pages are indexed as distinct pages rather than
+ * duplicates of the first; the reversed listing is the same content in another
+ * order, so it is marked `noindex, follow` instead.
+ */
 export async function generateMetadata({
   params,
+  searchParams,
 }: EpisodesRouteProps): Promise<Metadata> {
-  const { id } = await params;
+  const [{ id }, { page: pageParam, order }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const detail = await getAnimeInfo(parseAnimeParam(id));
   if (!detail) return { title: "Anime not found — Minna" };
 
-  const title = `${detail.title} — Episodes — Minna`;
+  const descending = isDescending(order);
+  const totalPages = episodesPageCount(detail.episodes.length);
+  const page = resolvePage(parseEpisodesPageParam(pageParam), totalPages);
+
+  const title =
+    page > 1
+      ? `${detail.title} — Episodes — Page ${page} — Minna`
+      : `${detail.title} — Episodes — Minna`;
+
   return {
     title,
     description: `Watch every episode of ${detail.title} on Minna.`,
-    alternates: { canonical: animeEpisodesHref(detail.id, detail.title) },
+    alternates: {
+      canonical: animeEpisodesPageHref(detail.id, detail.title, { page }),
+    },
+    ...(descending ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
 /**
  * Episodes list page (`/anime/[id]/episodes`). Reached from a season poster
- * card or the detail page's watch button. Server-rendered for SEO; the episode
- * cards paginate their own rendering with infinite scroll on the client.
+ * card or the detail page's watch button.
+ *
+ * Server-rendered for SEO, including pagination: series longer than
+ * {@link EPISODES_PAGE_SIZE} split into `?page=N` pages, and the sort order
+ * rides along as `?order=desc`, so every view has its own crawlable URL. Only
+ * the current page's episode titles are fetched (see `@/lib/anime/episode-titles`).
  */
 export default async function AnimeEpisodesPage({
   params,
+  searchParams,
 }: EpisodesRouteProps) {
-  const { id } = await params;
+  const [{ id }, { page: pageParam, order }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const detail = await getAnimeInfo(parseAnimeParam(id));
   if (!detail) notFound();
 
+  const descending = isDescending(order);
+
   // Keep SEO on one canonical URL: a bare id or stale slug 308s to the slugged
-  // episodes path.
-  const canonical = animeEpisodesHref(detail.id, detail.title);
-  if (`/anime/${id}/episodes` !== canonical) permanentRedirect(canonical);
+  // episodes path, params preserved.
+  const canonicalPath = animeEpisodesHref(detail.id, detail.title);
+  if (`/anime/${id}/episodes` !== canonicalPath) {
+    permanentRedirect(
+      animeEpisodesPageHref(detail.id, detail.title, {
+        page: parseEpisodesPageParam(pageParam) ?? 1,
+        descending,
+      }),
+    );
+  }
+
+  const totalPages = episodesPageCount(detail.episodes.length);
+  const requested = parseEpisodesPageParam(pageParam);
+
+  // `?page=1`, a junk value or a page past the end all render the first page —
+  // send them there instead of serving that content under a second URL.
+  if (
+    pageParam !== undefined &&
+    (requested === null || requested === 1 || requested > totalPages)
+  ) {
+    redirect(animeEpisodesPageHref(detail.id, detail.title, { descending }));
+  }
+  const page = resolvePage(requested, totalPages);
 
   const t = await getTranslations("detail");
   const user = await getCurrentUser();
-  const watchStates = user?.id
-    ? await getAnimeWatchStates(user.id, detail.id)
-    : {};
+
+  const { slice, from, to } = pageSlice(detail.episodes, page, descending);
+  const [watchStates, titles] = await Promise.all([
+    user?.id ? getAnimeWatchStates(user.id, detail.id) : Promise.resolve({}),
+    from > 0 ? getEpisodeTitles(detail.id, from, to) : Promise.resolve({}),
+  ]);
 
   return (
     <main className="flex flex-1 flex-col pb-10">
@@ -78,9 +182,13 @@ export default async function AnimeEpisodesPage({
           <EpisodeCards
             animeId={detail.id}
             animeTitle={detail.title}
-            episodes={detail.episodes}
+            episodes={withEpisodeTitles(slice, titles)}
+            totalEpisodes={detail.episodes.length}
             thumbnail={detail.banner ?? detail.image}
             watchStates={watchStates}
+            page={page}
+            totalPages={totalPages}
+            descending={descending}
           />
         </div>
       </div>

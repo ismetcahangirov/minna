@@ -1,13 +1,22 @@
 import "server-only";
 
-import { hasPlayableEpisodes } from "@/lib/anime/episodes";
+import {
+  hasPlayableEpisodes,
+  playableEpisodeCount,
+} from "@/lib/anime/episodes";
 import { type AnimeSummary, toAnimeSummary } from "@/lib/anime/types";
 import { advancedSearchAnime } from "@/lib/anime/provider";
 
-/** One anime entry for the sitemap: id + title (title builds the slug URL). */
+/**
+ * One anime entry for the sitemap: id + title (the title builds the slug URL)
+ * plus its episode count, which decides how many `?page=` URLs the episodes
+ * list spans. `null` when the count is unknown (saved rows carry no count), in
+ * which case only the first episodes page is listed.
+ */
 export interface AnimeSitemapEntry {
   id: string;
   title: string;
+  episodes: number | null;
 }
 
 /** One watch/episode entry for the sitemap. */
@@ -26,9 +35,11 @@ export interface EpisodeSitemapEntry {
 const FEED_PAGES = 30;
 const FEED_PER_PAGE = 50;
 
-/** Pages through the popular feed, collecting id→title for titles with episodes. */
-async function listPopularForSitemap(): Promise<Map<string, string>> {
-  const out = new Map<string, string>();
+/** Pages through the popular feed, collecting id→entry for titles with episodes. */
+async function listPopularForSitemap(): Promise<
+  Map<string, { title: string; episodes: number | null }>
+> {
+  const out = new Map<string, { title: string; episodes: number | null }>();
 
   for (let page = 1; page <= FEED_PAGES; page++) {
     let results: AnimeSummary[];
@@ -43,7 +54,7 @@ async function listPopularForSitemap(): Promise<Map<string, string>> {
         .filter((entry): entry is AnimeSummary => entry !== null)
         .filter(hasPlayableEpisodes);
       if (data?.hasNextPage === false) {
-        for (const a of results) if (!out.has(a.id)) out.set(a.id, a.title);
+        for (const a of results) if (!out.has(a.id)) out.set(a.id, toEntry(a));
         break;
       }
     } catch (error) {
@@ -53,10 +64,19 @@ async function listPopularForSitemap(): Promise<Map<string, string>> {
       );
       break;
     }
-    for (const a of results) if (!out.has(a.id)) out.set(a.id, a.title);
+    for (const a of results) if (!out.has(a.id)) out.set(a.id, toEntry(a));
   }
 
   return out;
+}
+
+/** The sitemap fields of one catalog result. */
+function toEntry(anime: AnimeSummary): {
+  title: string;
+  episodes: number | null;
+} {
+  const episodes = playableEpisodeCount(anime);
+  return { title: anime.title, episodes: episodes > 0 ? episodes : null };
 }
 
 /** Distinct anime users have favorited or watched (both store a title). */
@@ -100,10 +120,16 @@ export async function listAnimeSitemapEntries(): Promise<AnimeSitemapEntry[]> {
     listSavedAnime(),
   ]);
 
-  const merged = new Map<string, string>(popular);
-  for (const [id, title] of saved) if (!merged.has(id)) merged.set(id, title);
+  const merged = new Map(popular);
+  for (const [id, title] of saved) {
+    if (!merged.has(id)) merged.set(id, { title, episodes: null });
+  }
 
-  return [...merged].map(([id, title]) => ({ id, title }));
+  return [...merged].map(([id, entry]) => ({
+    id,
+    title: entry.title,
+    episodes: entry.episodes,
+  }));
 }
 
 /**

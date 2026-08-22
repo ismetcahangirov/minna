@@ -8,12 +8,15 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { watchHref } from "@/lib/anime/href";
 import type { AnimeEpisode } from "@/lib/anime/types";
+import { cn } from "@/lib/utils";
 
 interface EpisodeListProps {
   animeId: string;
   /** Anime title — slugged into the readable watch URL. */
   animeTitle: string;
   episodes: AnimeEpisode[];
+  /** Episode currently playing, highlighted in the list (watch route). */
+  activeEpisodeNumber?: number | null;
 }
 
 /**
@@ -26,6 +29,7 @@ export function EpisodeList({
   animeId,
   animeTitle,
   episodes,
+  activeEpisodeNumber = null,
 }: EpisodeListProps) {
   const t = useTranslations("detail");
   const [descending, setDescending] = useState(false);
@@ -69,25 +73,51 @@ export function EpisodeList({
       </div>
 
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {ordered.map((episode) => (
-          <li key={episode.id}>
-            <Link
-              href={watchHref(animeId, episode.number, animeTitle)}
-              className="group border-border bg-surface hover:border-primary/60 hover:bg-muted flex items-center gap-3 border p-3 transition-colors"
-            >
-              <span className="bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground flex size-9 shrink-0 items-center justify-center text-sm font-bold transition-colors">
-                {episode.number}
-              </span>
-              <span className="text-foreground line-clamp-1 min-w-0 flex-1 text-sm font-medium">
-                {episode.title ?? t("episodeLabel", { number: episode.number })}
-              </span>
-              <Play
-                className="text-muted-foreground group-hover:text-primary size-4 shrink-0 transition-colors"
-                aria-hidden
-              />
-            </Link>
-          </li>
-        ))}
+        {ordered.map((episode) => {
+          const isActive = episode.number === activeEpisodeNumber;
+          return (
+            <li key={episode.id}>
+              <Link
+                href={watchHref(animeId, episode.number, animeTitle)}
+                aria-current={isActive ? "true" : undefined}
+                className={cn(
+                  "group bg-surface hover:border-primary/60 hover:bg-muted flex items-center gap-3 border p-3 transition-colors",
+                  isActive ? "border-primary bg-primary/5" : "border-border",
+                )}
+              >
+                <span
+                  className={cn(
+                    "group-hover:bg-primary group-hover:text-primary-foreground flex size-9 shrink-0 items-center justify-center text-sm font-bold transition-colors",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground",
+                  )}
+                >
+                  {episode.number}
+                </span>
+                <span
+                  className={cn(
+                    "line-clamp-1 min-w-0 flex-1 text-sm font-medium",
+                    isActive ? "text-primary" : "text-foreground",
+                  )}
+                >
+                  {episode.title ??
+                    t("episodeLabel", { number: episode.number })}
+                </span>
+                {isActive ? (
+                  <span className="text-primary shrink-0 text-[0.65rem] font-bold tracking-widest uppercase">
+                    {t("nowPlaying")}
+                  </span>
+                ) : (
+                  <Play
+                    className="text-muted-foreground group-hover:text-primary size-4 shrink-0 transition-colors"
+                    aria-hidden
+                  />
+                )}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
