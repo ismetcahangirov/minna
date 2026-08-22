@@ -3,6 +3,14 @@
 import { useEffect, useRef } from "react";
 
 const ADSTERRA_KEY = "457046751eadca952094de44e01be6ec";
+
+/**
+ * Loader host for this ad unit. Adsterra hands out several — the one in the
+ * unit's own GET CODE snippet is the only one that fills: a different host
+ * answers 200 and even builds the container, then leaves it empty, because the
+ * key is not registered there. Copy this from the dashboard, never from memory.
+ */
+const ADSTERRA_HOST = "https://www.highrevenueformat.com";
 const AD_WIDTH = 728;
 const AD_HEIGHT = 90;
 
@@ -35,7 +43,7 @@ export function AdBanner() {
 
     const invokeScript = document.createElement("script");
     invokeScript.type = "text/javascript";
-    invokeScript.src = `https://www.highperformanceformat.com/${ADSTERRA_KEY}/invoke.js`;
+    invokeScript.src = `${ADSTERRA_HOST}/${ADSTERRA_KEY}/invoke.js`;
     invokeScript.async = true;
     container.appendChild(invokeScript);
   }, []);
