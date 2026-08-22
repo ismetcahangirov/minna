@@ -67,6 +67,7 @@
     "episodeLabel": "{number}. Bölüm",
     "back": "Geri",
     "watched": "İzlendi",
+    "nowPlaying": "Şu an oynatılıyor",
     "noEpisodes": "Bölümler henüz mevcut değil.",
     "sortAsc": "Önce eskiler",
     "sortDesc": "Önce yeniler",
