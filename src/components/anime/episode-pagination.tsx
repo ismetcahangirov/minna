@@ -13,6 +13,8 @@ interface EpisodePaginationProps {
   totalPages: number;
   /** Whether the list is sorted newest-first (kept across page changes). */
   descending: boolean;
+  /** Active search term, carried into every page link so a filter survives. */
+  query?: string;
 }
 
 /** How many numbered links surround the current page before ellipsis kicks in. */
@@ -40,7 +42,7 @@ function pageItems(page: number, totalPages: number): Array<number | null> {
 }
 
 const LINK_BASE =
-  "border-border bg-surface text-foreground hover:border-primary/60 hover:text-primary flex h-9 min-w-9 items-center justify-center border px-3 text-sm font-semibold transition-colors";
+  "border-border bg-surface text-foreground hover:border-primary/60 hover:text-primary flex h-9 min-w-9 items-center justify-center gap-1 border px-2 text-xs font-semibold transition-colors sm:px-3 sm:text-sm";
 
 /**
  * Numbered pagination for the episodes list. Every page is a real `<a href>`
@@ -53,12 +55,17 @@ export async function EpisodePagination({
   page,
   totalPages,
   descending,
+  query,
 }: EpisodePaginationProps) {
   if (totalPages <= 1) return null;
 
   const t = await getTranslations("detail.pagination");
   const href = (target: number) =>
-    animeEpisodesPageHref(animeId, animeTitle, { page: target, descending });
+    animeEpisodesPageHref(animeId, animeTitle, {
+      page: target,
+      descending,
+      query,
+    });
 
   return (
     <nav
@@ -68,8 +75,7 @@ export async function EpisodePagination({
       {page > 1 ? (
         <Link href={href(page - 1)} rel="prev" className={LINK_BASE}>
           <ChevronLeft className="size-4" aria-hidden />
-          <span className="hidden sm:inline">{t("previous")}</span>
-          <span className="sr-only sm:hidden">{t("previous")}</span>
+          <span>{t("previous")}</span>
         </Link>
       ) : (
         <span
@@ -77,7 +83,7 @@ export async function EpisodePagination({
           className={cn(LINK_BASE, "pointer-events-none opacity-40")}
         >
           <ChevronLeft className="size-4" aria-hidden />
-          <span className="hidden sm:inline">{t("previous")}</span>
+          <span>{t("previous")}</span>
         </span>
       )}
 
@@ -112,8 +118,7 @@ export async function EpisodePagination({
 
       {page < totalPages ? (
         <Link href={href(page + 1)} rel="next" className={LINK_BASE}>
-          <span className="hidden sm:inline">{t("next")}</span>
-          <span className="sr-only sm:hidden">{t("next")}</span>
+          <span>{t("next")}</span>
           <ChevronRight className="size-4" aria-hidden />
         </Link>
       ) : (
@@ -121,7 +126,7 @@ export async function EpisodePagination({
           aria-disabled="true"
           className={cn(LINK_BASE, "pointer-events-none opacity-40")}
         >
-          <span className="hidden sm:inline">{t("next")}</span>
+          <span>{t("next")}</span>
           <ChevronRight className="size-4" aria-hidden />
         </span>
       )}
