@@ -781,3 +781,91 @@ export async function kitsuAnimeInfo(
     relations: await resolveRelations(collectRelations(resource, index)),
   };
 }
+
+// --- Episode metadata -------------------------------------------------------
+
+/** One episode's Kitsu-sourced metadata, addressed by its episode number. */
+export interface KitsuEpisode {
+  number: number;
+  title: string | null;
+  description: string | null;
+}
+
+/** Kitsu episode attributes (only the fields the episode cards render). */
+interface KitsuEpisodeAttributes {
+  number?: number | null;
+  canonicalTitle?: string | null;
+  titles?: Record<string, string | null> | null;
+  synopsis?: string | null;
+}
+
+/**
+ * A placeholder title Kitsu stores for unnamed episodes ("Episode 5"). The
+ * cards already render that label themselves, so such a title carries no
+ * information and is dropped rather than duplicated.
+ */
+function isPlaceholderEpisodeTitle(title: string): boolean {
+  return /^(episode|ep\.?)\s*\d+$/i.test(title.trim());
+}
+
+/** Preferred episode title: English, then the canonical/romanized fallbacks. */
+function pickEpisodeTitle(attributes: KitsuEpisodeAttributes): string | null {
+  const titles = attributes.titles ?? {};
+  const candidates = [
+    titles.en,
+    titles.en_us,
+    attributes.canonicalTitle,
+    titles.en_jp,
+  ];
+
+  for (const candidate of candidates) {
+    const value = candidate?.trim();
+    if (value && !isPlaceholderEpisodeTitle(value)) return value;
+  }
+  return null;
+}
+
+/**
+ * Episode titles for one anime, addressed by its **AniList** id and limited to
+ * a window of the episode list (`offset` is zero-based, `limit` is capped at
+ * Kitsu's per-page maximum).
+ *
+ * The episodes route renders one page at a time, so only that page's window is
+ * fetched — a 1000-episode series never costs 50 round-trips. Entries are keyed
+ * by Kitsu's own `number` attribute rather than by their position in the
+ * response, so a shifted window still labels the right episodes. Throws like
+ * every other Kitsu call; the caller decides how to degrade.
+ */
+export async function kitsuEpisodes(
+  anilistId: string,
+  offset: number,
+  limit: number,
+): Promise<KitsuEpisode[]> {
+  const id = anilistId.trim();
+  if (!id || limit <= 0) return [];
+
+  const kitsuId = await resolveKitsuId(id);
+  if (!kitsuId) return [];
+
+  const doc = await kitsuFetch<KitsuResource<KitsuEpisodeAttributes>[]>(
+    `/anime/${encodeURIComponent(kitsuId)}/episodes` +
+      `?sort=number&page[offset]=${Math.max(0, Math.trunc(offset))}` +
+      `&page[limit]=${Math.min(limit, KITSU_MAX_PAGE_SIZE)}` +
+      "&fields[episodes]=number,canonicalTitle,titles,synopsis",
+  );
+
+  const resources = Array.isArray(doc.data) ? doc.data : [];
+
+  return resources
+    .map((resource) => {
+      const attributes = resource?.attributes ?? {};
+      const number = attributes.number;
+      if (typeof number !== "number" || !Number.isFinite(number)) return null;
+      return {
+        number,
+        title: pickEpisodeTitle(attributes),
+        description: attributes.synopsis?.trim() || null,
+      };
+    })
+    .filter((episode): episode is KitsuEpisode => episode !== null);
+}
