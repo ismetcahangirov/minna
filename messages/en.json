@@ -71,6 +71,12 @@
     "noEpisodes": "Episodes are not available yet.",
     "sortAsc": "Oldest first",
     "sortDesc": "Newest first",
+    "search": {
+      "placeholder": "Search episodes",
+      "label": "Search episodes by title or number",
+      "clear": "Clear search",
+      "empty": "No episode matches \"{query}\"."
+    },
     "pagination": {
       "label": "Episode pages",
       "previous": "Previous",

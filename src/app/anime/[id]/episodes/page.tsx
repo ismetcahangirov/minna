@@ -7,8 +7,10 @@ import { getTranslations } from "next-intl/server";
 import { EpisodeCards } from "@/components/anime/episode-cards";
 import { SeasonSwitcher } from "@/components/anime/season-tabs";
 import { getAnimeInfo } from "@/lib/anime/detail";
+import { filterEpisodes } from "@/lib/anime/episode-search";
 import {
   getEpisodeTitles,
+  getSeriesEpisodeTitles,
   withEpisodeTitles,
 } from "@/lib/anime/episode-titles";
 import {
@@ -19,6 +21,7 @@ import {
   episodesPageCount,
   parseAnimeParam,
   parseEpisodesPageParam,
+  parseEpisodesQueryParam,
 } from "@/lib/anime/href";
 import { getCurrentUser } from "@/lib/auth/session";
 import type { AnimeEpisode } from "@/lib/anime/types";
@@ -29,6 +32,7 @@ interface EpisodesRouteProps {
   searchParams: Promise<{
     page?: string | string[];
     order?: string | string[];
+    q?: string | string[];
   }>;
 }
 
@@ -80,7 +84,7 @@ export async function generateMetadata({
   params,
   searchParams,
 }: EpisodesRouteProps): Promise<Metadata> {
-  const [{ id }, { page: pageParam, order }] = await Promise.all([
+  const [{ id }, { page: pageParam, order, q }] = await Promise.all([
     params,
     searchParams,
   ]);
@@ -88,8 +92,24 @@ export async function generateMetadata({
   if (!detail) return { title: "Anime not found — Minna" };
 
   const descending = isDescending(order);
+  const query = parseEpisodesQueryParam(q);
   const totalPages = episodesPageCount(detail.episodes.length);
   const page = resolvePage(parseEpisodesPageParam(pageParam), totalPages);
+
+  const description = `Watch every episode of ${detail.title} on Minna.`;
+
+  // A filtered list is a view of the full one, not a page of its own: point it
+  // at the unfiltered list and keep it out of the index.
+  if (query) {
+    return {
+      title: `${detail.title} — Episodes — Minna`,
+      description,
+      alternates: {
+        canonical: animeEpisodesPageHref(detail.id, detail.title),
+      },
+      robots: { index: false, follow: true },
+    };
+  }
 
   const title =
     page > 1
@@ -98,7 +118,7 @@ export async function generateMetadata({
 
   return {
     title,
-    description: `Watch every episode of ${detail.title} on Minna.`,
+    description,
     alternates: {
       canonical: animeEpisodesPageHref(detail.id, detail.title, { page }),
     },
@@ -119,7 +139,7 @@ export default async function AnimeEpisodesPage({
   params,
   searchParams,
 }: EpisodesRouteProps) {
-  const [{ id }, { page: pageParam, order }] = await Promise.all([
+  const [{ id }, { page: pageParam, order, q }] = await Promise.all([
     params,
     searchParams,
   ]);
@@ -127,6 +147,7 @@ export default async function AnimeEpisodesPage({
   if (!detail) notFound();
 
   const descending = isDescending(order);
+  const query = parseEpisodesQueryParam(q);
 
   // Keep SEO on one canonical URL: a bare id or stale slug 308s to the slugged
   // episodes path, params preserved.
@@ -136,11 +157,22 @@ export default async function AnimeEpisodesPage({
       animeEpisodesPageHref(detail.id, detail.title, {
         page: parseEpisodesPageParam(pageParam) ?? 1,
         descending,
+        query,
       }),
     );
   }
 
-  const totalPages = episodesPageCount(detail.episodes.length);
+  // Searching spans the whole series, so it needs every title up front; plain
+  // browsing only pays for the page it renders (further down).
+  const seriesTitles = query
+    ? await getSeriesEpisodeTitles(detail.id, detail.episodes.length)
+    : {};
+  const matched = filterEpisodes(
+    query ? withEpisodeTitles(detail.episodes, seriesTitles) : detail.episodes,
+    query,
+  );
+
+  const totalPages = episodesPageCount(matched.length);
   const requested = parseEpisodesPageParam(pageParam);
 
   // `?page=1`, a junk value or a page past the end all render the first page —
@@ -149,22 +181,27 @@ export default async function AnimeEpisodesPage({
     pageParam !== undefined &&
     (requested === null || requested === 1 || requested > totalPages)
   ) {
-    redirect(animeEpisodesPageHref(detail.id, detail.title, { descending }));
+    redirect(
+      animeEpisodesPageHref(detail.id, detail.title, { descending, query }),
+    );
   }
   const page = resolvePage(requested, totalPages);
 
   const t = await getTranslations("detail");
   const user = await getCurrentUser();
 
-  const { slice, from, to } = pageSlice(detail.episodes, page, descending);
+  const { slice, from, to } = pageSlice(matched, page, descending);
   const [watchStates, titles] = await Promise.all([
     user?.id ? getAnimeWatchStates(user.id, detail.id) : Promise.resolve({}),
-    from > 0 ? getEpisodeTitles(detail.id, from, to) : Promise.resolve({}),
+    !query && from > 0
+      ? getEpisodeTitles(detail.id, from, to)
+      : Promise.resolve({}),
   ]);
 
   return (
     <main className="flex flex-1 flex-col pb-10">
-      <div className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
+      {/* pt clears the fixed 4rem header, which the back link sat behind. */}
+      <div className="mx-auto w-full max-w-[1600px] px-4 pt-24 pb-8 sm:px-6 lg:px-8">
         <Link
           href={animeHref(detail.id, detail.title)}
           className="text-muted-foreground hover:text-primary inline-flex items-center gap-1 text-sm font-medium transition-colors"
@@ -184,6 +221,8 @@ export default async function AnimeEpisodesPage({
             animeTitle={detail.title}
             episodes={withEpisodeTitles(slice, titles)}
             totalEpisodes={detail.episodes.length}
+            matchCount={matched.length}
+            query={query ?? ""}
             thumbnail={detail.banner ?? detail.image}
             watchStates={watchStates}
             page={page}

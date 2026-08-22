@@ -71,6 +71,12 @@
     "noEpisodes": "Bölümler henüz mevcut değil.",
     "sortAsc": "Önce eskiler",
     "sortDesc": "Önce yeniler",
+    "search": {
+      "placeholder": "Bölüm ara",
+      "label": "Bölümleri başlığa veya numaraya göre ara",
+      "clear": "Aramayı temizle",
+      "empty": "\"{query}\" ile eşleşen bölüm yok."
+    },
     "pagination": {
       "label": "Bölüm sayfaları",
       "previous": "Önceki",
