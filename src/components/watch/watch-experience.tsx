@@ -149,7 +149,7 @@ export function WatchExperience({
             onEnded={handleEnded}
           />
         ) : (
-          <div className="relative aspect-video w-full bg-black sm:aspect-[16/6.75]">
+          <div className="relative aspect-[16/8.1] w-full bg-black sm:aspect-[16/6.075]">
             {poster && (
               <Image
                 src={poster}
@@ -181,6 +181,7 @@ export function WatchExperience({
               : null
           }
           label={t("prevEpisode")}
+          shortLabel={t("prev")}
           icon="prev"
         />
 
@@ -189,12 +190,13 @@ export function WatchExperience({
           className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm font-medium transition-colors"
         >
           <ListVideo className="size-4" aria-hidden />
-          <span className="hidden sm:inline">{t("backToAnime")}</span>
+          <span>{t("backToAnime")}</span>
         </Link>
 
         <EpisodeNavButton
           href={nextHref}
           label={t("nextEpisode")}
+          shortLabel={t("next")}
           icon="next"
         />
       </div>
@@ -205,23 +207,27 @@ export function WatchExperience({
 function EpisodeNavButton({
   href,
   label,
+  shortLabel,
   icon,
 }: {
   href: string | null;
   label: string;
+  /** Shown instead of `label` on phones, where the full wording does not fit. */
+  shortLabel: string;
   icon: "prev" | "next";
 }) {
   const Icon = icon === "prev" ? ChevronLeft : ChevronRight;
   const content = (
     <>
       {icon === "prev" && <Icon className="size-4" aria-hidden />}
+      <span className="sm:hidden">{shortLabel}</span>
       <span className="hidden sm:inline">{label}</span>
       {icon === "next" && <Icon className="size-4" aria-hidden />}
     </>
   );
 
   const base =
-    "flex items-center gap-1.5 border px-3 py-2 text-sm font-medium transition-colors";
+    "flex items-center gap-1.5 border px-2.5 py-2 text-xs font-medium transition-colors sm:px-3 sm:text-sm";
 
   if (!href) {
     return (

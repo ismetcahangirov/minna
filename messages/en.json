@@ -236,6 +236,8 @@
     "unavailableBody": "This episode isn't available from the current source yet. Try another episode or check back soon.",
     "episodeLabel": "Episode {number}",
     "nowPlaying": "Now playing",
+    "prev": "Previous",
+    "next": "Next",
     "prevEpisode": "Previous episode",
     "nextEpisode": "Next episode",
     "backToAnime": "Back to anime",
