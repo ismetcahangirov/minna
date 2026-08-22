@@ -332,3 +332,138 @@
     opacity: 0.68;
   }
 }
+
+/* Current-episode marker (PLAYER-04). A light that circulates the active row's
+   outline forever: four solid segments, one per edge, each lit for its quarter
+   of a 4s cycle, with a short stutter mid-run so it reads as electric current
+   rather than a smooth sweep. Solid colours and sharp edges only — no gradient
+   and no blur, per the design system. */
+@keyframes episode-beam-top {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  11% {
+    opacity: 0.35;
+  }
+  14% {
+    opacity: 1;
+  }
+  23% {
+    opacity: 1;
+  }
+  25%,
+  100% {
+    transform: translateX(400%);
+    opacity: 0;
+  }
+}
+
+@keyframes episode-beam-right {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  11% {
+    opacity: 0.35;
+  }
+  14% {
+    opacity: 1;
+  }
+  23% {
+    opacity: 1;
+  }
+  25%,
+  100% {
+    transform: translateY(400%);
+    opacity: 0;
+  }
+}
+
+@keyframes episode-beam-bottom {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  11% {
+    opacity: 0.35;
+  }
+  14% {
+    opacity: 1;
+  }
+  23% {
+    opacity: 1;
+  }
+  25%,
+  100% {
+    transform: translateX(-400%);
+    opacity: 0;
+  }
+}
+
+@keyframes episode-beam-left {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  11% {
+    opacity: 0.35;
+  }
+  14% {
+    opacity: 1;
+  }
+  23% {
+    opacity: 1;
+  }
+  25%,
+  100% {
+    transform: translateY(-400%);
+    opacity: 0;
+  }
+}
+
+.episode-beam {
+  opacity: 0;
+  animation-duration: 4s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+.episode-beam-top {
+  animation-name: episode-beam-top;
+}
+
+.episode-beam-right {
+  animation-name: episode-beam-right;
+  animation-delay: 1s;
+}
+
+.episode-beam-bottom {
+  animation-name: episode-beam-bottom;
+  animation-delay: 2s;
+}
+
+.episode-beam-left {
+  animation-name: episode-beam-left;
+  animation-delay: 3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .episode-beam {
+    animation: none;
+    opacity: 0;
+  }
+}
