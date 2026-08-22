@@ -8,6 +8,7 @@ import { FavoriteButton } from "@/components/anime/favorite-button";
 import { DetailBanner } from "@/components/anime/detail-banner";
 import { HeroInitialScroll } from "@/components/anime/hero-initial-scroll";
 import { SeasonSwitcher } from "@/components/anime/season-tabs";
+import { AdBanner } from "@/components/home/ad-banner";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
 import { animeEpisodesHref } from "@/lib/anime/href";
@@ -240,6 +241,8 @@ export async function AnimeDetailView({
             </dl>
           </aside>
         </div>
+
+        <AdBanner className="mt-10" />
       </div>
     </article>
   );
