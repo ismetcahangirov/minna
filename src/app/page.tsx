@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
+import { AdBanner } from "@/components/home/ad-banner";
 import { AnimeRow, AnimeRowSkeleton } from "@/components/home/anime-row";
 import { CatalogNotice } from "@/components/home/catalog-notice";
 import { HeroSection } from "@/components/home/hero-section";
@@ -29,6 +30,8 @@ export default function Home() {
   return (
     <main className="flex flex-1 flex-col gap-10 pb-16 sm:gap-12">
       <HeroSection />
+
+      <AdBanner />
 
       <div className="flex flex-col gap-10 sm:gap-12">
         <Suspense fallback={<AnimeRowSkeleton />}>
