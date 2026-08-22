@@ -71,6 +71,8 @@
     "noEpisodes": "Bölümler henüz mevcut değil.",
     "sortAsc": "Önce eskiler",
     "sortDesc": "Önce yeniler",
+    "showMore": "Daha fazla göster",
+    "showLess": "Daha az göster",
     "search": {
       "placeholder": "Bölüm ara",
       "label": "Bölümleri başlığa veya numaraya göre ara",

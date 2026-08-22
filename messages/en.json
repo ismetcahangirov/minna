@@ -71,6 +71,8 @@
     "noEpisodes": "Episodes are not available yet.",
     "sortAsc": "Oldest first",
     "sortDesc": "Newest first",
+    "showMore": "Show more",
+    "showLess": "Show less",
     "search": {
       "placeholder": "Search episodes",
       "label": "Search episodes by title or number",
