@@ -5,6 +5,7 @@ import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { EpisodeCards } from "@/components/anime/episode-cards";
+import { AdBanner } from "@/components/home/ad-banner";
 import { SeasonSwitcher } from "@/components/anime/season-tabs";
 import { getAnimeInfo } from "@/lib/anime/detail";
 import { filterEpisodes } from "@/lib/anime/episode-search";
@@ -216,6 +217,7 @@ export default async function AnimeEpisodesPage({
 
         <div className="mt-8 flex flex-col gap-10">
           <SeasonSwitcher detail={detail} />
+          <AdBanner />
           <EpisodeCards
             animeId={detail.id}
             animeTitle={detail.title}

@@ -168,6 +168,25 @@ function pickImage(image: KitsuImage | null | undefined): string | null {
   );
 }
 
+/**
+ * The banner variant, which prefers `original`.
+ *
+ * Kitsu's `large` cover is a thumbnail strip — for older entries as small as
+ * 390x92 — and the detail hero stretches it over most of a phone screen, an
+ * ~8x upscale that looks like a smeared blur. `original` is the full-size
+ * artwork; the smaller variants only stand in when it is missing.
+ */
+function pickCoverImage(image: KitsuImage | null | undefined): string | null {
+  if (!image) return null;
+  return (
+    image.original?.trim() ||
+    image.large?.trim() ||
+    image.medium?.trim() ||
+    image.small?.trim() ||
+    null
+  );
+}
+
 /** Kitsu's `averageRating` is a 0–100 string, the same scale AniList reports. */
 function toRating(raw: string | null | undefined): number | null {
   if (typeof raw !== "string") return null;
@@ -287,7 +306,7 @@ function toConsumetResult(
       userPreferred: attributes.canonicalTitle?.trim() || null,
     },
     image: pickImage(attributes.posterImage),
-    cover: pickImage(attributes.coverImage),
+    cover: pickCoverImage(attributes.coverImage),
     description: attributes.synopsis?.trim() || null,
     genres: categories
       .map((category) => category.attributes?.title)

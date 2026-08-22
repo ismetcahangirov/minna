@@ -5,6 +5,7 @@ import { Suspense } from "react";
 
 import { EpisodeList } from "@/components/anime/episode-list";
 import { WatchEpisodeList } from "@/components/anime/watch-episode-list";
+import { AdBanner } from "@/components/home/ad-banner";
 import { WatchExperience } from "@/components/watch/watch-experience";
 import { getActivePreRollAd } from "@/lib/ads/queries";
 import { getAnimeInfo } from "@/lib/anime/detail";
@@ -194,6 +195,8 @@ export default async function WatchPage({ params }: WatchRouteProps) {
             : t("episodeLabel", { number: current.number })}
         </p>
       </div>
+
+      <AdBanner className="mt-8" />
 
       {/* Full episode list for jumping around (DETAIL-02 reuse). */}
       {detail.episodes.length > 0 && (

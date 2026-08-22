@@ -19,9 +19,11 @@ import {
  * v1 entries lacked it, which silently disabled seasons until their TTL. v3
  * added `malId` (MegaPlay MAL-route fallback key) — v2 entries lacked it. v4
  * added relations to Kitsu-sourced records; v3 entries written from Kitsu have
- * an empty `relations`, which silently disables the season switcher.
+ * an empty `relations`, which silently disables the season switcher. v5 takes
+ * Kitsu's full-size cover instead of its thumbnail strip — v4 entries hold a
+ * cover as small as 390x92, which the detail hero blows up into a blur.
  */
-const DETAIL_CACHE_VERSION = "v4";
+const DETAIL_CACHE_VERSION = "v5";
 
 /** The Redis key for one anime's cached detail record. */
 export function animeDetailCacheKey(id: string): string {
