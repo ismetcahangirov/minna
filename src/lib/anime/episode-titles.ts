@@ -25,10 +25,20 @@ import { kitsuEpisodes } from "@/lib/kitsu/client";
  */
 
 /** Bumped when the cached shape changes so stale entries are ignored. */
-const TITLES_CACHE_VERSION = "v1";
+const TITLES_CACHE_VERSION = "v2";
 
-/** Episode number → title, for one window of an anime's episode list. */
-export type EpisodeTitleMap = Record<number, string>;
+/** Episodes Kitsu returns per request — its hard per-page maximum. */
+const KITSU_EPISODES_PER_PAGE = 20;
+
+/** What a metadata source knows about one episode beyond its number. */
+export interface EpisodeMeta {
+  title: string | null;
+  /** Episode still, when a source has one. */
+  image: string | null;
+}
+
+/** Episode number → metadata, for one window of an anime's episode list. */
+export type EpisodeTitleMap = Record<number, EpisodeMeta>;
 
 /** Redis key for one anime's cached title window. */
 function titlesCacheKey(animeId: string, from: number, to: number): string {
@@ -41,18 +51,19 @@ function titlesCacheKey(animeId: string, from: number, to: number): string {
   );
 }
 
-/** Kitsu titles for episodes `from..to`, or an empty map if it cannot answer. */
+/** Kitsu metadata for episodes `from..to`, or an empty map if it cannot answer. */
 async function kitsuTitles(
   animeId: string,
   from: number,
   to: number,
-): Promise<Map<number, string>> {
-  const out = new Map<number, string>();
+): Promise<Map<number, EpisodeMeta>> {
+  const out = new Map<number, EpisodeMeta>();
   try {
     // Kitsu sorts by episode number, so the window starts one before `from`.
     const episodes = await kitsuEpisodes(animeId, from - 1, to - from + 1);
     for (const episode of episodes) {
-      if (episode.title) out.set(episode.number, episode.title);
+      if (!episode.title && !episode.image) continue;
+      out.set(episode.number, { title: episode.title, image: episode.image });
     }
   } catch (error) {
     console.warn(
@@ -84,20 +95,20 @@ export async function getEpisodeTitles(
   const cached = await cacheGet<EpisodeTitleMap>(key);
   if (cached) return cached;
 
-  const titles = new Map<number, string>();
+  const titles = new Map<number, EpisodeMeta>();
 
   const anilist = await fetchAniListEpisodeTitles(animeId);
   for (let number = from; number <= to; number++) {
-    const title = anilist.get(number);
-    if (title) titles.set(number, title);
+    const meta = anilist.get(number);
+    if (meta) titles.set(number, { title: meta.title, image: meta.image });
   }
 
   // Fill the gaps AniList left — a partially covered window is the common case.
   if (titles.size < to - from + 1) {
     const kitsu = await kitsuTitles(animeId, from, to);
-    for (const [number, title] of kitsu) {
+    for (const [number, meta] of kitsu) {
       if (number >= from && number <= to && !titles.has(number)) {
-        titles.set(number, title);
+        titles.set(number, meta);
       }
     }
   }
@@ -112,16 +123,109 @@ export async function getEpisodeTitles(
 }
 
 /**
- * Returns `episodes` with each entry's `title` filled in from `titles` when it
- * has none of its own. A real provider-supplied title always wins.
+ * Returns `episodes` with each entry's title and still filled in from `titles`
+ * where it has none of its own. Values the provider already supplied always
+ * win; an episode no source knows keeps its numbered label and falls back to
+ * the anime artwork.
  */
 export function withEpisodeTitles(
   episodes: AnimeEpisode[],
   titles: EpisodeTitleMap,
 ): AnimeEpisode[] {
-  return episodes.map((episode) =>
-    episode.title
-      ? episode
-      : { ...episode, title: titles[episode.number] ?? null },
+  return episodes.map((episode) => {
+    const meta = titles[episode.number];
+    if (!meta || (episode.title && episode.image)) return episode;
+    return {
+      ...episode,
+      title: episode.title ?? meta.title ?? null,
+      image: episode.image ?? meta.image ?? null,
+    };
+  });
+}
+
+/**
+ * How far the Kitsu top-up walks when AniList's coverage is thin. Kitsu pages
+ * at 20, so this bounds a whole-series lookup to 15 requests (300 episodes) —
+ * a deliberate, logged bound rather than 50+ round-trips for a 1000-episode
+ * series. Episodes past it stay searchable by number.
+ */
+const SERIES_KITSU_PAGES = 15;
+
+/** Kitsu windows fetched at once during the top-up. */
+const SERIES_KITSU_CONCURRENCY = 5;
+
+/** Below this share of titled episodes AniList alone is not worth searching. */
+const SERIES_COVERAGE_TARGET = 0.5;
+
+/**
+ * Titles for a whole series, keyed by episode number — the map the episode
+ * search filters on and the watch route's list labels itself from.
+ *
+ * AniList answers in one call and usually covers the popular titles; when it
+ * covers less than half the series, Kitsu is walked as far as
+ * {@link SERIES_KITSU_PAGES} allows to fill the rest. The result is cached, so
+ * that walk happens once a day per anime, and never during plain page browsing
+ * (which only needs {@link getEpisodeTitles}'s single window).
+ */
+export async function getSeriesEpisodeTitles(
+  animeId: string,
+  totalEpisodes: number,
+): Promise<EpisodeTitleMap> {
+  if (!animeId || totalEpisodes <= 0) return {};
+
+  const key = cacheKey(
+    "anime",
+    "episode-titles",
+    TITLES_CACHE_VERSION,
+    animeId,
+    `series-${totalEpisodes}`,
   );
+  const cached = await cacheGet<EpisodeTitleMap>(key);
+  if (cached) return cached;
+
+  const titles = new Map<number, EpisodeMeta>();
+  for (const [number, meta] of await fetchAniListEpisodeTitles(animeId)) {
+    if (number >= 1 && number <= totalEpisodes) {
+      titles.set(number, { title: meta.title, image: meta.image });
+    }
+  }
+
+  const titled = [...titles.values()].filter((meta) => meta.title).length;
+  if (titled < totalEpisodes * SERIES_COVERAGE_TARGET) {
+    const pages = Math.min(
+      Math.ceil(totalEpisodes / KITSU_EPISODES_PER_PAGE),
+      SERIES_KITSU_PAGES,
+    );
+    if (pages * KITSU_EPISODES_PER_PAGE < totalEpisodes) {
+      console.warn(
+        `[anime] episode-title search for ${animeId} covers the first ` +
+          `${pages * KITSU_EPISODES_PER_PAGE} of ${totalEpisodes} episodes`,
+      );
+    }
+
+    for (let first = 0; first < pages; first += SERIES_KITSU_CONCURRENCY) {
+      const batch = Array.from(
+        { length: Math.min(SERIES_KITSU_CONCURRENCY, pages - first) },
+        (_, index) => {
+          const from = (first + index) * KITSU_EPISODES_PER_PAGE + 1;
+          return kitsuTitles(animeId, from, from + KITSU_EPISODES_PER_PAGE - 1);
+        },
+      );
+      for (const window of await Promise.all(batch)) {
+        for (const [number, meta] of window) {
+          if (number >= 1 && number <= totalEpisodes && !titles.has(number)) {
+            titles.set(number, meta);
+          }
+        }
+      }
+    }
+  }
+
+  const result = Object.fromEntries(titles) as EpisodeTitleMap;
+  await cacheSet(
+    key,
+    result,
+    titles.size > 0 ? CACHE_TTL.long : CACHE_TTL.short,
+  );
+  return result;
 }

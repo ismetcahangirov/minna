@@ -50,6 +50,7 @@ function ensureEpisodes(detail: AnimeDetail): AnimeDetail {
     title: null,
     description: null,
     airDate: null,
+    image: null,
   }));
   return { ...detail, episodes };
 }
