@@ -40,6 +40,8 @@ interface WatchExperienceProps {
   nextEpisode: EpisodeRef | null;
   ad: PreRollAdData | null;
   poster: string | null;
+  /** Series length, carried into the library entry behind its progress bar. */
+  totalEpisodes: number | null;
   /** Resume position in seconds (PLAYER-05), seeded into the progress writer. */
   initialTime: number;
   isAuthenticated: boolean;
@@ -65,6 +67,7 @@ export function WatchExperience({
   nextEpisode,
   ad,
   poster,
+  totalEpisodes,
   initialTime,
   isAuthenticated,
 }: WatchExperienceProps) {
@@ -93,11 +96,13 @@ export function WatchExperience({
       durationSeconds: duration || null,
       title: animeTitle,
       image: poster,
+      totalEpisodes,
     });
   }, [
     animeId,
     animeTitle,
     poster,
+    totalEpisodes,
     episode.id,
     episode.number,
     isAuthenticated,

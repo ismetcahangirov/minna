@@ -177,6 +177,7 @@ export default async function WatchPage({ params }: WatchRouteProps) {
         nextEpisode={next ? { id: next.id, number: next.number } : null}
         ad={ad}
         poster={poster}
+        totalEpisodes={detail.totalEpisodes ?? detail.episodes.length}
         initialTime={initialTime}
         isAuthenticated={Boolean(user?.id)}
       />
