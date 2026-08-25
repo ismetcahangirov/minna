@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { SeasonCarousel } from "@/components/anime/season-carousel";
+import { TapHint } from "@/components/anime/tap-hint";
 import { Button } from "@/components/ui/button";
 import { animeEpisodesHref } from "@/lib/anime/href";
 import { getAnimeSeasons } from "@/lib/anime/seasons";
@@ -49,10 +50,20 @@ async function EpisodesLink({ detail }: { detail: AnimeDetail }) {
     <Button
       size="lg"
       nativeButton={false}
+      // `relative` gives the hint a box to sit in; the button keeps the width
+      // it had before the hint existed.
+      className="relative"
       render={<Link href={animeEpisodesHref(detail.id, detail.title)} />}
     >
-      <ListVideo aria-hidden />
-      {t("viewEpisodes")}
+      <span className="relative z-10 inline-flex items-center gap-1.5">
+        <ListVideo aria-hidden className="relative z-10" />
+        <span className="relative z-10">{t("viewEpisodes")}</span>
+        {/* Hangs off the label's bottom-right corner and paints beneath it, so
+            the tap reads as landing on the button without the hand ever
+            covering the wording. Anchored to the label rather than the button,
+            so it follows the text however wide the button gets. */}
+        <TapHint className="text-primary-foreground/85 -right-5 -bottom-3" />
+      </span>
     </Button>
   );
 }

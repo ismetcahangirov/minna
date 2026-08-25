@@ -467,3 +467,68 @@
     opacity: 0;
   }
 }
+
+/* "Tap here" hint (DETAIL-02). A standalone title has no season switcher, so
+   its episodes button sits alone with nothing around it to read as the next
+   step. A looping finger tap with two ripple arcs points at it. Decorative
+   only: the element is aria-hidden and never intercepts a click.
+
+   The tap and the ripples share one 2.4s cycle so the arcs leave the fingertip
+   on the beat the finger presses down. */
+@keyframes tap-hint-press {
+  0%,
+  58%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  68% {
+    transform: translate3d(0, 2.5px, 0);
+  }
+  80% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes tap-hint-wave {
+  0%,
+  60% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+
+.tap-hint-hand {
+  animation: tap-hint-press 2.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Each ripple is its own element centred on the fingertip, so scaling it grows
+   the arc around the fingertip rather than around the arc's own bounding box. */
+.tap-hint-wave {
+  opacity: 0;
+  animation: tap-hint-wave 2.4s ease-out infinite;
+  will-change: opacity, transform;
+}
+
+.tap-hint-wave-outer {
+  animation-delay: 0.14s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap-hint-hand {
+    animation: none;
+  }
+  /* No animation means no ripples at all: the base opacity keeps them hidden
+     and the still hand carries the hint on its own. */
+  .tap-hint-wave {
+    animation: none;
+  }
+}
