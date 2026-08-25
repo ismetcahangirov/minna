@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { EpisodeList } from "@/components/anime/episode-list";
 import { WatchEpisodeList } from "@/components/anime/watch-episode-list";
 import { AdBanner } from "@/components/home/ad-banner";
+import { EpisodeReviews } from "@/components/community/episode-reviews";
 import { WatchExperience } from "@/components/watch/watch-experience";
 import { getActivePreRollAd } from "@/lib/ads/queries";
 import { getAnimeInfo } from "@/lib/anime/detail";
@@ -198,6 +199,21 @@ export default async function WatchPage({ params }: WatchRouteProps) {
       </div>
 
       <AdBanner className="mt-8" />
+
+      {/* Member reviews of this episode (COMM-07). Streamed in a boundary of
+          its own so its two queries never hold up the player. */}
+      <Suspense fallback={null}>
+        <EpisodeReviews
+          animeId={detail.id}
+          animeTitle={detail.title}
+          animeImage={detail.image}
+          episodeNumber={current.number}
+          isAuthenticated={Boolean(user?.id)}
+          loginHref={`/login?callbackUrl=${encodeURIComponent(
+            watchHref(detail.id, current.number, detail.title),
+          )}`}
+        />
+      </Suspense>
 
       {/* Full episode list for jumping around (DETAIL-02 reuse). */}
       {detail.episodes.length > 0 && (

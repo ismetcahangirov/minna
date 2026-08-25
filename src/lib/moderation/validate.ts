@@ -1,6 +1,9 @@
 import "server-only";
 
+import { TEXT_LIMITS } from "@/lib/moderation/limits";
 import { containsProfanity } from "@/lib/moderation/profanity";
+
+export { TEXT_LIMITS };
 
 /**
  * Why a member's text was refused. Stable codes, not messages — the client owns
@@ -10,13 +13,6 @@ export type TextRejection = "empty" | "tooShort" | "tooLong" | "profanity";
 
 export type TextCheck =
   { ok: true; value: string } | { ok: false; error: TextRejection };
-
-/** Length bounds for every member-written field in the community features. */
-export const TEXT_LIMITS = {
-  threadTitle: { min: 4, max: 120 },
-  threadBody: { min: 0, max: 4000 },
-  post: { min: 2, max: 2000 },
-} as const;
 
 /**
  * Trims, collapses runaway blank lines, enforces the field's bounds and runs
