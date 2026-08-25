@@ -1,11 +1,14 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  index,
   integer,
   pgEnum,
   pgTable,
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -19,6 +22,13 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   image: text("image"),
+  // Public, URL-safe identity for the member directory (`/users/{handle}`),
+  // derived from the display name at sign-in. Nullable so rows written before
+  // the directory shipped still resolve (they fall back to their id).
+  handle: text("handle").unique(),
+  // Whether other members may open this profile and see its library. Opt-out,
+  // not opt-in: the directory is the point of the feature.
+  libraryPublic: boolean("library_public").notNull().default(true),
   role: userRoleEnum("role").notNull().default("user"),
   // Admin-set block flag (ADMIN-06). A blocked user cannot open a new session —
   // the Google sign-in flow rejects them — while their data (favorites, watch
@@ -212,3 +222,178 @@ export const backgroundVideos = pgTable(
 
 export type BackgroundVideo = typeof backgroundVideos.$inferSelect;
 export type NewBackgroundVideo = typeof backgroundVideos.$inferInsert;
+
+// --- Community: library, discussions (EPIC-15) ------------------------------
+
+// How a member classifies an anime in their library. `watching`/`completed` are
+// also derived automatically from watch progress; the remaining values are only
+// ever set by hand.
+export const libraryStatusEnum = pgEnum("library_status", [
+  "watching",
+  "completed",
+  "on_hold",
+  "dropped",
+  "planned",
+]);
+
+/**
+ * A member's library entry for one anime (LIB-01) — the "watching / finished"
+ * shelf and the source of the per-anime progress bar.
+ *
+ * Written from two places: automatically, when the player records the first
+ * ever completion of an episode (see `saveWatchProgress`), and by hand when the
+ * member picks a status. Both go through a single upsert statement.
+ *
+ * Free-tier shape: `episodesWatched` is a denormalized counter, incremented
+ * once per episode at the moment it flips to completed, so rendering a progress
+ * bar never runs a COUNT over `watch_progress`. `title`/`image`/`totalEpisodes`
+ * are denormalized the same way `favorites` does it, so the library page
+ * renders with one indexed query and zero Consumet round-trips.
+ *
+ * `statusLocked` is set the moment the member chooses a status themselves;
+ * from then on the automatic derivation never overwrites their choice.
+ */
+export const userLibrary = pgTable(
+  "user_library",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    animeId: text("anime_id").notNull(),
+    title: text("title").notNull(),
+    image: text("image"),
+    status: libraryStatusEnum("status").notNull().default("watching"),
+    statusLocked: boolean("status_locked").notNull().default(false),
+    /** Distinct episodes the member has finished (>=90% watched). */
+    episodesWatched: integer("episodes_watched").notNull().default(0),
+    /** Episode count as the catalog reported it; null while unknown. */
+    totalEpisodes: integer("total_episodes"),
+    /** Highest episode number reached, for the "continue from" line. */
+    lastEpisodeNumber: integer("last_episode_number"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    unique("user_library_user_anime_unique").on(table.userId, table.animeId),
+    // Serves both the "all shelves" and the per-status tab listings, newest
+    // first, without a sort step.
+    index("user_library_user_status_idx").on(
+      table.userId,
+      table.status,
+      table.updatedAt.desc(),
+    ),
+  ],
+);
+
+export type UserLibraryEntry = typeof userLibrary.$inferSelect;
+export type NewUserLibraryEntry = typeof userLibrary.$inferInsert;
+
+// What a discussion is attached to: a whole anime, one season (AniList models
+// seasons as separate entries, so `seasonId` is itself an anime id), or a
+// single episode.
+export const discussionScopeEnum = pgEnum("discussion_scope", [
+  "anime",
+  "season",
+  "episode",
+]);
+
+/**
+ * A discussion thread (COMM-01). One table backs both the community page and
+ * the per-episode review box: an episode's reviews are simply the posts of its
+ * `scope = 'episode'` thread, so there is a single moderation path, a single
+ * profanity gate and no second comments table to index on a free-tier database.
+ *
+ * `auto` marks the thread the site opened by itself the first time somebody
+ * reviewed an episode (no opening post, not authored by a member); a partial
+ * unique index keeps exactly one of those per (anime, episode).
+ *
+ * Free-tier shape: `replyCount` and `lastPostAt` are denormalized so the
+ * listing never aggregates over `discussion_posts`, and `animeTitle`/
+ * `animeImage` are denormalized so it never calls the catalog.
+ */
+export const discussionThreads = pgTable(
+  "discussion_threads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // Null for site-opened episode threads, and after the author's account is
+    // deleted — the conversation outlives the account.
+    authorId: uuid("author_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    scope: discussionScopeEnum("scope").notNull(),
+    animeId: text("anime_id").notNull(),
+    animeTitle: text("anime_title").notNull(),
+    animeImage: text("anime_image"),
+    /** AniList id of the chosen season entry (scope = 'season'). */
+    seasonId: text("season_id"),
+    /** Human label of that season as the switcher shows it ("Season 2"). */
+    seasonLabel: text("season_label"),
+    /** Episode number (scope = 'episode'). */
+    episodeNumber: integer("episode_number"),
+    title: text("title").notNull(),
+    /** Opening post; null for site-opened episode threads. */
+    body: text("body"),
+    replyCount: integer("reply_count").notNull().default(0),
+    lastPostAt: timestamp("last_post_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    /** Set by an admin to stop new replies without deleting the thread. */
+    locked: boolean("locked").notNull().default(false),
+    auto: boolean("auto").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // The community listing: most recently active first.
+    index("discussion_threads_activity_idx").on(table.lastPostAt.desc()),
+    // Threads of one anime (detail page rail, anime filter).
+    index("discussion_threads_anime_idx").on(
+      table.animeId,
+      table.lastPostAt.desc(),
+    ),
+    // At most one site-opened thread per episode; the watch page looks it up
+    // by this exact pair.
+    uniqueIndex("discussion_threads_auto_episode_unique")
+      .on(table.animeId, table.episodeNumber)
+      .where(sql`auto`),
+  ],
+);
+
+export type DiscussionThread = typeof discussionThreads.$inferSelect;
+export type NewDiscussionThread = typeof discussionThreads.$inferInsert;
+
+/**
+ * One message inside a thread (COMM-02) — a community reply or an episode
+ * review, depending on the parent thread's scope. Deleting the thread or the
+ * author's account removes the post.
+ */
+export const discussionPosts = pgTable(
+  "discussion_posts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    threadId: uuid("thread_id")
+      .notNull()
+      .references(() => discussionThreads.id, { onDelete: "cascade" }),
+    authorId: uuid("author_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // Oldest-first reading of one thread, and the keyset pagination cursor.
+    index("discussion_posts_thread_idx").on(table.threadId, table.createdAt),
+  ],
+);
+
+export type DiscussionPost = typeof discussionPosts.$inferSelect;
+export type NewDiscussionPost = typeof discussionPosts.$inferInsert;
