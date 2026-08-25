@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useTransition } from "react";
 
-import { NAV_ITEMS } from "@/components/header/nav-config";
+import { COMMUNITY_ITEMS, NAV_ITEMS } from "@/components/header/nav-config";
 import type { SessionUser } from "@/components/header/user-menu";
 import { setLocale } from "@/i18n/actions";
 import { locales, localeNames, type Locale } from "@/i18n/config";
@@ -141,6 +141,31 @@ export function MobileMenu({
                     )}
                   >
                     <Icon className="size-5" />
+                    {tNav(labelKey)}
+                  </Drawer.Close>
+                );
+              })}
+            </nav>
+
+            {/* Community */}
+            <p className={sectionTitle}>{tNav("community")}</p>
+            <nav className="flex flex-col">
+              {COMMUNITY_ITEMS.map(({ href, labelKey, icon: Icon }) => {
+                const active =
+                  pathname === href || pathname?.startsWith(`${href}/`);
+                return (
+                  <Drawer.Close
+                    key={href}
+                    nativeButton={false}
+                    render={<Link href={href} />}
+                    className={cn(
+                      "flex items-center gap-2 px-1 py-2 text-sm transition-colors",
+                      active
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="size-4" />
                     {tNav(labelKey)}
                   </Drawer.Close>
                 );

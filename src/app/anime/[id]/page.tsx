@@ -7,6 +7,7 @@ import { animeHref, parseAnimeParam } from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isFavorite } from "@/lib/favorites/queries";
+import { getLibraryEntry } from "@/lib/library/queries";
 
 interface AnimeDetailRouteProps {
   params: Promise<{ id: string }>;
@@ -72,7 +73,12 @@ export default async function AnimeDetailPage({
   if (`/anime/${id}` !== canonical) permanentRedirect(canonical);
 
   const user = await getCurrentUser();
-  const favorited = user?.id ? await isFavorite(user.id, detail.id) : false;
+  const [favorited, libraryEntry] = user?.id
+    ? await Promise.all([
+        isFavorite(user.id, detail.id),
+        getLibraryEntry(user.id, detail.id),
+      ])
+    : [false, null];
   const loginHref = `/login?callbackUrl=${encodeURIComponent(canonical)}`;
 
   return (
@@ -81,6 +87,7 @@ export default async function AnimeDetailPage({
         detail={detail}
         isAuthenticated={Boolean(user?.id)}
         isFavorite={favorited}
+        libraryEntry={libraryEntry}
         loginHref={loginHref}
       />
     </main>

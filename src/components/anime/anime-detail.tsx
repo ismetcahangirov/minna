@@ -9,17 +9,22 @@ import { DetailBanner } from "@/components/anime/detail-banner";
 import { HeroInitialScroll } from "@/components/anime/hero-initial-scroll";
 import { SeasonSwitcher } from "@/components/anime/season-tabs";
 import { AdBanner } from "@/components/home/ad-banner";
+import { LibraryProgressBar } from "@/components/library/progress-bar";
+import { LibraryStatusMenu } from "@/components/library/status-menu";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
 import { animeEpisodesHref } from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeDetail } from "@/lib/anime/types";
+import type { LibraryEntry } from "@/lib/library/types";
 import { buildAnimeJsonLd } from "@/lib/seo/anime-jsonld";
 
 interface AnimeDetailViewProps {
   detail: AnimeDetail;
   isAuthenticated: boolean;
   isFavorite: boolean;
+  /** The viewer's library entry for this anime, or null when it is not filed. */
+  libraryEntry: LibraryEntry | null;
   /** Login flow target for the favorite button when signed out. */
   loginHref: string;
 }
@@ -52,14 +57,19 @@ export async function AnimeDetailView({
   detail,
   isAuthenticated,
   isFavorite,
+  libraryEntry,
   loginHref,
 }: AnimeDetailViewProps) {
   const t = await getTranslations("detail");
+  const tLibrary = await getTranslations("library");
 
   const backdrop = detail.banner ?? detail.image;
   const score = detail.rating !== null ? (detail.rating / 10).toFixed(1) : null;
   const episodeCount = detail.totalEpisodes ?? (detail.episodes.length || null);
   const hasEpisodes = detail.episodes.length > 0;
+  // The library row's own count wins over the catalog's, so a series whose
+  // length changed after it was filed keeps a bar that matches its counter.
+  const libraryTotal = libraryEntry?.totalEpisodes ?? episodeCount;
   const synopsis = detail.description ? stripHtml(detail.description) : null;
 
   const metaItems = [
@@ -181,7 +191,36 @@ export async function AnimeDetailView({
                   isAuthenticated={isAuthenticated}
                   loginHref={loginHref}
                 />
+                <LibraryStatusMenu
+                  animeId={detail.id}
+                  title={detail.title}
+                  image={detail.image}
+                  totalEpisodes={episodeCount}
+                  status={libraryEntry?.status ?? null}
+                  loginHref={isAuthenticated ? null : loginHref}
+                />
               </div>
+
+              {/* How far the viewer is through the series (LIB-04). The counter
+                  behind it is kept on the library row, so this costs no extra
+                  work beyond the entry the page already read. */}
+              {libraryEntry && libraryEntry.episodesWatched > 0 && (
+                <LibraryProgressBar
+                  watched={libraryEntry.episodesWatched}
+                  total={libraryTotal}
+                  label={
+                    libraryTotal
+                      ? tLibrary("progress", {
+                          watched: libraryEntry.episodesWatched,
+                          total: libraryTotal,
+                        })
+                      : tLibrary("progressUnknown", {
+                          watched: libraryEntry.episodesWatched,
+                        })
+                  }
+                  className="mt-5 max-w-md"
+                />
+              )}
             </div>
           </div>
         </div>

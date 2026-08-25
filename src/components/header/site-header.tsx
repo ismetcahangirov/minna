@@ -1,4 +1,5 @@
 import { CategoriesMenu } from "@/components/header/categories-menu";
+import { CommunityMenu } from "@/components/header/community-menu";
 import { HeaderShell } from "@/components/header/header-shell";
 import { LanguageSwitcher } from "@/components/header/language-switcher";
 import { Logo } from "@/components/header/logo";
@@ -36,6 +37,7 @@ export async function SiteHeader() {
       <div className="hidden items-center lg:flex">
         <CategoriesMenu categories={categories} />
         <NavLinks />
+        <CommunityMenu />
       </div>
 
       {/* Right slot */}
