@@ -110,6 +110,7 @@ export default async function MemberProfilePage({
             alt=""
             width={80}
             height={80}
+            unoptimized
             className="border-border size-20 shrink-0 border object-cover"
           />
         ) : (

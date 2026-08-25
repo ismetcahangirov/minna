@@ -23,6 +23,15 @@ const nextConfig: NextConfig = {
       // AniList's `streamingEpisodes` (its subdomain varies per image).
       { protocol: "https", hostname: "media.kitsu.io", pathname: "/**" },
       { protocol: "https", hostname: "**.crunchyroll.com", pathname: "/**" },
+      // Google account avatars (the only sign-in method), shown on member
+      // cards, public profiles and every post. Google serves them already
+      // sized (the `=s96-c` suffix), so they are rendered `unoptimized` —
+      // listing the host is only what lets next/image accept the src at all.
+      {
+        protocol: "https",
+        hostname: "**.googleusercontent.com",
+        pathname: "/**",
+      },
     ],
     // Serve AVIF first (best compression), then WebP, then the original
     // format for unsupported browsers (PERF-02). AVIF/WebP shrink the

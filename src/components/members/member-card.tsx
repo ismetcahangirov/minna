@@ -31,6 +31,7 @@ export async function MemberCard({ member }: MemberCardProps) {
           alt=""
           width={48}
           height={48}
+          unoptimized
           className="border-border size-12 shrink-0 border object-cover"
         />
       ) : (

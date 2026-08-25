@@ -22,6 +22,7 @@ function Avatar({ author }: { author: DiscussionAuthor | null }) {
         alt=""
         width={32}
         height={32}
+        unoptimized
         className="border-border size-8 shrink-0 border object-cover"
       />
     );
