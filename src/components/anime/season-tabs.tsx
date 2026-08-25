@@ -62,7 +62,7 @@ async function EpisodesLink({ detail }: { detail: AnimeDetail }) {
             the tap reads as landing on the button without the hand ever
             covering the wording. Anchored to the label rather than the button,
             so it follows the text however wide the button gets. */}
-        <TapHint className="text-primary-foreground/85 -right-7 -bottom-3" />
+        <TapHint className="text-primary-foreground/85 -right-9 -bottom-3" />
       </span>
     </Button>
   );
