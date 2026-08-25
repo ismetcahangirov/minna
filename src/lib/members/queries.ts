@@ -145,3 +145,29 @@ export async function countMembers(): Promise<number> {
     return 0;
   }
 }
+
+/**
+ * Whether the member currently lets others read their library (MEM-04). Reads
+ * the account row rather than the session, so a change is reflected at once
+ * instead of waiting for the JWT to refresh. Defaults to visible on failure,
+ * matching the column default.
+ */
+export async function getUserVisibility(userId: string): Promise<boolean> {
+  if (!userId) return false;
+
+  try {
+    const { db } = await import("@/db");
+    const rows = await db
+      .select({ libraryPublic: users.libraryPublic })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    return rows[0]?.libraryPublic ?? true;
+  } catch (error) {
+    console.error(
+      "[members] getUserVisibility failed:",
+      (error as Error).message,
+    );
+    return true;
+  }
+}

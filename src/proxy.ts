@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 
 // Route segments that require an authenticated user. Extend this list as
 // login-only areas are built (profile — EPIC-09, favorites — EPIC-08, …).
-const PROTECTED_PREFIXES = ["/profile", "/favorites"];
+const PROTECTED_PREFIXES = ["/profile", "/favorites", "/library"];
 
 // Admin panel (EPIC-12) — requires the `admin` role, not just a session.
 const ADMIN_PREFIX = "/admin";
@@ -52,5 +52,10 @@ export default auth((req) => {
 // Only run the proxy on protected segments so it never adds latency to public
 // pages or blocks static assets.
 export const config = {
-  matcher: ["/profile/:path*", "/favorites/:path*", "/admin/:path*"],
+  matcher: [
+    "/profile/:path*",
+    "/favorites/:path*",
+    "/library/:path*",
+    "/admin/:path*",
+  ],
 };
