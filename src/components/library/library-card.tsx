@@ -34,6 +34,12 @@ const STATUS_KEY = {
  *
  * Every value shown is read off the library row itself, so a full shelf renders
  * from a single query with no catalog call per card.
+ *
+ * Every block below the poster reserves the tallest case it can take — two
+ * lines of title, a caption plus its bar, a full-height control — so the cards
+ * in a row are the same height and their titles, bars and controls sit on one
+ * line. The height comes out of that structure rather than a hardcoded figure
+ * per breakpoint, so it still follows the poster as the column width changes.
  */
 export async function LibraryCard({
   entry,
@@ -72,7 +78,10 @@ export async function LibraryCard({
             </div>
           )}
         </div>
-        <h3 className="text-foreground group-hover:text-primary mt-2 line-clamp-2 text-sm font-semibold transition-colors">
+        {/* Two lines tall whether the title needs one or two — the longest a
+            clamped title can be, so a short one leaves the gap instead of
+            lifting everything under it. */}
+        <h3 className="text-foreground group-hover:text-primary mt-2 line-clamp-2 h-10 text-sm leading-5 font-semibold transition-colors">
           {entry.title}
         </h3>
       </Link>
@@ -94,7 +103,9 @@ export async function LibraryCard({
           className="mt-3 w-full"
         />
       ) : (
-        <p className="border-border text-muted-foreground mt-3 border px-2 py-1.5 text-center text-xs tracking-wide uppercase">
+        // Matches the control's height on the owner's own shelf, so a public
+        // profile and a private one lay out identically.
+        <p className="border-border text-muted-foreground mt-3 flex h-9 items-center justify-center border px-2 text-center text-xs tracking-wide uppercase">
           {t(STATUS_KEY[entry.status])}
         </p>
       )}
