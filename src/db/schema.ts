@@ -223,7 +223,7 @@ export const backgroundVideos = pgTable(
 export type BackgroundVideo = typeof backgroundVideos.$inferSelect;
 export type NewBackgroundVideo = typeof backgroundVideos.$inferInsert;
 
-// --- Community: library, discussions (EPIC-15) ------------------------------
+// --- Community: library, discussions (EPIC-17) ------------------------------
 
 // How a member classifies an anime in their library. `watching`/`completed` are
 // also derived automatically from watch progress; the remaining values are only

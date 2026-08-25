@@ -1,5 +1,5 @@
 /**
- * Community discussion shapes (EPIC-15). One thread model covers all three
+ * Community discussion shapes (EPIC-17). One thread model covers all three
  * scopes a conversation can hang off — a whole anime, one season, or a single
  * episode — so the community page and the per-episode review box read the same
  * rows through the same queries.

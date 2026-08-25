@@ -334,3 +334,30 @@ panelindən idarə olunur.
       deploy
 - [ ] **DEPLOY-03:** Neon + Redis production konfiqurasiyası
 - [ ] **DEPLOY-04:** CI/CD pipeline (GitHub Actions) — test + lint + build
+
+---
+
+## EPIC-17: Topluluq — Müzakirələr, Kitabxana və Üzvlər
+
+**Labels:** `epic`, `community`, `frontend`, `backend`
+
+**Sub-issues:**
+
+- [x] **COMM-01:** Müzakirə açma (anime / sezon / bölüm seçimi ilə) —
+      `/discussions/new`
+- [x] **COMM-02:** Müzakirəyə cavab yazma (post)
+- [x] **COMM-03:** Müzakirələr siyahısı səhifəsi — `/discussions`
+- [x] **COMM-04:** Müzakirə detal səhifəsi (cavablar + səhifələmə)
+- [x] **COMM-05:** Söyüş filtri (EN/TR/AZ/RU) — bütün üzv mətnləri üçün
+- [x] **COMM-06:** Redis əsaslı yazma limiti (spam qoruması)
+- [x] **COMM-07:** Bölüm rəyləri (watch səhifəsində, eyni thread modeli)
+- [x] **LIB-01:** `user_library` sxemi — sayğaclı (denormalizasiya)
+- [x] **LIB-02:** İzləmə progress-indən avtomatik kitabxana yazısı
+- [x] **LIB-03:** Kitabxana səhifəsi — `/library` (rəf tabları)
+- [x] **LIB-04:** Anime üzrə progress bar (detal səhifəsi + kartlar)
+- [x] **LIB-05:** Əl ilə status seçimi (`status_locked`)
+- [x] **LIB-06:** Kitabxanadan silmə
+- [x] **MEM-01:** Public handle (`users.handle`) — login zamanı təyin olunur
+- [x] **MEM-02:** Üzv kataloqu + axtarış — `/users`
+- [x] **MEM-03:** Public profil — `/users/{handle}`
+- [x] **MEM-04:** Kitabxana görünürlüyü (public/private)

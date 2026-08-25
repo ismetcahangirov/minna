@@ -1,5 +1,5 @@
 /**
- * Public member shapes for the directory and public profiles (EPIC-15).
+ * Public member shapes for the directory and public profiles (EPIC-17).
  *
  * Only what a member has chosen to make public appears here — never the Google
  * email, which stays on the account row and out of every public query.
