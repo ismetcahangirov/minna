@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, ne } from "drizzle-orm";
 
 import { blogs, blogTags, blogsToTags } from "@/db/schema";
 import { BROWSE_PAGE_SIZE, type PagedResult } from "@/lib/browse/types";
@@ -9,6 +9,7 @@ import {
   type BlogDetail,
   type BlogSummary,
   type BlogTagRef,
+  type BlogTranslationRef,
   toBlogDetail,
   toBlogSummary,
 } from "@/lib/blog/types";
@@ -95,6 +96,37 @@ export async function listBlogs(
 }
 
 /**
+ * The published translations of one post, excluding the post itself.
+ *
+ * Only published rows count: `hreflang` must point at pages a visitor can
+ * actually reach, and advertising a draft would send Google to a 404 and
+ * invalidate the reciprocal set it belongs to.
+ */
+async function translationsOf(
+  db: Awaited<typeof import("@/db")>["db"],
+  groupId: string,
+  selfId: string,
+): Promise<BlogTranslationRef[]> {
+  const rows = await db
+    .select({
+      slug: blogs.slug,
+      language: blogs.language,
+      title: blogs.title,
+    })
+    .from(blogs)
+    .where(
+      and(
+        eq(blogs.translationGroupId, groupId),
+        ne(blogs.id, selfId),
+        eq(blogs.published, true),
+      ),
+    )
+    .orderBy(blogs.language);
+
+  return rows;
+}
+
+/**
  * A single published post by slug (LIST-05), or `null` when it does not exist
  * (the detail page treats that as a 404). Degrades to `null` on any DB failure.
  *
@@ -115,8 +147,12 @@ export const getBlogBySlug = cache(
         .limit(1);
 
       if (rows.length === 0) return null;
-      const tags = await tagsByBlogId(db, [rows[0].id]);
-      return toBlogDetail(rows[0], tags.get(rows[0].id) ?? []);
+      const [row] = rows;
+      const [tags, translations] = await Promise.all([
+        tagsByBlogId(db, [row.id]),
+        translationsOf(db, row.translationGroupId, row.id),
+      ]);
+      return toBlogDetail(row, tags.get(row.id) ?? [], translations);
     } catch (error) {
       console.error("[blog] getBlogBySlug failed:", (error as Error).message);
       return null;

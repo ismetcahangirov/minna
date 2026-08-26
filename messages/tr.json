@@ -172,7 +172,8 @@
         "pagination": "Arşiv sayfaları",
         "previous": "Daha yeni yazılar",
         "next": "Daha eski yazılar"
-      }
+      },
+      "translations": "Başka bir dilde oku"
     },
     "favorites": {
       "title": "Favoriler",

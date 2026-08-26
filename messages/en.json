@@ -172,7 +172,8 @@
         "pagination": "Archive pages",
         "previous": "Newer posts",
         "next": "Older posts"
-      }
+      },
+      "translations": "Read in another language"
     },
     "favorites": {
       "title": "Favorites",
