@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname } from "@/i18n/navigation";
 
 /**
  * Hides the public site header on the admin panel (EPIC-12), which ships its

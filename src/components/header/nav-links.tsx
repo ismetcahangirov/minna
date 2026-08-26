@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { NAV_ITEMS } from "@/components/header/nav-config";
+import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 /**

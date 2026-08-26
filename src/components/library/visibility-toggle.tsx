@@ -1,10 +1,10 @@
 "use client";
 
 import { Eye, EyeOff } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 
+import { useRouter } from "@/i18n/navigation";
 import { setLibraryVisibility } from "@/lib/members/actions";
 
 interface VisibilityToggleProps {

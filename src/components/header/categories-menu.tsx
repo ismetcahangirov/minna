@@ -2,9 +2,9 @@
 
 import { Menu } from "@base-ui/react/menu";
 import { ChevronDown } from "lucide-react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/i18n/navigation";
 import type { Category } from "@/lib/anime/genres";
 import { cn } from "@/lib/utils";
 

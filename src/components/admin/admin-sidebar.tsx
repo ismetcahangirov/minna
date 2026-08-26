@@ -1,11 +1,10 @@
 "use client";
 
 import { LogOut } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { ADMIN_NAV } from "@/components/admin/admin-nav";
+import { Link, usePathname } from "@/i18n/navigation";
 import { signOutUser } from "@/lib/auth/actions";
 import { cn } from "@/lib/utils";
 

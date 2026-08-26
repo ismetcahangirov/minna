@@ -12,8 +12,11 @@ import {
 } from "@/lib/anime/sitemap";
 import { listBlogSitemapEntries } from "@/lib/blog/queries";
 import { listBlogTagSitemapEntries } from "@/lib/blog/tags";
+import { locales } from "@/i18n/config";
+import { blogPostHref } from "@/lib/blog/href";
 import { cacheKey, getOrSet } from "@/lib/cache";
 import { pickDefaultVersion } from "@/lib/seo/hreflang";
+import { localeVersions } from "@/lib/seo/locale-alternates";
 import { absoluteUrl } from "@/lib/seo/site";
 
 /**
@@ -39,6 +42,39 @@ export const dynamic = "force-dynamic";
 /** How long one enumeration of the catalog is reused for. */
 const SITEMAP_TTL = 3600;
 
+/** Google refuses a sitemap with more URLs than this. */
+const SITEMAP_URL_LIMIT = 50_000;
+
+/**
+ * One entry per locale for a page that exists in all three (I18N-05).
+ *
+ * Every entry carries the same reciprocal alternates set, because a sitemap
+ * alternates block and a page's `hreflang` are read as one claim: listing only
+ * the English URL — which is what this file used to do — left the Turkish and
+ * Russian versions with no way into the index at all.
+ *
+ * `x-default` comes from the shared {@link pickDefaultVersion}, the same
+ * function the pages use, so the two can never name different defaults.
+ *
+ * @param path The unprefixed path, e.g. `/popular`.
+ */
+function perLocale(
+  path: string,
+  entry: Omit<MetadataRoute.Sitemap[number], "url" | "alternates">,
+): MetadataRoute.Sitemap {
+  const versions = localeVersions(path);
+  const absolute = Object.fromEntries(
+    Object.entries(versions).map(([tag, href]) => [tag, absoluteUrl(href)]),
+  );
+  const languages = { ...absolute, "x-default": pickDefaultVersion(absolute) };
+
+  return locales.map((locale) => ({
+    ...entry,
+    url: absoluteUrl(versions[locale]),
+    alternates: { languages },
+  }));
+}
+
 /** The publicly crawlable static routes and their crawl hints. */
 const STATIC_ROUTES: ReadonlyArray<{
   path: string;
@@ -57,7 +93,7 @@ const STATIC_ROUTES: ReadonlyArray<{
  */
 async function sitemapEntries() {
   return getOrSet(
-    cacheKey("sitemap", "entries", "v3"),
+    cacheKey("sitemap", "entries", "v4"),
     SITEMAP_TTL,
     async () => {
       const [anime, posts, episodes, tags] = await Promise.all([
@@ -79,35 +115,39 @@ async function sitemapEntries() {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
-    url: absoluteUrl(route.path),
-    lastModified: now,
-    changeFrequency: route.changeFrequency,
-    priority: route.priority,
-  }));
+  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.flatMap((route) =>
+    perLocale(route.path, {
+      lastModified: now,
+      changeFrequency: route.changeFrequency,
+      priority: route.priority,
+    }),
+  );
 
   const { anime, posts, episodes, tags } = await sitemapEntries();
 
-  const animeEntries: MetadataRoute.Sitemap = anime.map((entry) => ({
-    url: absoluteUrl(animeHref(entry.id, entry.title)),
-    lastModified: now,
-    changeFrequency: "weekly",
-    priority: 0.8,
-  }));
+  const animeEntries: MetadataRoute.Sitemap = anime.flatMap((entry) =>
+    perLocale(animeHref(entry.id, entry.title), {
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    }),
+  );
 
   // The episodes list of a long series spans several `?page=` URLs — each is a
   // distinct set of episodes, so each is listed. Titles whose episode count is
   // unknown contribute their first page only.
   const episodeListEntries: MetadataRoute.Sitemap = anime.flatMap((entry) => {
     const pages = entry.episodes ? episodesPageCount(entry.episodes) : 1;
-    return Array.from({ length: pages }, (_, index) => ({
-      url: absoluteUrl(
+    return Array.from({ length: pages }, (_, index) =>
+      perLocale(
         animeEpisodesPageHref(entry.id, entry.title, { page: index + 1 }),
+        {
+          lastModified: now,
+          changeFrequency: "weekly" as const,
+          priority: index === 0 ? 0.7 : 0.5,
+        },
       ),
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: index === 0 ? 0.7 : 0.5,
-    }));
+    ).flat();
   });
 
   // Every language version of an article, keyed by its tag, so each sitemap
@@ -117,7 +157,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const versionsByGroup = new Map<string, Record<string, string>>();
   for (const post of posts) {
     const group = versionsByGroup.get(post.translationGroupId) ?? {};
-    group[post.language] = absoluteUrl(`/blogs/${post.slug}`);
+    group[post.language] = absoluteUrl(blogPostHref(post));
     versionsByGroup.set(post.translationGroupId, group);
   }
 
@@ -131,7 +171,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         : undefined;
 
     return {
-      url: absoluteUrl(`/blogs/${post.slug}`),
+      // A post has one URL — its slug under its own language's prefix — so
+      // unlike a site page it contributes one entry, not three (I18N-07).
+      url: absoluteUrl(blogPostHref(post)),
       lastModified: post.updatedAt,
       changeFrequency: "monthly" as const,
       priority: 0.6,
@@ -142,21 +184,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Tag archives are hubs, not leaves: a well-stocked one is a better entry
   // point than any single post under it, so its priority tracks how much it
   // covers rather than sitting at a flat default.
-  const blogTagEntries: MetadataRoute.Sitemap = tags.map((tag) => ({
-    url: absoluteUrl(`/blogs/tag/${tag.slug}`),
-    lastModified: tag.updatedAt,
-    changeFrequency: "weekly",
-    priority: tag.postCount >= 5 ? 0.6 : 0.4,
-  }));
+  const blogTagEntries: MetadataRoute.Sitemap = tags.flatMap((tag) =>
+    perLocale(`/blogs/tag/${tag.slug}`, {
+      lastModified: tag.updatedAt,
+      changeFrequency: "weekly",
+      priority: tag.postCount >= 5 ? 0.6 : 0.4,
+    }),
+  );
 
-  const watchEntries: MetadataRoute.Sitemap = episodes.map((ep) => ({
-    url: absoluteUrl(watchHref(ep.animeId, ep.episodeNumber, ep.animeTitle)),
-    lastModified: now,
-    changeFrequency: "weekly" as const,
-    priority: 0.7,
-  }));
+  const watchEntries: MetadataRoute.Sitemap = episodes.flatMap((ep) =>
+    perLocale(watchHref(ep.animeId, ep.episodeNumber, ep.animeTitle), {
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }),
+  );
 
-  return [
+  const all = [
     ...staticEntries,
     ...animeEntries,
     ...episodeListEntries,
@@ -164,4 +208,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...blogTagEntries,
     ...watchEntries,
   ];
+
+  // Three locales means roughly three times the URLs. Nothing here truncates,
+  // but crossing the limit means Google rejects the file wholesale rather than
+  // taking the first 50,000 — so say so out loud rather than discovering it in
+  // Search Console. The fix when it happens is a sitemap index, not a cap.
+  if (all.length > SITEMAP_URL_LIMIT) {
+    console.warn(
+      `[sitemap] ${all.length} URLs exceeds Google's ${SITEMAP_URL_LIMIT} limit — split into a sitemap index`,
+    );
+  }
+
+  return all;
 }

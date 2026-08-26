@@ -2,9 +2,10 @@
 
 import { Newspaper } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useFormatter } from "next-intl";
 
+import { Link } from "@/i18n/navigation";
+import { postLocale } from "@/lib/blog/href";
 import type { BlogSummary } from "@/lib/blog/types";
 
 interface BlogCardProps {
@@ -25,6 +26,12 @@ export function BlogCard({ blog, priority }: BlogCardProps) {
   return (
     <Link
       href={`/blogs/${blog.slug}`}
+      // A listing shows the best available version of each article, which for
+      // an untranslated post is not the reader's language. The card therefore
+      // links to the post's own locale — its single canonical URL — rather than
+      // to a prefix under which it does not exist.
+      locale={postLocale(blog.language)}
+      hrefLang={blog.language}
       className="group focus-visible:ring-ring block w-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
     >
       <div className="border-border bg-surface group-hover:border-primary/60 relative aspect-[3/4] overflow-hidden border transition-[transform,border-color] duration-300 group-hover:z-10 group-hover:scale-[1.02] group-hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.9)]">

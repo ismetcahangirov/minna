@@ -15,7 +15,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "validate:video": "node scripts/validate-video.mjs",
-    "bench:cache": "node scripts/bench-cache.mjs"
+    "bench:cache": "node scripts/bench-cache.mjs",
+    "verify:locale": "node scripts/verify-locale-urls.mjs"
   },
   "engines": {
     "node": ">=22"

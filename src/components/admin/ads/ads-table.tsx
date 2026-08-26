@@ -1,9 +1,9 @@
 import { Pencil } from "lucide-react";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { DeleteAdButton } from "@/components/admin/ads/delete-ad-button";
 import type { Ad } from "@/db/schema";
+import { Link } from "@/i18n/navigation";
 import { setAdActiveAction } from "@/lib/admin/ads/actions";
 import { cn } from "@/lib/utils";
 

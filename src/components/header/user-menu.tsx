@@ -3,10 +3,10 @@
 import { Avatar } from "@base-ui/react/avatar";
 import { Menu } from "@base-ui/react/menu";
 import { LogOut, User } from "lucide-react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 /**

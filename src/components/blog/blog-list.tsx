@@ -1,7 +1,7 @@
 "use client";
 
 import { Newspaper } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { BlogCard, BlogCardSkeleton } from "@/components/blog/blog-card";
 import { InfinitePagedGrid } from "@/components/browse/infinite-paged-grid";
@@ -23,11 +23,16 @@ interface BlogListProps {
  */
 export function BlogList({ initialPage }: BlogListProps) {
   const t = useTranslations("browse");
+  const locale = useLocale();
 
   return (
-    <InfinitePagedGrid<BlogSummary>
+    <InfinitePagedGrid<BlogSummary, { page: number; locale: string }>
       initialPage={initialPage}
       usePage={useGetBlogPageQuery}
+      // Scrolled pages have to be selected for the same locale the first page
+      // was, or page 2 would quietly switch which version of each translated
+      // article it shows.
+      getPageArg={(page) => ({ page, locale })}
       getKey={(blog) => blog.id}
       gridClassName={GRID_CLASS}
       skeletonCount={8}

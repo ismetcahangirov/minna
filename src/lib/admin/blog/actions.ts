@@ -4,9 +4,10 @@ import { randomUUID } from "node:crypto";
 
 import { and, eq, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { blogs, blogTags, blogsToTags } from "@/db/schema";
+import { redirect } from "@/i18n/navigation";
+import { getActiveLocale } from "@/i18n/route-locale";
 import { requireAdmin } from "@/lib/auth/admin";
 
 type BlogField =
@@ -248,7 +249,7 @@ export async function createBlogAction(
   }
 
   revalidateBlogPaths(parsed.values.slug);
-  redirect("/admin/blogs");
+  redirect({ href: "/admin/blogs", locale: await getActiveLocale() });
 }
 
 /** Updates a post (id bound by the edit page), then returns to the list. */
@@ -279,7 +280,7 @@ export async function updateBlogAction(
   }
 
   revalidateBlogPaths(parsed.values.slug, previousSlug);
-  redirect("/admin/blogs");
+  redirect({ href: "/admin/blogs", locale: await getActiveLocale() });
 }
 
 /** Deletes a post (id/slug bound per row). */

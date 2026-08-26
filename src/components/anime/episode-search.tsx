@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { EpisodeSearchField } from "@/components/anime/episode-search-field";
+import { useRouter } from "@/i18n/navigation";
 import { animeEpisodesPageHref } from "@/lib/anime/href";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 

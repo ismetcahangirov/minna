@@ -1,11 +1,11 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { toggleFavorite } from "@/lib/favorites/actions";
 import { cn } from "@/lib/utils";
 

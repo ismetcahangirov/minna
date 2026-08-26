@@ -2,9 +2,10 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { ads } from "@/db/schema";
+import { redirect } from "@/i18n/navigation";
+import { getActiveLocale } from "@/i18n/route-locale";
 import { invalidateAdPool } from "@/lib/ads/queries";
 import { requireAdmin } from "@/lib/auth/admin";
 
@@ -130,7 +131,7 @@ export async function createAdAction(
 
   await invalidateAdPool();
   revalidatePath("/admin/ads");
-  redirect("/admin/ads");
+  redirect({ href: "/admin/ads", locale: await getActiveLocale() });
 }
 
 /** Updates an existing ad (id bound by the edit page), then returns to the list. */
@@ -154,7 +155,7 @@ export async function updateAdAction(
 
   await invalidateAdPool();
   revalidatePath("/admin/ads");
-  redirect("/admin/ads");
+  redirect({ href: "/admin/ads", locale: await getActiveLocale() });
 }
 
 /** Deletes an ad (id bound per row). */

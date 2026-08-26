@@ -1,7 +1,8 @@
 import "server-only";
 
-import { redirect } from "next/navigation";
-
+import { redirect } from "@/i18n/navigation";
+import { getActiveLocale } from "@/i18n/route-locale";
+import { localePath } from "@/i18n/paths";
 import { getCurrentUser } from "@/lib/auth/session";
 
 /**
@@ -37,7 +38,23 @@ export async function getCurrentAdmin() {
  */
 export async function requireAdmin() {
   const user = await getCurrentUser();
-  if (!user?.id) redirect("/login?callbackUrl=/admin");
-  if (user.role !== "admin") redirect("/");
+
+  // Both redirects have to land in the language the admin was already using —
+  // being bounced into English for failing a role check would be its own bug.
+  if (!user?.id) {
+    const locale = await getActiveLocale();
+    redirect({
+      href: {
+        pathname: "/login",
+        // The login page hands `callbackUrl` straight to Next's own redirect,
+        // so it has to be the already-localized path.
+        query: { callbackUrl: localePath("/admin", locale) },
+      },
+      locale,
+    });
+  }
+  if (user.role !== "admin")
+    redirect({ href: "/", locale: await getActiveLocale() });
+
   return user;
 }

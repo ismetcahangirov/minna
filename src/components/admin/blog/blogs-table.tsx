@@ -1,9 +1,9 @@
 import { Pencil } from "lucide-react";
-import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 
 import { DeleteBlogButton } from "@/components/admin/blog/delete-blog-button";
 import type { Blog } from "@/db/schema";
+import { Link } from "@/i18n/navigation";
 import { setBlogPublishedAction } from "@/lib/admin/blog/actions";
 import { cn } from "@/lib/utils";
 

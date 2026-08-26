@@ -1,11 +1,11 @@
 import { ArrowDownUp, Check, Film, Play } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { EpisodePagination } from "@/components/anime/episode-pagination";
 import { EpisodeSearch } from "@/components/anime/episode-search";
 import { buttonVariants } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { animeEpisodesPageHref, watchHref } from "@/lib/anime/href";
 import type { AnimeEpisode } from "@/lib/anime/types";
 import { cn } from "@/lib/utils";

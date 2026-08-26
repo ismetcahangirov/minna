@@ -1,11 +1,11 @@
 import { ListVideo } from "lucide-react";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { SeasonCarousel } from "@/components/anime/season-carousel";
 import { TapHint } from "@/components/anime/tap-hint";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { animeEpisodesHref } from "@/lib/anime/href";
 import { getAnimeSeasons } from "@/lib/anime/seasons";
 import type { AnimeDetail } from "@/lib/anime/types";

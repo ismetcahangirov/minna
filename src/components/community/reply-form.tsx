@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useActionState, useEffect, useRef } from "react";
 
 import { COMMUNITY_ERROR_KEY } from "@/components/community/error-key";
 import { Button } from "@/components/ui/button";
+import { Link, useRouter } from "@/i18n/navigation";
 import { createPost, type PostFormState } from "@/lib/discussions/actions";
 import { TEXT_LIMITS } from "@/lib/moderation/limits";
 

@@ -29,6 +29,12 @@ export interface BlogSummary {
   coverImageAlt: string | null;
   author: string | null;
   publishedAt: string;
+  /**
+   * BCP-47 language of the article. A card needs it because a post lives only
+   * under its own language's prefix (I18N-07), so the link a listing renders
+   * depends on the post, not on the locale the listing is being read in.
+   */
+  language: string;
   /** Empty until an editor tags the post; drives the tag archive pages. */
   tags: BlogTagRef[];
 }
@@ -42,8 +48,6 @@ export interface BlogDetail extends BlogSummary {
   content: string;
   /** Author profile/homepage, published as `Person.url` (E-E-A-T). */
   authorUrl: string | null;
-  /** BCP-47 language of the body, published as `inLanguage`. */
-  language: string;
   /** Drives `dateModified`, distinct from the (backdatable) publish date. */
   updatedAt: string;
   /** Groups this post with its translations; see `blogs.translationGroupId`. */
@@ -67,6 +71,7 @@ export function toBlogSummary(row: Blog, tags: BlogTagRef[] = []): BlogSummary {
     coverImageAlt: row.coverImageAlt,
     author: row.author,
     publishedAt: row.publishedAt.toISOString(),
+    language: row.language,
     tags,
   };
 }

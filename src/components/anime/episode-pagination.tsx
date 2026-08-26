@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
+import { Link } from "@/i18n/navigation";
 import { animeEpisodesPageHref } from "@/lib/anime/href";
 import { cn } from "@/lib/utils";
 

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import {
@@ -6,6 +5,7 @@ import {
   type LibraryCounts,
   type LibraryStatus,
 } from "@/lib/library/types";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 interface LibraryTabsProps {

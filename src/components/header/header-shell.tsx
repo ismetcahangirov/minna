@@ -1,8 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 /** Past this scroll depth the header gains its solid background + hairline. */

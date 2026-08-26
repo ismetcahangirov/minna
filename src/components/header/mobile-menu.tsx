@@ -2,15 +2,13 @@
 
 import { Drawer } from "@base-ui/react/drawer";
 import { Check, LogOut, Menu as MenuIcon, User, X } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { useTransition } from "react";
 
 import { COMMUNITY_ITEMS, NAV_ITEMS } from "@/components/header/nav-config";
 import type { SessionUser } from "@/components/header/user-menu";
-import { setLocale } from "@/i18n/actions";
 import { locales, localeNames, type Locale } from "@/i18n/config";
+import { Link, usePathname } from "@/i18n/navigation";
+import { keepHash, useCurrentRoute } from "@/i18n/use-locale-switch";
 import type { Category } from "@/lib/anime/genres";
 import { cn } from "@/lib/utils";
 
@@ -44,17 +42,8 @@ export function MobileMenu({
   const tNav = useTranslations("nav");
   const tAuth = useTranslations("auth");
   const pathname = usePathname();
-  const router = useRouter();
   const activeLocale = useLocale() as Locale;
-  const [pending, startTransition] = useTransition();
-
-  function selectLocale(locale: Locale) {
-    if (locale === activeLocale) return;
-    startTransition(async () => {
-      await setLocale(locale);
-      router.refresh();
-    });
-  }
+  const localeHref = useCurrentRoute();
 
   return (
     <Drawer.Root swipeDirection="right">
@@ -195,13 +184,20 @@ export function MobileMenu({
             <p className={sectionTitle}>{tNav("language")}</p>
             <div className="flex flex-col">
               {locales.map((locale) => (
-                <button
+                <Drawer.Close
                   key={locale}
-                  type="button"
-                  disabled={pending}
-                  onClick={() => selectLocale(locale)}
+                  nativeButton={false}
+                  render={
+                    <Link
+                      href={localeHref}
+                      locale={locale}
+                      hrefLang={locale}
+                      lang={locale}
+                      onClick={keepHash}
+                    />
+                  }
                   className={cn(
-                    "flex items-center justify-between px-1 py-2 text-sm transition-colors disabled:opacity-50",
+                    "flex items-center justify-between px-1 py-2 text-sm transition-colors",
                     locale === activeLocale
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground",
@@ -211,7 +207,7 @@ export function MobileMenu({
                   {locale === activeLocale && (
                     <Check className="text-primary size-4" />
                   )}
-                </button>
+                </Drawer.Close>
               ))}
             </div>
           </Drawer.Popup>

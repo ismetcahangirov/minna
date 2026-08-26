@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useRef } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import type { BlogFormState } from "@/lib/admin/blog/actions";
 import type { BlogMediaItem } from "@/lib/admin/blog/media-actions";
 import type { BlogTranslationTarget } from "@/lib/admin/blog/queries";

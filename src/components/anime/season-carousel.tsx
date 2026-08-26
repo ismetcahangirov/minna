@@ -2,7 +2,6 @@
 
 import { ChevronLeft, ChevronRight, Film } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   type PointerEvent,
@@ -12,6 +11,7 @@ import {
   useState,
 } from "react";
 
+import { Link } from "@/i18n/navigation";
 import { animeEpisodesHref } from "@/lib/anime/href";
 import type { AnimeSeason } from "@/lib/anime/seasons";
 import { cn } from "@/lib/utils";
