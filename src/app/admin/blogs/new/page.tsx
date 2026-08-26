@@ -3,7 +3,11 @@ import { getTranslations } from "next-intl/server";
 
 import { BlogForm } from "@/components/admin/blog/blog-form";
 import { createBlogAction } from "@/lib/admin/blog/actions";
-import { listAdminBlogTags, listBlogMedia } from "@/lib/admin/blog/queries";
+import {
+  listAdminBlogTags,
+  listBlogMedia,
+  listBlogTranslationTargets,
+} from "@/lib/admin/blog/queries";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("admin.blogs");
@@ -15,10 +19,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Create-post form page (ADMIN-05). */
 export default async function NewBlogPage() {
-  const [t, library, tags] = await Promise.all([
+  const [t, library, tags, translationTargets] = await Promise.all([
     getTranslations("admin.blogs"),
     listBlogMedia(),
     listAdminBlogTags(),
+    listBlogTranslationTargets(),
   ]);
 
   return (
@@ -35,6 +40,7 @@ export default async function NewBlogPage() {
         submitKey="create"
         library={library}
         tagSuggestions={tags.map((tag) => tag.name)}
+        translationTargets={translationTargets}
       />
     </div>
   );

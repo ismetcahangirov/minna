@@ -9,6 +9,7 @@ import {
   getAdminBlogTagNames,
   listAdminBlogTags,
   listBlogMedia,
+  listBlogTranslationTargets,
 } from "@/lib/admin/blog/queries";
 
 interface EditBlogRouteProps {
@@ -35,7 +36,16 @@ export default async function EditBlogPage({ params }: EditBlogRouteProps) {
 
   if (!post) notFound();
 
-  const postTags = await getAdminBlogTagNames(post.id);
+  const [postTags, translationTargets] = await Promise.all([
+    getAdminBlogTagNames(post.id),
+    listBlogTranslationTargets(post.id),
+  ]);
+  // Preselect the group only when something else is actually in it; a group of
+  // one is what "standalone" means, and showing it selected would suggest the
+  // post is tied to a sibling that does not exist.
+  const linked = translationTargets.some(
+    (target) => target.groupId === post.translationGroupId,
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -53,6 +63,7 @@ export default async function EditBlogPage({ params }: EditBlogRouteProps) {
         submitKey="save"
         library={library}
         tagSuggestions={tags.map((tag) => tag.name)}
+        translationTargets={translationTargets}
         defaultValues={{
           title: post.title,
           slug: post.slug,
@@ -63,6 +74,7 @@ export default async function EditBlogPage({ params }: EditBlogRouteProps) {
           author: post.author ?? "",
           authorUrl: post.authorUrl ?? "",
           language: post.language,
+          translationGroupId: linked ? post.translationGroupId : "",
           tags: postTags.join(", "),
           published: post.published,
         }}

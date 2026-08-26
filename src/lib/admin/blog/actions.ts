@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
 import { and, eq, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -8,7 +10,13 @@ import { blogs, blogTags, blogsToTags } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/admin";
 
 type BlogField =
-  "title" | "slug" | "content" | "coverImage" | "authorUrl" | "language";
+  | "title"
+  | "slug"
+  | "content"
+  | "coverImage"
+  | "authorUrl"
+  | "language"
+  | "translationGroupId";
 
 export interface BlogFormState {
   error?: string;
@@ -25,8 +33,19 @@ interface BlogValues {
   author: string | null;
   authorUrl: string | null;
   language: string;
+  translationGroupId: string;
   published: boolean;
 }
+
+/** Postgres unique-violation code, raised by the one-post-per-language index. */
+const UNIQUE_VIOLATION = "23505";
+
+function isUniqueViolation(error: unknown): boolean {
+  return (error as { code?: string })?.code === UNIQUE_VIOLATION;
+}
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Languages a post may be authored in — the locales the UI itself ships. */
 const LANGUAGES = ["en", "tr", "ru"] as const;
@@ -67,6 +86,12 @@ function parseBlog(
   const author = String(formData.get("author") ?? "").trim();
   const authorUrl = String(formData.get("authorUrl") ?? "").trim();
   const language = String(formData.get("language") ?? "en").trim();
+  // Empty means "not a translation of anything" — a fresh group of one. The
+  // column is `notNull`, so standalone is a new id rather than an absent one.
+  const groupRaw = String(formData.get("translationGroupId") ?? "").trim();
+  const translationGroupId = UUID_PATTERN.test(groupRaw)
+    ? groupRaw
+    : randomUUID();
   const published = formData.get("published") != null;
 
   if (!title || title.length > 200) fieldErrors.title = "required";
@@ -94,6 +119,7 @@ function parseBlog(
       author: author || null,
       authorUrl: authorUrl || null,
       language,
+      translationGroupId,
       published,
     },
   };
@@ -214,6 +240,9 @@ export async function createBlogAction(
       .returning({ id: blogs.id });
     await syncBlogTags(db, created.id, parseTagNames(formData));
   } catch (error) {
+    if (isUniqueViolation(error)) {
+      return { fieldErrors: { translationGroupId: "translationExists" } };
+    }
     console.error("[admin] createBlog failed:", (error as Error).message);
     return { error: "saveFailed" };
   }
@@ -242,6 +271,9 @@ export async function updateBlogAction(
     await db.update(blogs).set(parsed.values).where(eq(blogs.id, id));
     await syncBlogTags(db, id, parseTagNames(formData));
   } catch (error) {
+    if (isUniqueViolation(error)) {
+      return { fieldErrors: { translationGroupId: "translationExists" } };
+    }
     console.error("[admin] updateBlog failed:", (error as Error).message);
     return { error: "saveFailed" };
   }
