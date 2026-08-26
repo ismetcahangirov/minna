@@ -11,6 +11,7 @@ import {
   listEpisodeSitemapEntries,
 } from "@/lib/anime/sitemap";
 import { listBlogSitemapEntries } from "@/lib/blog/queries";
+import { listBlogTagSitemapEntries } from "@/lib/blog/tags";
 import { cacheKey, getOrSet } from "@/lib/cache";
 import { absoluteUrl } from "@/lib/seo/site";
 
@@ -55,22 +56,24 @@ const STATIC_ROUTES: ReadonlyArray<{
  */
 async function sitemapEntries() {
   return getOrSet(
-    cacheKey("sitemap", "entries", "v1"),
+    cacheKey("sitemap", "entries", "v2"),
     SITEMAP_TTL,
     async () => {
-      const [anime, posts, episodes] = await Promise.all([
+      const [anime, posts, episodes, tags] = await Promise.all([
         listAnimeSitemapEntries(),
         listBlogSitemapEntries(),
         listEpisodeSitemapEntries(),
+        listBlogTagSitemapEntries(),
       ]);
-      return { anime, posts, episodes };
+      return { anime, posts, episodes, tags };
     },
   );
 }
 
 /**
- * `sitemap.xml` (PERF-01): the static public pages plus every published blog
- * post. Degrades to just the static routes if the blog query fails.
+ * `sitemap.xml` (PERF-01): the static public pages, every published blog post
+ * and every tag archive that has one. Degrades to just the static routes if the
+ * blog queries fail.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -82,7 +85,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route.priority,
   }));
 
-  const { anime, posts, episodes } = await sitemapEntries();
+  const { anime, posts, episodes, tags } = await sitemapEntries();
 
   const animeEntries: MetadataRoute.Sitemap = anime.map((entry) => ({
     url: absoluteUrl(animeHref(entry.id, entry.title)),
@@ -113,6 +116,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  // Tag archives are hubs, not leaves: a well-stocked one is a better entry
+  // point than any single post under it, so its priority tracks how much it
+  // covers rather than sitting at a flat default.
+  const blogTagEntries: MetadataRoute.Sitemap = tags.map((tag) => ({
+    url: absoluteUrl(`/blogs/tag/${tag.slug}`),
+    lastModified: tag.updatedAt,
+    changeFrequency: "weekly",
+    priority: tag.postCount >= 5 ? 0.6 : 0.4,
+  }));
+
   const watchEntries: MetadataRoute.Sitemap = episodes.map((ep) => ({
     url: absoluteUrl(watchHref(ep.animeId, ep.episodeNumber, ep.animeTitle)),
     lastModified: now,
@@ -125,6 +138,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...animeEntries,
     ...episodeListEntries,
     ...blogEntries,
+    ...blogTagEntries,
     ...watchEntries,
   ];
 }

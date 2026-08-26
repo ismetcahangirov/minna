@@ -163,7 +163,16 @@
       "backToBlogs": "Назад в блог",
       "readingTime": "Чтение: {minutes} мин",
       "updatedOn": "Обновлено {date}",
-      "tableOfContents": "Содержание"
+      "tableOfContents": "Содержание",
+      "tag": {
+        "eyebrow": "Тема",
+        "heading": "Записи с тегом {tag}",
+        "fallbackDescription": "Все записи на Minna о {tag}.",
+        "browseByTopic": "Просмотр по темам",
+        "pagination": "Страницы архива",
+        "previous": "Более новые записи",
+        "next": "Более старые записи"
+      }
     },
     "favorites": {
       "title": "Избранное",

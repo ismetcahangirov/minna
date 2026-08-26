@@ -163,7 +163,16 @@
       "backToBlogs": "Bloga dön",
       "readingTime": "{minutes} dk okuma",
       "updatedOn": "{date} tarihinde güncellendi",
-      "tableOfContents": "İçindekiler"
+      "tableOfContents": "İçindekiler",
+      "tag": {
+        "eyebrow": "Konu",
+        "heading": "{tag} etiketli yazılar",
+        "fallbackDescription": "Minna'da {tag} hakkındaki tüm yazılar.",
+        "browseByTopic": "Konuya göre gözat",
+        "pagination": "Arşiv sayfaları",
+        "previous": "Daha yeni yazılar",
+        "next": "Daha eski yazılar"
+      }
     },
     "favorites": {
       "title": "Favoriler",

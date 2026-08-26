@@ -163,7 +163,16 @@
       "backToBlogs": "Back to blog",
       "readingTime": "{minutes} min read",
       "updatedOn": "Updated on {date}",
-      "tableOfContents": "Contents"
+      "tableOfContents": "Contents",
+      "tag": {
+        "eyebrow": "Topic",
+        "heading": "Posts tagged {tag}",
+        "fallbackDescription": "Every post on Minna about {tag}.",
+        "browseByTopic": "Browse by topic",
+        "pagination": "Archive pages",
+        "previous": "Newer posts",
+        "next": "Older posts"
+      }
     },
     "favorites": {
       "title": "Favorites",

@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
+import Link from "next/link";
+
 import { BlogList } from "@/components/blog/blog-list";
 import { JsonLd } from "@/components/seo/json-ld";
 import { listBlogs } from "@/lib/blog/queries";
+import { listBlogTags } from "@/lib/blog/tags";
 import { buildBlogListJsonLd } from "@/lib/seo/blog-jsonld";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -27,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function BlogsPage() {
   const t = await getTranslations("browse.blogs");
-  const initialPage = await listBlogs(1);
+  const [initialPage, tags] = await Promise.all([listBlogs(1), listBlogTags()]);
 
   // Names the page as a curated collection and its first page of posts, so
   // `/blogs` reads as the blog's hub rather than one more page of prose.
@@ -49,6 +52,27 @@ export default async function BlogsPage() {
           {t("subtitle")}
         </p>
       </header>
+
+      {tags.length > 0 && (
+        <nav aria-label={t("tag.browseByTopic")} className="mb-8">
+          <ul className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <li key={tag.slug}>
+                <Link
+                  href={`/blogs/tag/${tag.slug}`}
+                  rel="tag"
+                  className="border-border text-muted-foreground hover:border-primary hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors outline-none focus-visible:ring-2"
+                >
+                  {tag.name}
+                  <span className="text-muted-foreground/60 tabular-nums">
+                    {tag.postCount}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
 
       <BlogList initialPage={initialPage} />
     </main>
