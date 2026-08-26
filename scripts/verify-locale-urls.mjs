@@ -339,6 +339,135 @@ async function checkAlternates(page, sitemapAlternates, base) {
   }
 }
 
+/* ------------------------------------------------- canonical consolidation */
+
+/**
+ * How many URLs of each (locale, route) pair are probed for consolidation.
+ * Nine pairs — three locales by three routes — so the pass costs roughly
+ * `9 * PER_ROUTE * 2` requests regardless of how large the sitemap is.
+ */
+const CONSOLIDATION_PER_ROUTE = 3;
+
+/** Splits a request pathname into its locale prefix, if any, and the rest. */
+function splitLocale(pathname) {
+  const [, first, ...rest] = pathname.split("/");
+  if (!LOCALES.includes(first)) return { locale: null, path: pathname };
+  return { locale: first, path: rest.length > 0 ? `/${rest.join("/")}` : "/" };
+}
+
+/**
+ * The other URLs the same page used to be reachable at.
+ *
+ * All three anime routes resolve their record from the *leading digits* of a
+ * path segment and ignore the rest, so `/anime/21`, `/anime/21-one-piece` and
+ * `/anime/21-anything-at-all` are the same page. That is by design — a bare id
+ * is what DB rows and old links hold — but only if every form but one answers
+ * a redirect. Returns `[]` for a path that is not one of those routes, and
+ * `null` for the route name so the caller can label a failure.
+ */
+function nonCanonicalForms(path) {
+  const wrong = "-not-the-canonical-slug";
+
+  const detail = /^\/anime\/(\d+)(?:-[^/]*)?$/.exec(path);
+  if (detail) {
+    return [`/anime/${detail[1]}`, `/anime/${detail[1]}${wrong}`];
+  }
+
+  const episodes = /^\/anime\/(\d+)(?:-[^/]*)?\/episodes$/.exec(path);
+  if (episodes) {
+    return [
+      `/anime/${episodes[1]}/episodes`,
+      `/anime/${episodes[1]}${wrong}/episodes`,
+    ];
+  }
+
+  const watch = /^\/watch\/(\d+)(?:-[^/]*)?\/episode-(\d+(?:\.\d+)?)$/.exec(
+    path,
+  );
+  if (watch) {
+    return [
+      `/watch/${watch[1]}/${watch[2]}`,
+      `/watch/${watch[1]}${wrong}/episode-${watch[2]}`,
+    ];
+  }
+
+  return [];
+}
+
+/** Which of the three anime routes a path is, for grouping and labelling. */
+function routeKind(path) {
+  if (/^\/watch\//.test(path)) return "watch";
+  if (/^\/anime\/[^/]+\/episodes$/.test(path)) return "episodes";
+  if (/^\/anime\/[^/]+$/.test(path)) return "detail";
+  return null;
+}
+
+/**
+ * One anime, one URL (#192).
+ *
+ * A canonical tag is a hint; a 308 is a directive. These routes used to answer
+ * 200 with the full document at *any* slug, so each title advertised an
+ * unbounded set of indexable duplicates and only the canonical tag held them
+ * together. Every non-canonical form must now move, permanently, in one hop, to
+ * exactly the URL the sitemap lists — which is the same assertion from the
+ * other side as "no sitemap URL redirects".
+ */
+async function checkConsolidation(entry) {
+  const url = new URL(entry.loc);
+  const { locale, path } = splitLocale(url.pathname);
+
+  for (const form of nonCanonicalForms(path)) {
+    // A title with no latin characters slugifies to nothing, so its canonical
+    // URL *is* the bare id — there is nothing to consolidate.
+    if (form === path) continue;
+
+    const from = new URL(
+      `${locale ? `/${locale}${form}` : form}${url.search}`,
+      url.origin,
+    ).toString();
+
+    const response = await head(from);
+    checked += 1;
+
+    if (response.status !== 308) {
+      fail(
+        from,
+        `answers ${response.status}, not 308 — a second URL serving ${entry.loc}`,
+      );
+      continue;
+    }
+
+    const target = new URL(response.location ?? "", from).toString();
+    if (target !== entry.loc) {
+      fail(from, `308s to ${target}, but the sitemap lists ${entry.loc}`);
+    }
+  }
+}
+
+/**
+ * Picks a spread of anime URLs to probe: up to {@link CONSOLIDATION_PER_ROUTE}
+ * per locale and route, so all nine combinations are covered without the pass
+ * growing with the catalogue.
+ */
+function consolidationSample(entries) {
+  const groups = new Map();
+
+  for (const entry of entries) {
+    const { locale, path } = splitLocale(new URL(entry.loc).pathname);
+    const kind = routeKind(path);
+    if (!kind) continue;
+
+    const key = `${locale ?? "en"}|${kind}`;
+    const group = groups.get(key) ?? [];
+    if (group.length >= CONSOLIDATION_PER_ROUTE) continue;
+
+    group.push(entry);
+    groups.set(key, group);
+  }
+
+  return [...groups.values()].flat();
+}
+
 /* --------------------------------------------------------------------- main */
 
 async function main() {
@@ -394,6 +523,16 @@ async function main() {
     await checkAlternates(page, entry.alternates, opts.base);
     await checkCookieIndependence(page, opts.base);
   });
+
+  const consolidation = consolidationSample(entries);
+  console.log(
+    `
+Probing ${consolidation.length} anime URLs for canonical consolidation…`,
+  );
+  notes.push(
+    `consolidation probed ${consolidation.length} of ${entries.length} sitemap URLs (up to ${CONSOLIDATION_PER_ROUTE} per locale per route)`,
+  );
+  await pooled(consolidation, opts.concurrency, checkConsolidation);
 
   if (opts.previous) {
     const previous = parseSitemap(await readFile(opts.previous, "utf8"));
