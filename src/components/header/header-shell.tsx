@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
-/** Past this scroll depth the header gains its solid background + hairline. */
+/** Past this scroll depth the header gains its bottom hairline. */
 const SCROLL_THRESHOLD = 8;
 /** Minimum per-event delta (px) before a scroll counts as a direction change. */
 const DIRECTION_DELTA = 4;
@@ -14,10 +14,13 @@ const DIRECTION_DELTA = 4;
 const SETTLE_MS = 900;
 
 /**
- * Fixed, top-0 header container (HEADER-01). Transparent while the page is at
- * the top so content (e.g. the home hero) shows through; once scrolled it
- * switches to a solid background with a bottom hairline. Solid fill only —
- * no backdrop-blur/glassmorphism and no gradient (design system).
+ * Fixed, top-0 header container (HEADER-01). The bar is always filled with the
+ * black page background — it used to be transparent at the top so the home hero
+ * showed through, but that left the logo and nav sitting on whatever artwork
+ * happened to be behind them, with the contrast changing per page. A bottom
+ * hairline is added once the page is scrolled, so the header still reads as
+ * lifted off the content rather than as part of it. Solid fill only — no
+ * backdrop-blur/glassmorphism and no gradient (design system).
  *
  * Auto-hide: scrolling down slides the bar up out of view, scrolling up brings
  * it back, and it is always shown at the very top. The slide is animated via a
@@ -67,11 +70,9 @@ export function HeaderShell({ children }: { children: React.ReactNode }) {
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-[translate,background-color,border-color] duration-300 [will-change:translate]",
+        "bg-background fixed inset-x-0 top-0 z-50 border-b transition-[translate,border-color] duration-300 [will-change:translate]",
         hidden ? "-translate-y-full" : "translate-y-0",
-        scrolled
-          ? "bg-background border-border border-b"
-          : "border-b border-transparent bg-transparent",
+        scrolled ? "border-border" : "border-transparent",
       )}
     >
       <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-4 px-4 sm:px-6 lg:px-8">
