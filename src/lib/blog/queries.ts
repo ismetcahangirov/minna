@@ -1,14 +1,16 @@
 import "server-only";
 
 import { cache } from "react";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, inArray, ne, sql } from "drizzle-orm";
 
 import { blogs, blogTags, blogsToTags } from "@/db/schema";
+import { defaultLocale, type Locale } from "@/i18n/config";
 import { BROWSE_PAGE_SIZE, type PagedResult } from "@/lib/browse/types";
 import {
   type BlogDetail,
   type BlogSummary,
   type BlogTagRef,
+  type BlogTranslationRef,
   toBlogDetail,
   toBlogSummary,
 } from "@/lib/blog/types";
@@ -19,6 +21,31 @@ const MAX_PAGE = 500;
 function safePage(page: number | undefined): number {
   if (!Number.isFinite(page) || (page as number) < 1) return 1;
   return Math.min(Math.floor(page as number), MAX_PAGE);
+}
+
+/**
+ * One row per translation group, ranked so the reader's language wins.
+ *
+ * A listing that showed every row would print the same article once per
+ * language it exists in. Ranking picks the reader's language first, the site
+ * default second, and anything else last, so a group always contributes
+ * exactly one card and never an empty slot.
+ *
+ * Googlebot carries no locale cookie, so a crawl always sees the default-
+ * language selection here. That is deliberate: the translations are discovered
+ * through the sitemap and the reciprocal `hreflang` on each post, which is the
+ * mechanism Google documents for exactly this, and it keeps one listing URL
+ * from serving different content to different crawlers.
+ */
+function preferredPerGroup(locale: Locale) {
+  return sql<number>`row_number() over (
+    partition by ${blogs.translationGroupId}
+    order by case ${blogs.language}
+      when ${locale} then 0
+      when ${defaultLocale} then 1
+      else 2
+    end, ${blogs.publishedAt} desc
+  )`;
 }
 
 /**
@@ -64,16 +91,26 @@ async function tagsByBlogId(
  */
 export async function listBlogs(
   page: number = 1,
+  locale: Locale = defaultLocale,
 ): Promise<PagedResult<BlogSummary>> {
   const current = safePage(page);
 
   try {
     const { db } = await import("@/db");
-    const rows = await db
-      .select()
+    const ranked = db
+      .select({
+        ...getTableColumns(blogs),
+        groupRank: preferredPerGroup(locale).as("group_rank"),
+      })
       .from(blogs)
       .where(eq(blogs.published, true))
-      .orderBy(desc(blogs.publishedAt))
+      .as("ranked");
+
+    const rows = await db
+      .select()
+      .from(ranked)
+      .where(eq(ranked.groupRank, 1))
+      .orderBy(desc(ranked.publishedAt))
       .limit(BROWSE_PAGE_SIZE + 1)
       .offset((current - 1) * BROWSE_PAGE_SIZE);
 
@@ -92,6 +129,37 @@ export async function listBlogs(
     console.error("[blog] listBlogs failed:", (error as Error).message);
     return { items: [], page: current, hasNextPage: false };
   }
+}
+
+/**
+ * The published translations of one post, excluding the post itself.
+ *
+ * Only published rows count: `hreflang` must point at pages a visitor can
+ * actually reach, and advertising a draft would send Google to a 404 and
+ * invalidate the reciprocal set it belongs to.
+ */
+async function translationsOf(
+  db: Awaited<typeof import("@/db")>["db"],
+  groupId: string,
+  selfId: string,
+): Promise<BlogTranslationRef[]> {
+  const rows = await db
+    .select({
+      slug: blogs.slug,
+      language: blogs.language,
+      title: blogs.title,
+    })
+    .from(blogs)
+    .where(
+      and(
+        eq(blogs.translationGroupId, groupId),
+        ne(blogs.id, selfId),
+        eq(blogs.published, true),
+      ),
+    )
+    .orderBy(blogs.language);
+
+  return rows;
 }
 
 /**
@@ -115,8 +183,12 @@ export const getBlogBySlug = cache(
         .limit(1);
 
       if (rows.length === 0) return null;
-      const tags = await tagsByBlogId(db, [rows[0].id]);
-      return toBlogDetail(rows[0], tags.get(rows[0].id) ?? []);
+      const [row] = rows;
+      const [tags, translations] = await Promise.all([
+        tagsByBlogId(db, [row.id]),
+        translationsOf(db, row.translationGroupId, row.id),
+      ]);
+      return toBlogDetail(row, tags.get(row.id) ?? [], translations);
     } catch (error) {
       console.error("[blog] getBlogBySlug failed:", (error as Error).message);
       return null;
@@ -128,6 +200,10 @@ export const getBlogBySlug = cache(
 export interface BlogSitemapEntry {
   slug: string;
   updatedAt: Date;
+  /** BCP-47 tag, so the sitemap entry can carry `xhtml:link` alternates. */
+  language: string;
+  /** Which posts are translations of one another. */
+  translationGroupId: string;
 }
 
 /**
@@ -139,13 +215,18 @@ export async function listBlogSitemapEntries(): Promise<BlogSitemapEntry[]> {
   try {
     const { db } = await import("@/db");
     const rows = await db
-      .select({ slug: blogs.slug, updatedAt: blogs.updatedAt })
+      .select({
+        slug: blogs.slug,
+        updatedAt: blogs.updatedAt,
+        language: blogs.language,
+        translationGroupId: blogs.translationGroupId,
+      })
       .from(blogs)
       .where(eq(blogs.published, true))
       .orderBy(desc(blogs.publishedAt))
       .limit(50_000);
 
-    return rows.map((row) => ({ slug: row.slug, updatedAt: row.updatedAt }));
+    return rows;
   } catch (error) {
     console.error(
       "[blog] listBlogSitemapEntries failed:",

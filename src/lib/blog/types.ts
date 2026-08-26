@@ -1,5 +1,13 @@
 import type { Blog } from "@/db/schema";
 
+/** One other language this article exists in. */
+export interface BlogTranslationRef {
+  slug: string;
+  /** BCP-47 tag, used for `hreflang` and the switcher's label. */
+  language: string;
+  title: string;
+}
+
 /** A topic label carried by a post, and the archive page it links to. */
 export interface BlogTagRef {
   slug: string;
@@ -38,6 +46,14 @@ export interface BlogDetail extends BlogSummary {
   language: string;
   /** Drives `dateModified`, distinct from the (backdatable) publish date. */
   updatedAt: string;
+  /** Groups this post with its translations; see `blogs.translationGroupId`. */
+  translationGroupId: string;
+  /**
+   * Published siblings in other languages, excluding this post. Empty when the
+   * article has not been translated — the common case, and the one where no
+   * `hreflang` should be emitted at all.
+   */
+  translations: BlogTranslationRef[];
 }
 
 /** Narrows a DB row to the card {@link BlogSummary} (drops the body/content). */
@@ -56,12 +72,18 @@ export function toBlogSummary(row: Blog, tags: BlogTagRef[] = []): BlogSummary {
 }
 
 /** Narrows a DB row to the full {@link BlogDetail} (includes the body). */
-export function toBlogDetail(row: Blog, tags: BlogTagRef[] = []): BlogDetail {
+export function toBlogDetail(
+  row: Blog,
+  tags: BlogTagRef[] = [],
+  translations: BlogTranslationRef[] = [],
+): BlogDetail {
   return {
     ...toBlogSummary(row, tags),
     content: row.content,
     authorUrl: row.authorUrl,
     language: row.language,
     updatedAt: row.updatedAt.toISOString(),
+    translationGroupId: row.translationGroupId,
+    translations,
   };
 }

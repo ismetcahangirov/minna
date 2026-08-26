@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { BlogFormState } from "@/lib/admin/blog/actions";
 import type { BlogMediaItem } from "@/lib/admin/blog/media-actions";
+import type { BlogTranslationTarget } from "@/lib/admin/blog/queries";
 
 import { BlogImagePanel } from "./blog-image-panel";
 import { MarkdownToolbar } from "./markdown-toolbar";
@@ -21,6 +22,8 @@ export interface BlogFormValues {
   author: string;
   authorUrl: string;
   language: string;
+  /** The translation group to join; empty means the post stands alone. */
+  translationGroupId: string;
   /** Comma-separated tag names, as the field shows and submits them. */
   tags: string;
   published: boolean;
@@ -34,6 +37,8 @@ interface BlogFormProps {
   library: BlogMediaItem[];
   /** Existing tag names, offered as suggestions on the tag field. */
   tagSuggestions: string[];
+  /** Posts this one can be declared a translation of. */
+  translationTargets: BlogTranslationTarget[];
 }
 
 const controlClass =
@@ -87,6 +92,7 @@ export function BlogForm({
   defaultValues,
   library,
   tagSuggestions,
+  translationTargets,
 }: BlogFormProps) {
   const t = useTranslations("admin.blogs");
   const contentRef = useRef<HTMLTextAreaElement>(null);
@@ -265,6 +271,30 @@ export function BlogForm({
           {LANGUAGES.map((code) => (
             <option key={code} value={code}>
               {t(`languages.${code}`)}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field
+        label={t("fields.translationOf")}
+        htmlFor="translationGroupId"
+        hint={t("fields.translationOfHint")}
+        error={err(fe.translationGroupId)}
+      >
+        <select
+          id="translationGroupId"
+          name="translationGroupId"
+          defaultValue={defaultValues?.translationGroupId ?? ""}
+          className={controlClass}
+        >
+          <option value="">{t("fields.translationStandalone")}</option>
+          {translationTargets.map((target) => (
+            <option
+              key={`${target.groupId}-${target.language}`}
+              value={target.groupId}
+            >
+              {`${target.title} (${target.language.toUpperCase()})`}
             </option>
           ))}
         </select>

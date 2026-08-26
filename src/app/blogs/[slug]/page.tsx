@@ -2,16 +2,46 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Clock, List } from "lucide-react";
+import { ArrowLeft, Clock, Languages, List } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 
 import { JsonLd } from "@/components/seo/json-ld";
+import { isLocale, openGraphLocales, type Locale } from "@/i18n/config";
 import { renderBlogMarkdown } from "@/lib/blog/markdown";
 import { getBlogBySlug } from "@/lib/blog/queries";
 import { blogDescription, buildBlogJsonLd } from "@/lib/seo/blog-jsonld";
+import { pickDefaultVersion } from "@/lib/seo/hreflang";
+import { localeNames } from "@/i18n/config";
+import type { BlogDetail } from "@/lib/blog/types";
 
 interface BlogDetailRouteProps {
   params: Promise<{ slug: string }>;
+}
+
+/**
+ * The `hreflang` map for a translated article: every language version keyed by
+ * its tag, plus `x-default`.
+ *
+ * The set is reciprocal by construction — each version lists all of them,
+ * itself included — because a one-way link is the failure Google responds to by
+ * ignoring the whole set. `x-default` names the version to fall back to for a
+ * language nobody here speaks, and points at the site's default locale when the
+ * article has one.
+ *
+ * Returns `undefined` for an untranslated post: a lone `hreflang` pointing only
+ * at itself claims a choice that does not exist.
+ */
+function hreflangMap(post: BlogDetail): Record<string, string> | undefined {
+  if (post.translations.length === 0) return undefined;
+
+  const languages: Record<string, string> = {
+    [post.language]: `/blogs/${post.slug}`,
+  };
+  for (const sibling of post.translations) {
+    languages[sibling.language] = `/blogs/${sibling.slug}`;
+  }
+
+  return { ...languages, "x-default": pickDefaultVersion(languages) };
 }
 
 /**
@@ -37,7 +67,12 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `/blogs/${post.slug}` },
+    // Each translation stays its own canonical URL — pointing them all at one
+    // would tell Google the other language versions should not be indexed.
+    alternates: {
+      canonical: `/blogs/${post.slug}`,
+      languages: hreflangMap(post),
+    },
     // `article:*` is what turns a generic OG card into a dated, attributed
     // article for the crawlers and social previews that read it.
     openGraph: {
@@ -49,6 +84,12 @@ export async function generateMetadata({
       modifiedTime: post.updatedAt,
       authors: post.author ? [post.author] : undefined,
       tags: post.tags.map((tag) => tag.name),
+      locale: isLocale(post.language)
+        ? openGraphLocales[post.language as Locale]
+        : undefined,
+      alternateLocale: post.translations
+        .filter((sibling) => isLocale(sibling.language))
+        .map((sibling) => openGraphLocales[sibling.language as Locale]),
       images,
     },
     twitter: {
@@ -179,6 +220,35 @@ export default async function BlogDetailPage({ params }: BlogDetailRouteProps) {
                 </li>
               ))}
             </ul>
+          )}
+
+          {post.translations.length > 0 && (
+            <nav aria-label={t("translations")} className="mt-5">
+              <p className="text-muted-foreground mb-2 inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase">
+                <Languages className="size-3.5" aria-hidden />
+                {t("translations")}
+              </p>
+              <ul className="flex flex-wrap gap-2">
+                {post.translations.map((sibling) => (
+                  <li key={sibling.slug}>
+                    {/* A real anchor between versions, not just a meta tag:
+                        it is how a reader switches, and it backs the
+                        `hreflang` claim with a link a crawler can follow. */}
+                    <Link
+                      href={`/blogs/${sibling.slug}`}
+                      hrefLang={sibling.language}
+                      lang={sibling.language}
+                      title={sibling.title}
+                      className="border-border text-muted-foreground hover:border-primary hover:text-foreground focus-visible:ring-ring inline-flex border px-2.5 py-1 text-xs font-medium transition-colors outline-none focus-visible:ring-2"
+                    >
+                      {isLocale(sibling.language)
+                        ? localeNames[sibling.language]
+                        : sibling.language.toUpperCase()}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           )}
 
           {modified && (

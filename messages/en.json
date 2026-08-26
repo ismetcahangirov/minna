@@ -172,7 +172,8 @@
         "pagination": "Archive pages",
         "previous": "Newer posts",
         "next": "Older posts"
-      }
+      },
+      "translations": "Read in another language"
     },
     "favorites": {
       "title": "Favorites",
@@ -415,7 +416,10 @@
         "languageHint": "The language the post is written in, published as inLanguage.",
         "tags": "Tags",
         "tagsHint": "Comma-separated. Each tag gets its own indexed archive page.",
-        "tagsPlaceholder": "Shonen, Studio Ghibli, Reviews"
+        "tagsPlaceholder": "Shonen, Studio Ghibli, Reviews",
+        "translationOf": "Translation of",
+        "translationOfHint": "Link this post to the article it translates. Each version keeps its own URL and they reference each other with hreflang.",
+        "translationStandalone": "Not a translation"
       },
       "errors": {
         "required": "This field is required.",
@@ -423,7 +427,8 @@
         "invalidSlug": "Use lowercase letters, numbers and hyphens.",
         "slugTaken": "That slug is already in use.",
         "saveFailed": "Could not save the post. Please try again.",
-        "invalidLanguage": "Choose one of the supported languages."
+        "invalidLanguage": "Choose one of the supported languages.",
+        "translationExists": "That article already has a version in this language."
       },
       "media": {
         "title": "Images",

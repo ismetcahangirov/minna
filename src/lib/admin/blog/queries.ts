@@ -109,3 +109,47 @@ export async function getAdminBlogTagNames(blogId: string): Promise<string[]> {
     return [];
   }
 }
+
+/** A post an editor can declare the one being edited a translation of. */
+export interface BlogTranslationTarget {
+  /** The group to join — what the form actually submits. */
+  groupId: string;
+  title: string;
+  language: string;
+}
+
+/**
+ * Posts available as a translation target (ADMIN-05), newest first.
+ *
+ * Drafts are included: a translation is usually written before either version
+ * is published, and refusing to link them until then would force the editor
+ * back into the form afterwards. `excludeId` drops the post being edited, which
+ * cannot be a translation of itself.
+ */
+export async function listBlogTranslationTargets(
+  excludeId?: string,
+): Promise<BlogTranslationTarget[]> {
+  try {
+    const { db } = await import("@/db");
+    const rows = await db
+      .select({
+        groupId: blogs.translationGroupId,
+        title: blogs.title,
+        language: blogs.language,
+        id: blogs.id,
+      })
+      .from(blogs)
+      .orderBy(desc(blogs.createdAt))
+      .limit(200);
+
+    return rows
+      .filter((row) => row.id !== excludeId)
+      .map(({ groupId, title, language }) => ({ groupId, title, language }));
+  } catch (error) {
+    console.error(
+      "[admin] listBlogTranslationTargets failed:",
+      (error as Error).message,
+    );
+    return [];
+  }
+}

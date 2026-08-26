@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import Link from "next/link";
 
 import { BlogList } from "@/components/blog/blog-list";
+import type { Locale } from "@/i18n/config";
 import { JsonLd } from "@/components/seo/json-ld";
 import { listBlogs } from "@/lib/blog/queries";
 import { listBlogTags } from "@/lib/blog/tags";
@@ -30,7 +31,11 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function BlogsPage() {
   const t = await getTranslations("browse.blogs");
-  const [initialPage, tags] = await Promise.all([listBlogs(1), listBlogTags()]);
+  const locale = await getLocale();
+  const [initialPage, tags] = await Promise.all([
+    listBlogs(1, locale as Locale),
+    listBlogTags(),
+  ]);
 
   // Names the page as a curated collection and its first page of posts, so
   // `/blogs` reads as the blog's hub rather than one more page of prose.

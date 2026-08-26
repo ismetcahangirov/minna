@@ -13,6 +13,7 @@ import {
 import { listBlogSitemapEntries } from "@/lib/blog/queries";
 import { listBlogTagSitemapEntries } from "@/lib/blog/tags";
 import { cacheKey, getOrSet } from "@/lib/cache";
+import { pickDefaultVersion } from "@/lib/seo/hreflang";
 import { absoluteUrl } from "@/lib/seo/site";
 
 /**
@@ -56,7 +57,7 @@ const STATIC_ROUTES: ReadonlyArray<{
  */
 async function sitemapEntries() {
   return getOrSet(
-    cacheKey("sitemap", "entries", "v2"),
+    cacheKey("sitemap", "entries", "v3"),
     SITEMAP_TTL,
     async () => {
       const [anime, posts, episodes, tags] = await Promise.all([
@@ -109,12 +110,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
   });
 
-  const blogEntries: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: absoluteUrl(`/blogs/${post.slug}`),
-    lastModified: post.updatedAt,
-    changeFrequency: "monthly",
-    priority: 0.6,
-  }));
+  // Every language version of an article, keyed by its tag, so each sitemap
+  // entry can carry the same reciprocal set the pages declare. Google reads
+  // sitemap alternates and page `hreflang` as one claim and expects them to
+  // agree, so both are built from the same rows.
+  const versionsByGroup = new Map<string, Record<string, string>>();
+  for (const post of posts) {
+    const group = versionsByGroup.get(post.translationGroupId) ?? {};
+    group[post.language] = absoluteUrl(`/blogs/${post.slug}`);
+    versionsByGroup.set(post.translationGroupId, group);
+  }
+
+  const blogEntries: MetadataRoute.Sitemap = posts.map((post) => {
+    const versions = versionsByGroup.get(post.translationGroupId) ?? {};
+    // An untranslated post has nothing to alternate with; listing itself alone
+    // claims a language choice the reader does not have.
+    const languages =
+      Object.keys(versions).length > 1
+        ? { ...versions, "x-default": pickDefaultVersion(versions) }
+        : undefined;
+
+    return {
+      url: absoluteUrl(`/blogs/${post.slug}`),
+      lastModified: post.updatedAt,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+      ...(languages ? { alternates: { languages } } : {}),
+    };
+  });
 
   // Tag archives are hubs, not leaves: a well-stocked one is a better entry
   // point than any single post under it, so its priority tracks how much it

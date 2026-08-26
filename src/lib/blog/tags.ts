@@ -1,9 +1,10 @@
 import "server-only";
 
 import { cache } from "react";
-import { and, count, desc, eq, max, sql } from "drizzle-orm";
+import { and, count, desc, eq, getTableColumns, max, sql } from "drizzle-orm";
 
 import { blogs, blogTags, blogsToTags } from "@/db/schema";
+import { defaultLocale, type Locale } from "@/i18n/config";
 import { BROWSE_PAGE_SIZE, type PagedResult } from "@/lib/browse/types";
 import { type BlogSummary, toBlogSummary } from "@/lib/blog/types";
 
@@ -97,24 +98,42 @@ export const listBlogsByTag = cache(
   async (
     tagId: string,
     page: number = 1,
+    locale: Locale = defaultLocale,
   ): Promise<PagedResult<BlogSummary>> => {
     const current = Math.max(1, Math.min(Math.floor(page) || 1, 500));
 
     try {
       const { db } = await import("@/db");
-      const rows = await db
-        .select({ blog: blogs })
+      // Same one-card-per-translation-group rule as the main listing: an
+      // archive that printed an article once per language would read as
+      // duplicate content on the very page meant to establish a topic.
+      const ranked = db
+        .select({
+          ...getTableColumns(blogs),
+          groupRank: sql<number>`row_number() over (
+            partition by ${blogs.translationGroupId}
+            order by case ${blogs.language}
+              when ${locale} then 0
+              when ${defaultLocale} then 1
+              else 2
+            end, ${blogs.publishedAt} desc
+          )`.as("group_rank"),
+        })
         .from(blogsToTags)
         .innerJoin(blogs, eq(blogs.id, blogsToTags.blogId))
         .where(and(eq(blogsToTags.tagId, tagId), eq(blogs.published, true)))
-        .orderBy(desc(blogs.publishedAt))
+        .as("ranked");
+
+      const rows = await db
+        .select()
+        .from(ranked)
+        .where(eq(ranked.groupRank, 1))
+        .orderBy(desc(ranked.publishedAt))
         .limit(BROWSE_PAGE_SIZE + 1)
         .offset((current - 1) * BROWSE_PAGE_SIZE);
 
       return {
-        items: rows
-          .slice(0, BROWSE_PAGE_SIZE)
-          .map((row) => toBlogSummary(row.blog)),
+        items: rows.slice(0, BROWSE_PAGE_SIZE).map((row) => toBlogSummary(row)),
         page: current,
         hasNextPage: rows.length > BROWSE_PAGE_SIZE,
       };

@@ -172,7 +172,8 @@
         "pagination": "Arşiv sayfaları",
         "previous": "Daha yeni yazılar",
         "next": "Daha eski yazılar"
-      }
+      },
+      "translations": "Başka bir dilde oku"
     },
     "favorites": {
       "title": "Favoriler",
@@ -415,7 +416,10 @@
         "languageHint": "Yazının yazıldığı dil; inLanguage olarak yayımlanır.",
         "tags": "Etiketler",
         "tagsHint": "Virgülle ayırın. Her etiketin kendi dizine eklenen arşiv sayfası olur.",
-        "tagsPlaceholder": "Shonen, Studio Ghibli, İncelemeler"
+        "tagsPlaceholder": "Shonen, Studio Ghibli, İncelemeler",
+        "translationOf": "Şunun çevirisi",
+        "translationOfHint": "Bu yazıyı çevirdiği makaleye bağlayın. Her sürüm kendi URL'sini korur ve birbirlerine hreflang ile atıfta bulunurlar.",
+        "translationStandalone": "Çeviri değil"
       },
       "errors": {
         "required": "Bu alan zorunludur.",
@@ -423,7 +427,8 @@
         "invalidSlug": "Küçük harf, rakam ve tire kullanın.",
         "slugTaken": "Bu slug zaten kullanımda.",
         "saveFailed": "Yazı kaydedilemedi. Lütfen tekrar deneyin.",
-        "invalidLanguage": "Desteklenen dillerden birini seçin."
+        "invalidLanguage": "Desteklenen dillerden birini seçin.",
+        "translationExists": "Bu makalenin bu dilde zaten bir sürümü var."
       },
       "media": {
         "title": "Görseller",
