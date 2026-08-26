@@ -15,11 +15,20 @@ import { routing } from "@/i18n/routing";
  * a locale and it returns that locale's path, which is how the `hreflang` sets
  * and the sitemap are built (I18N-03 / I18N-05).
  */
-export const {
-  Link,
-  redirect,
-  permanentRedirect,
-  usePathname,
-  useRouter,
-  getPathname,
-} = createNavigation(routing);
+const navigation = createNavigation(routing);
+
+export const { Link, usePathname, useRouter, getPathname } = navigation;
+
+/**
+ * Re-exported with an explicit type rather than destructured with the rest.
+ *
+ * TypeScript only lets a `never`-returning call end a function's control flow
+ * when the callee is a const with an *annotated* type; a destructured binding
+ * does not qualify, even though the underlying signature says `never`. Without
+ * these two lines every caller — each admin action, each canonical redirect —
+ * fails with "function lacks ending return statement" and has to grow an
+ * unreachable `return` to satisfy the compiler.
+ */
+export const redirect: typeof navigation.redirect = navigation.redirect;
+export const permanentRedirect: typeof navigation.permanentRedirect =
+  navigation.permanentRedirect;

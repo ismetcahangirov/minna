@@ -2,9 +2,9 @@
 
 import { Newspaper } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useFormatter } from "next-intl";
 
+import { Link } from "@/i18n/navigation";
 import type { BlogSummary } from "@/lib/blog/types";
 
 interface BlogCardProps {

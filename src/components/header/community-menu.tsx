@@ -2,11 +2,10 @@
 
 import { Menu } from "@base-ui/react/menu";
 import { ChevronDown } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { COMMUNITY_ITEMS } from "@/components/header/nav-config";
+import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 const triggerClass =

@@ -1,8 +1,8 @@
 import { ArrowRight, Heart } from "lucide-react";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { FavoriteCard } from "@/components/favorites/favorite-card";
+import { Link } from "@/i18n/navigation";
 import type { FavoriteItem } from "@/lib/favorites/types";
 
 /**

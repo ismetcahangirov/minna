@@ -1,8 +1,8 @@
 import { UserRound } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 
+import { Link } from "@/i18n/navigation";
 import { memberHref, type MemberSummary } from "@/lib/members/types";
 
 interface MemberCardProps {

@@ -1,9 +1,10 @@
 "use server";
 
 import { sql } from "drizzle-orm";
-import { redirect } from "next/navigation";
 
 import { discussionThreads } from "@/db/schema";
+import { redirect } from "@/i18n/navigation";
+import { getActiveLocale } from "@/i18n/route-locale";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   isDiscussionScope,
@@ -172,7 +173,10 @@ export async function createThread(
   }
 
   // Outside the try: `redirect` signals by throwing, and must not be caught.
-  redirect(`/discussions/${threadId}`);
+  redirect({
+    href: `/discussions/${threadId}`,
+    locale: await getActiveLocale(),
+  });
 }
 
 /**

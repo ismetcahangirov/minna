@@ -3,11 +3,10 @@
 import { ChevronLeft, ChevronRight, ListVideo } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { Link, useRouter } from "@/i18n/navigation";
 import { animeHref, watchHref } from "@/lib/anime/href";
 import type { PreRollAd as PreRollAdData } from "@/lib/ads/queries";
 import { saveWatchProgress } from "@/lib/watch/actions";

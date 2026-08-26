@@ -2,8 +2,6 @@
 
 import { Drawer } from "@base-ui/react/drawer";
 import { Check, LogOut, Menu as MenuIcon, User, X } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useTransition } from "react";
 
@@ -11,6 +9,7 @@ import { COMMUNITY_ITEMS, NAV_ITEMS } from "@/components/header/nav-config";
 import type { SessionUser } from "@/components/header/user-menu";
 import { setLocale } from "@/i18n/actions";
 import { locales, localeNames, type Locale } from "@/i18n/config";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import type { Category } from "@/lib/anime/genres";
 import { cn } from "@/lib/utils";
 

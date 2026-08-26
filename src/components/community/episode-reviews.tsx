@@ -1,9 +1,9 @@
 import { MessagesSquare } from "lucide-react";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { PostItem } from "@/components/community/post-item";
 import { ReplyForm } from "@/components/community/reply-form";
+import { Link } from "@/i18n/navigation";
 import { getEpisodeThread, listThreadPosts } from "@/lib/discussions/queries";
 import { EPISODE_REVIEW_PREVIEW } from "@/lib/discussions/types";
 

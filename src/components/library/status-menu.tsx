@@ -2,11 +2,10 @@
 
 import { Menu } from "@base-ui/react/menu";
 import { Check, ChevronDown, Plus, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 
+import { Link, useRouter } from "@/i18n/navigation";
 import { removeFromLibrary, setLibraryStatus } from "@/lib/library/actions";
 import { LIBRARY_STATUSES, type LibraryStatus } from "@/lib/library/types";
 import { cn } from "@/lib/utils";

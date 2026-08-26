@@ -1,6 +1,5 @@
 import { Calendar, Film, Layers, Play, Star, Tv } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
@@ -13,6 +12,7 @@ import { LibraryProgressBar } from "@/components/library/progress-bar";
 import { LibraryStatusMenu } from "@/components/library/status-menu";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { animeEpisodesHref } from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeDetail } from "@/lib/anime/types";

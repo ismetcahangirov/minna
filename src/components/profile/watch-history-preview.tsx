@@ -1,8 +1,8 @@
 import { Film, History, Play } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
+import { Link } from "@/i18n/navigation";
 import { animeSlug, watchHref } from "@/lib/anime/href";
 import type { WatchHistoryItem } from "@/lib/watch/types";
 

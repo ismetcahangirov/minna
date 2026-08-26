@@ -1,13 +1,13 @@
 "use client";
 
 import { ArrowDownUp, ChevronDown, ChevronUp, Play } from "lucide-react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 import { CurrentEpisodeBeam } from "@/components/anime/current-episode-beam";
 import { EpisodeSearchField } from "@/components/anime/episode-search-field";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { filterEpisodes } from "@/lib/anime/episode-search";
 import { watchHref } from "@/lib/anime/href";
 import type { AnimeEpisode } from "@/lib/anime/types";

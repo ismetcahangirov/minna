@@ -1,5 +1,4 @@
 import { ChevronRight } from "lucide-react";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import {
@@ -7,6 +6,7 @@ import {
   AnimePosterCardSkeleton,
 } from "@/components/anime/anime-poster-card";
 import { AnimeCarousel } from "@/components/home/anime-carousel";
+import { Link } from "@/i18n/navigation";
 import { getAnimeSection } from "@/lib/anime/catalog";
 import type { AnimeSection } from "@/lib/anime/types";
 

@@ -1,7 +1,7 @@
 import { Film, Play, Star } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
+import { Link } from "@/i18n/navigation";
 import { animeHref } from "@/lib/anime/href";
 import type { AnimeSummary } from "@/lib/anime/types";
 import { cn } from "@/lib/utils";
