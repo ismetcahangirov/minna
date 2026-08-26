@@ -414,6 +414,32 @@
         "invalidSlug": "Küçük harf, rakam ve tire kullanın.",
         "slugTaken": "Bu slug zaten kullanımda.",
         "saveFailed": "Yazı kaydedilemedi. Lütfen tekrar deneyin."
+      },
+      "media": {
+        "title": "Görseller",
+        "hint": "Bir dosya yükleyin veya bir URL yapıştırın, sonra gövdenin istediğiniz yerine ekleyin.",
+        "upload": "Görsel yükle",
+        "uploading": "Yükleniyor...",
+        "fromLink": "URL'den ekle",
+        "urlLabel": "Görsel URL'si",
+        "altLabel": "Alternatif metin",
+        "altHint": "Görseli tanımlayın. Yalnızca tamamen dekoratifse boş bırakın.",
+        "captionLabel": "Açıklama",
+        "captionHint": "Görselin altında gösterilir ve açıklaması olarak okunur.",
+        "insert": "Ekle",
+        "remove": "Kaldır",
+        "confirmRemove": "Bu görsel kitaplıktan kaldırılsın mı? Onu kullanan yazılar çalışmaya devam eder.",
+        "empty": "Henüz görsel yok.",
+        "add": "Ekle",
+        "errors": {
+          "required": "Önce bir dosya seçin.",
+          "invalidFile": "JPEG, PNG, WebP, AVIF veya GIF bir görsel kullanın.",
+          "tooLarge": "Bu görsel 10 MB'tan büyük.",
+          "invalidUrl": "Geçerli bir http(s) URL'si girin.",
+          "cloudinaryMissing": "Bu dağıtımda görsel yükleme yapılandırılmamış.",
+          "uploadFailed": "Görsel yüklenemedi. Lütfen tekrar deneyin.",
+          "saveFailed": "Görsel kaydedilemedi. Lütfen tekrar deneyin."
+        }
       }
     },
     "users": {

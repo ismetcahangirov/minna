@@ -414,6 +414,32 @@
         "invalidSlug": "Use lowercase letters, numbers and hyphens.",
         "slugTaken": "That slug is already in use.",
         "saveFailed": "Could not save the post. Please try again."
+      },
+      "media": {
+        "title": "Images",
+        "hint": "Upload a file or paste a URL, then insert it anywhere in the body.",
+        "upload": "Upload image",
+        "uploading": "Uploading...",
+        "fromLink": "Add from URL",
+        "urlLabel": "Image URL",
+        "altLabel": "Alt text",
+        "altHint": "Describe the image. Leave blank only if it is purely decorative.",
+        "captionLabel": "Caption",
+        "captionHint": "Shown under the image and read as its description.",
+        "insert": "Insert",
+        "remove": "Remove",
+        "confirmRemove": "Remove this image from the library? Posts already using it keep working.",
+        "empty": "No images yet.",
+        "add": "Add",
+        "errors": {
+          "required": "Choose a file first.",
+          "invalidFile": "Use a JPEG, PNG, WebP, AVIF or GIF image.",
+          "tooLarge": "That image is larger than 10 MB.",
+          "invalidUrl": "Enter a valid http(s) URL.",
+          "cloudinaryMissing": "Image uploads are not configured on this deployment.",
+          "uploadFailed": "Could not upload the image. Please try again.",
+          "saveFailed": "Could not save the image. Please try again."
+        }
       }
     },
     "users": {

@@ -32,6 +32,15 @@ const nextConfig: NextConfig = {
         hostname: "**.googleusercontent.com",
         pathname: "/**",
       },
+      // Blog covers and body images uploaded from the admin panel. Body images
+      // are rendered as plain `<img>` out of sanitized HTML, so the delivery
+      // URL already carries `f_auto,q_auto`; listing this host is what lets the
+      // cover art go through `next/image` as well.
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
     ],
     // Serve AVIF first (best compression), then WebP, then the original
     // format for unsupported browsers (PERF-02). AVIF/WebP shrink the
