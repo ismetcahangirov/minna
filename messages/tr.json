@@ -160,7 +160,19 @@
       "subtitle": "Minna ekibinden haberler, içerikler ve detaylı yazılar.",
       "empty": "Henüz gönderi yok",
       "emptyHint": "Haberler ve içerikler için yakında tekrar uğrayın.",
-      "backToBlogs": "Bloga dön"
+      "backToBlogs": "Bloga dön",
+      "readingTime": "{minutes} dk okuma",
+      "updatedOn": "{date} tarihinde güncellendi",
+      "tableOfContents": "İçindekiler",
+      "tag": {
+        "eyebrow": "Konu",
+        "heading": "{tag} etiketli yazılar",
+        "fallbackDescription": "Minna'da {tag} hakkındaki tüm yazılar.",
+        "browseByTopic": "Konuya göre gözat",
+        "pagination": "Arşiv sayfaları",
+        "previous": "Daha yeni yazılar",
+        "next": "Daha eski yazılar"
+      }
     },
     "favorites": {
       "title": "Favoriler",
@@ -389,19 +401,78 @@
         "excerpt": "Özet",
         "excerptHint": "Liste kartında görünen kısa özet.",
         "content": "İçerik",
-        "contentHint": "Düz metin. Boş satırlar paragrafları ayırır.",
+        "contentHint": "GFM tablolarıyla Markdown. Araç çubuğu başlıkları, listeleri, alıntıları ve anlamsal etiketleri (aside, details, time, abbr, mark) imlecin bulunduğu yere yazar.",
         "coverImage": "Kapak görseli URL",
         "coverImageHint": "Yazı sayfası için isteğe bağlı tam ekran arka plan.",
         "author": "Yazar",
         "published": "Yayında",
-        "date": "Tarih"
+        "date": "Tarih",
+        "coverImageAlt": "Kapak alternatif metni",
+        "coverImageAltHint": "Kapağı ekran okuyucular ve görsel araması için tanımlar.",
+        "authorUrl": "Yazar URL'si",
+        "authorUrlHint": "Profil veya ana sayfa; yazının yazar varlığı olarak yayımlanır.",
+        "language": "Dil",
+        "languageHint": "Yazının yazıldığı dil; inLanguage olarak yayımlanır.",
+        "tags": "Etiketler",
+        "tagsHint": "Virgülle ayırın. Her etiketin kendi dizine eklenen arşiv sayfası olur.",
+        "tagsPlaceholder": "Shonen, Studio Ghibli, İncelemeler"
       },
       "errors": {
         "required": "Bu alan zorunludur.",
         "invalidUrl": "Geçerli bir http(s) URL girin.",
         "invalidSlug": "Küçük harf, rakam ve tire kullanın.",
         "slugTaken": "Bu slug zaten kullanımda.",
-        "saveFailed": "Yazı kaydedilemedi. Lütfen tekrar deneyin."
+        "saveFailed": "Yazı kaydedilemedi. Lütfen tekrar deneyin.",
+        "invalidLanguage": "Desteklenen dillerden birini seçin."
+      },
+      "media": {
+        "title": "Görseller",
+        "hint": "Bir dosya yükleyin veya bir URL yapıştırın, sonra gövdenin istediğiniz yerine ekleyin.",
+        "upload": "Görsel yükle",
+        "uploading": "Yükleniyor...",
+        "fromLink": "URL'den ekle",
+        "urlLabel": "Görsel URL'si",
+        "altLabel": "Alternatif metin",
+        "altHint": "Görseli tanımlayın. Yalnızca tamamen dekoratifse boş bırakın.",
+        "captionLabel": "Açıklama",
+        "captionHint": "Görselin altında gösterilir ve açıklaması olarak okunur.",
+        "insert": "Ekle",
+        "remove": "Kaldır",
+        "confirmRemove": "Bu görsel kitaplıktan kaldırılsın mı? Onu kullanan yazılar çalışmaya devam eder.",
+        "empty": "Henüz görsel yok.",
+        "add": "Ekle",
+        "errors": {
+          "required": "Önce bir dosya seçin.",
+          "invalidFile": "JPEG, PNG, WebP, AVIF veya GIF bir görsel kullanın.",
+          "tooLarge": "Bu görsel 10 MB'tan büyük.",
+          "invalidUrl": "Geçerli bir http(s) URL'si girin.",
+          "cloudinaryMissing": "Bu dağıtımda görsel yükleme yapılandırılmamış.",
+          "uploadFailed": "Görsel yüklenemedi. Lütfen tekrar deneyin.",
+          "saveFailed": "Görsel kaydedilemedi. Lütfen tekrar deneyin."
+        }
+      },
+      "languages": {
+        "en": "İngilizce",
+        "tr": "Türkçe",
+        "ru": "Rusça"
+      },
+      "toolbar": {
+        "label": "Biçimlendirme",
+        "heading2": "Bölüm başlığı",
+        "heading3": "Alt bölüm başlığı",
+        "bold": "Kalın",
+        "italic": "İtalik",
+        "link": "Bağlantı",
+        "bulletList": "Madde işaretli liste",
+        "numberedList": "Numaralı liste",
+        "quote": "Alıntı",
+        "code": "Satır içi kod",
+        "table": "Tablo",
+        "note": "Yan not (aside)",
+        "details": "Katlanabilir blok (details)",
+        "time": "Tarih (time)",
+        "abbreviation": "Kısaltma (abbr)",
+        "highlight": "Vurgu (mark)"
       }
     },
     "users": {

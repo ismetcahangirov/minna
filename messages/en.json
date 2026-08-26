@@ -160,7 +160,19 @@
       "subtitle": "News, features and deep dives from the Minna team.",
       "empty": "No posts yet",
       "emptyHint": "Check back soon for news and features.",
-      "backToBlogs": "Back to blog"
+      "backToBlogs": "Back to blog",
+      "readingTime": "{minutes} min read",
+      "updatedOn": "Updated on {date}",
+      "tableOfContents": "Contents",
+      "tag": {
+        "eyebrow": "Topic",
+        "heading": "Posts tagged {tag}",
+        "fallbackDescription": "Every post on Minna about {tag}.",
+        "browseByTopic": "Browse by topic",
+        "pagination": "Archive pages",
+        "previous": "Newer posts",
+        "next": "Older posts"
+      }
     },
     "favorites": {
       "title": "Favorites",
@@ -389,19 +401,78 @@
         "excerpt": "Excerpt",
         "excerptHint": "Short summary shown on the listing card.",
         "content": "Content",
-        "contentHint": "Plain text. Blank lines separate paragraphs.",
+        "contentHint": "Markdown with GFM tables. The toolbar writes headings, lists, quotes and semantic tags (aside, details, time, abbr, mark) at the cursor.",
         "coverImage": "Cover image URL",
         "coverImageHint": "Optional full-bleed background for the post page.",
         "author": "Author",
         "published": "Published",
-        "date": "Date"
+        "date": "Date",
+        "coverImageAlt": "Cover alt text",
+        "coverImageAltHint": "Describes the cover for screen readers and image search.",
+        "authorUrl": "Author URL",
+        "authorUrlHint": "Profile or homepage, published as the article's author entity.",
+        "language": "Language",
+        "languageHint": "The language the post is written in, published as inLanguage.",
+        "tags": "Tags",
+        "tagsHint": "Comma-separated. Each tag gets its own indexed archive page.",
+        "tagsPlaceholder": "Shonen, Studio Ghibli, Reviews"
       },
       "errors": {
         "required": "This field is required.",
         "invalidUrl": "Enter a valid http(s) URL.",
         "invalidSlug": "Use lowercase letters, numbers and hyphens.",
         "slugTaken": "That slug is already in use.",
-        "saveFailed": "Could not save the post. Please try again."
+        "saveFailed": "Could not save the post. Please try again.",
+        "invalidLanguage": "Choose one of the supported languages."
+      },
+      "media": {
+        "title": "Images",
+        "hint": "Upload a file or paste a URL, then insert it anywhere in the body.",
+        "upload": "Upload image",
+        "uploading": "Uploading...",
+        "fromLink": "Add from URL",
+        "urlLabel": "Image URL",
+        "altLabel": "Alt text",
+        "altHint": "Describe the image. Leave blank only if it is purely decorative.",
+        "captionLabel": "Caption",
+        "captionHint": "Shown under the image and read as its description.",
+        "insert": "Insert",
+        "remove": "Remove",
+        "confirmRemove": "Remove this image from the library? Posts already using it keep working.",
+        "empty": "No images yet.",
+        "add": "Add",
+        "errors": {
+          "required": "Choose a file first.",
+          "invalidFile": "Use a JPEG, PNG, WebP, AVIF or GIF image.",
+          "tooLarge": "That image is larger than 10 MB.",
+          "invalidUrl": "Enter a valid http(s) URL.",
+          "cloudinaryMissing": "Image uploads are not configured on this deployment.",
+          "uploadFailed": "Could not upload the image. Please try again.",
+          "saveFailed": "Could not save the image. Please try again."
+        }
+      },
+      "languages": {
+        "en": "English",
+        "tr": "Turkish",
+        "ru": "Russian"
+      },
+      "toolbar": {
+        "label": "Formatting",
+        "heading2": "Section heading",
+        "heading3": "Subsection heading",
+        "bold": "Bold",
+        "italic": "Italic",
+        "link": "Link",
+        "bulletList": "Bulleted list",
+        "numberedList": "Numbered list",
+        "quote": "Quote",
+        "code": "Inline code",
+        "table": "Table",
+        "note": "Side note (aside)",
+        "details": "Collapsible block (details)",
+        "time": "Date (time)",
+        "abbreviation": "Abbreviation (abbr)",
+        "highlight": "Highlight (mark)"
       }
     },
     "users": {

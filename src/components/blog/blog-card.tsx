@@ -31,7 +31,7 @@ export function BlogCard({ blog, priority }: BlogCardProps) {
         {blog.coverImage ? (
           <Image
             src={blog.coverImage}
-            alt={blog.title}
+            alt={blog.coverImageAlt ?? blog.title}
             fill
             priority={priority}
             sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 340px"

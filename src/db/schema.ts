@@ -5,6 +5,7 @@ import {
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -145,6 +146,11 @@ export type NewWatchProgress = typeof watchProgress.$inferInsert;
 // URL segment (`/blogs/[slug]`); `coverImage` is the full-bleed background of
 // the detail page. `publishedAt` (defaulting to creation time) drives the
 // newest-first listing and can be backdated by an editor.
+//
+// `content` is Markdown (SEO-05), rendered server-side into semantic HTML —
+// headings, lists, quotes and inline figures — so the body carries a real
+// document outline instead of a flat run of paragraphs. Plain text written
+// before that change is still valid Markdown and renders unchanged.
 export const blogs = pgTable("blogs", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(),
@@ -153,7 +159,16 @@ export const blogs = pgTable("blogs", {
   excerpt: text("excerpt"),
   content: text("content").notNull(),
   coverImage: text("cover_image"),
+  // Alt text for the cover, so the one image every post has is described for
+  // screen readers and image search instead of falling back to the title.
+  coverImageAlt: text("cover_image_alt"),
   author: text("author"),
+  // Author profile or homepage, published as the Person.url of the article
+  // JSON-LD — the one authorship signal a bare name cannot carry (E-E-A-T).
+  authorUrl: text("author_url"),
+  // BCP-47 language of the body, emitted as `inLanguage`. A post is authored
+  // in one language; the UI being EN/TR/RU does not translate it.
+  language: text("language").notNull().default("en"),
   published: boolean("published").notNull().default(true),
   publishedAt: timestamp("published_at", { withTimezone: true })
     .notNull()
@@ -169,6 +184,83 @@ export const blogs = pgTable("blogs", {
 
 export type Blog = typeof blogs.$inferSelect;
 export type NewBlog = typeof blogs.$inferInsert;
+
+// A topic label shared across posts (SEO-05). A tag owns an archive page at
+// `/blogs/tag/{slug}` and feeds the `about`/`keywords` of a post's JSON-LD, so
+// the slug is the stable identity and the name is only the display label.
+export const blogTags = pgTable("blog_tags", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  // One-line intro shown on the archive page and used as its meta
+  // description; a generated sentence stands in when it is empty.
+  description: text("description"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type BlogTag = typeof blogTags.$inferSelect;
+export type NewBlogTag = typeof blogTags.$inferInsert;
+
+// Which posts carry which tags. Deleting either side drops the link, never the
+// counterpart — a tag outlives the posts that used it so its archive URL stays
+// stable for crawlers that already indexed it.
+export const blogsToTags = pgTable(
+  "blogs_to_tags",
+  {
+    blogId: uuid("blog_id")
+      .notNull()
+      .references(() => blogs.id, { onDelete: "cascade" }),
+    tagId: uuid("tag_id")
+      .notNull()
+      .references(() => blogTags.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.blogId, table.tagId] }),
+    // The tag archive page: every post carrying one tag.
+    index("blogs_to_tags_tag_idx").on(table.tagId),
+  ],
+);
+
+export type BlogToTag = typeof blogsToTags.$inferSelect;
+
+// Where a media row's file lives. `upload` means Cloudinary holds the asset and
+// the app may delete it; `link` means an editor pasted someone else's URL and
+// removing the row must never try to delete the remote file.
+export const blogMediaSourceEnum = pgEnum("blog_media_source", [
+  "upload",
+  "link",
+]);
+
+// The admin image library (ADMIN-05). Post bodies embed images by URL, so a row
+// here is not required to render one — it exists so an admin can re-insert an
+// image into another post without re-uploading, and so `alt`/`caption` written
+// once are offered again. Intentionally not scoped to a post: an image is
+// uploaded before the post it belongs to has an id.
+export const blogMedia = pgTable(
+  "blog_media",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    url: text("url").notNull().unique(),
+    // Default alt text offered when the image is inserted. Nullable because a
+    // purely decorative image is correctly marked with an empty alt.
+    alt: text("alt"),
+    caption: text("caption"),
+    width: integer("width"),
+    height: integer("height"),
+    source: blogMediaSourceEnum("source").notNull().default("link"),
+    // Cloudinary public id, so deleting the row can delete the asset too.
+    publicId: text("public_id"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("blog_media_recent_idx").on(table.createdAt.desc())],
+);
+
+export type BlogMedia = typeof blogMedia.$inferSelect;
+export type NewBlogMedia = typeof blogMedia.$inferInsert;
 
 // Which page an atmospheric background belongs to (ADMIN-04). Each page ships a
 // built-in CSS/video default that lives in code and is never stored here; a row
