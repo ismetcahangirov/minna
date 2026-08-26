@@ -52,8 +52,8 @@ Google OAuth is the only authentication method, handled by Auth.js
 | Server logic    | `src/lib/**`                     | Queries, server actions, caching, HTTP clients, SEO.    |
 | Data access     | `src/db/**`                      | Drizzle schema and client.                              |
 | Auth            | `src/auth.ts`, `src/lib/auth/**` | Auth.js config, session, RBAC, user sync.               |
-| Edge gate       | `src/proxy.ts`                   | Pre-request auth/RBAC redirects on protected segments.  |
-| i18n            | `src/i18n/**`, `messages/**`     | next-intl config and EN/TR/RU catalogs.                 |
+| Edge gate       | `src/proxy.ts`                   | Locale routing for every page; auth/RBAC on gated ones. |
+| i18n            | `src/i18n/**`, `messages/**`     | Locale routing config and EN/TR/RU catalogs.            |
 
 **Rule of thumb:** the browser never calls Consumet or the database directly.
 It either renders server components (which call `src/lib` in-process) or issues
@@ -106,9 +106,13 @@ Configured in `src/auth.ts` (Auth.js / NextAuth v5).
 The admin panel is gated in **three layers** (`src/lib/auth/admin.ts`):
 
 1. **`src/proxy.ts`** — an edge check on the session JWT. Signed-out users are
-   sent to `/login`; signed-in non-admins are bounced to `/`. Runs only on the
-   `matcher` segments (`/profile`, `/favorites`, `/admin`).
-2. **`requireAdmin()`** in the admin server layout (`app/admin/layout.tsx`) —
+   sent to `/login`; signed-in non-admins are bounced to `/`, both in the
+   locale they were browsing in. The `matcher` now covers every page because
+   locale routing needs it, so the gate itself tests the path: the session is
+   only decoded for `/profile`, `/favorites`, `/library` and `/admin`, and the
+   test runs against the _unprefixed_ path so `/tr/admin` is gated exactly like
+   `/admin`.
+2. **`requireAdmin()`** in the admin server layout (`app/[locale]/admin/layout.tsx`) —
    re-checks the decoded session so a stale/forged cookie can't render the
    shell.
 3. **Every admin Server Action / route handler** calls `requireAdmin()` itself
@@ -180,7 +184,6 @@ endpoints:
 - `src/lib/auth/actions.ts` — sign-in / sign-out.
 - `src/lib/admin/{ads,blog,backgrounds,users}/actions.ts` — admin CRUD; each
   calls `requireAdmin()` first.
-- `src/i18n/actions.ts` — locale switch (persisted in a cookie).
 
 Admin data reads live in the sibling `queries.ts` files
 (`src/lib/admin/**/queries.ts`).
@@ -189,8 +192,35 @@ Admin data reads live in the sibling `queries.ts` files
 
 `next-intl` provides EN (default) / TR / RU. Message catalogs are
 `messages/{en,tr,ru}.json`; config and request handling are in `src/i18n/**`.
-The active locale is persisted in a cookie and switched via a server action.
 Every user-facing string must exist in all three catalogs.
+
+**The locale lives in the URL** (EPIC-18), not in a cookie. Every public route
+sits under `src/app/[locale]/**`, and `src/i18n/routing.ts` is the single
+config both `src/proxy.ts` and `src/i18n/request.ts` read.
+
+The prefix mode is `as-needed`: English keeps the unprefixed URLs it was
+already indexed at (`/blogs`, `/anime/21-…`) and the other two are prefixed
+(`/tr/blogs`, `/ru/blogs`). A redundant `/en/…` redirects away, so every page
+has exactly one address per language.
+
+- **Navigate with `@/i18n/navigation`**, never `next/link` or
+  `next/navigation`'s `redirect` — those drop the prefix. They take unprefixed
+  paths and apply the active locale themselves.
+- **`src/i18n/paths.ts`** does the same prefixing as plain strings, for the two
+  places that cannot import the navigation module: the proxy and the auth
+  server actions.
+- **The NEXT_LOCALE cookie is only a hint** for a bare visit, alongside
+  `Accept-Language`. It decides where an unprefixed URL _sends_ a returning
+  visitor; it never decides what an explicit `/tr/…` URL renders.
+- **A blog post is the exception to "one page, three locales"**: it is written
+  in one language and lives only under that language's prefix. See
+  `src/lib/blog/href.ts`.
+- **Canonical and `hreflang`** come from `src/lib/seo/locale-alternates.ts`,
+  which shares `pickDefaultVersion` with the sitemap so the two cannot name
+  different `x-default`s.
+
+`npm run verify:locale -- --base=<deployment>` checks all of the above against
+a running deployment.
 
 ## SEO & performance
 

@@ -31,11 +31,16 @@ function safePage(page: number | undefined): number {
  * default second, and anything else last, so a group always contributes
  * exactly one card and never an empty slot.
  *
- * Googlebot carries no locale cookie, so a crawl always sees the default-
- * language selection here. That is deliberate: the translations are discovered
- * through the sitemap and the reciprocal `hreflang` on each post, which is the
- * mechanism Google documents for exactly this, and it keeps one listing URL
- * from serving different content to different crawlers.
+ * The ranking locale is the one in the URL, so `/blogs` and `/tr/blogs` are two
+ * listings with two stable selections rather than one listing that changes
+ * under a cookie. A crawler therefore sees the same page a reader at that URL
+ * does, and each version can be indexed on its own.
+ *
+ * The selection is per reader, not per article: a group whose only published
+ * version is Turkish still appears on `/blogs`, because an English reader
+ * should be offered the article rather than an emptier blog. The card links to
+ * that version's own URL — `/tr/blogs/…` — since that is the only place it
+ * exists. See `@/lib/blog/href`.
  */
 function preferredPerGroup(locale: Locale) {
   return sql<number>`row_number() over (
