@@ -6,15 +6,11 @@ import { ArrowLeft, Clock, Languages, List } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 
 import { JsonLd } from "@/components/seo/json-ld";
-import {
-  defaultLocale,
-  isLocale,
-  openGraphLocales,
-  type Locale,
-} from "@/i18n/config";
+import { isLocale, openGraphLocales, type Locale } from "@/i18n/config";
 import { renderBlogMarkdown } from "@/lib/blog/markdown";
 import { getBlogBySlug } from "@/lib/blog/queries";
 import { blogDescription, buildBlogJsonLd } from "@/lib/seo/blog-jsonld";
+import { pickDefaultVersion } from "@/lib/seo/hreflang";
 import { localeNames } from "@/i18n/config";
 import type { BlogDetail } from "@/lib/blog/types";
 
@@ -45,8 +41,7 @@ function hreflangMap(post: BlogDetail): Record<string, string> | undefined {
     languages[sibling.language] = `/blogs/${sibling.slug}`;
   }
 
-  const fallback = languages[defaultLocale] ?? `/blogs/${post.slug}`;
-  return { ...languages, "x-default": fallback };
+  return { ...languages, "x-default": pickDefaultVersion(languages) };
 }
 
 /**

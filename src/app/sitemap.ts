@@ -13,6 +13,7 @@ import {
 import { listBlogSitemapEntries } from "@/lib/blog/queries";
 import { listBlogTagSitemapEntries } from "@/lib/blog/tags";
 import { cacheKey, getOrSet } from "@/lib/cache";
+import { pickDefaultVersion } from "@/lib/seo/hreflang";
 import { absoluteUrl } from "@/lib/seo/site";
 
 /**
@@ -124,7 +125,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const versions = versionsByGroup.get(post.translationGroupId) ?? {};
     // An untranslated post has nothing to alternate with; listing itself alone
     // claims a language choice the reader does not have.
-    const languages = Object.keys(versions).length > 1 ? versions : undefined;
+    const languages =
+      Object.keys(versions).length > 1
+        ? { ...versions, "x-default": pickDefaultVersion(versions) }
+        : undefined;
 
     return {
       url: absoluteUrl(`/blogs/${post.slug}`),
