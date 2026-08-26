@@ -160,7 +160,10 @@
       "subtitle": "Новости, статьи и подробные материалы от команды Minna.",
       "empty": "Пока нет записей",
       "emptyHint": "Загляните позже за новостями и материалами.",
-      "backToBlogs": "Назад в блог"
+      "backToBlogs": "Назад в блог",
+      "readingTime": "Чтение: {minutes} мин",
+      "updatedOn": "Обновлено {date}",
+      "tableOfContents": "Содержание"
     },
     "favorites": {
       "title": "Избранное",

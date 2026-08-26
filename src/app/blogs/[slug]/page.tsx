@@ -2,19 +2,22 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Clock, List } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 
-import { stripHtml } from "@/lib/anime/text";
+import { JsonLd } from "@/components/seo/json-ld";
+import { renderBlogMarkdown } from "@/lib/blog/markdown";
 import { getBlogBySlug } from "@/lib/blog/queries";
+import { blogDescription, buildBlogJsonLd } from "@/lib/seo/blog-jsonld";
 
 interface BlogDetailRouteProps {
   params: Promise<{ slug: string }>;
 }
 
 /**
- * Dynamic SEO metadata for a blog post (LIST-05): title, description and Open
- * Graph/Twitter cards from the post. Shares nothing extra — a single query.
+ * Dynamic SEO metadata for a blog post (LIST-05). Both the post and its
+ * rendered body are memoized per request, so this shares the page's work rather
+ * than repeating the query and the Markdown parse.
  */
 export async function generateMetadata({
   params,
@@ -24,33 +27,49 @@ export async function generateMetadata({
 
   if (!post) return { title: "Blog not found — Minna" };
 
+  const body = await renderBlogMarkdown(post.content);
   const title = `${post.title} — Minna`;
-  const description = (
-    post.excerpt ?? stripHtml(post.content).slice(0, 200)
-  ).trim();
+  const description = blogDescription(post, body.text);
   const images = post.coverImage
-    ? [{ url: post.coverImage, alt: post.title }]
+    ? [{ url: post.coverImage, alt: post.coverImageAlt ?? post.title }]
     : [];
 
   return {
     title,
     description,
     alternates: { canonical: `/blogs/${post.slug}` },
-    openGraph: { title, description, type: "article", images },
+    // `article:*` is what turns a generic OG card into a dated, attributed
+    // article for the crawlers and social previews that read it.
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      url: `/blogs/${post.slug}`,
+      publishedTime: post.publishedAt,
+      modifiedTime: post.updatedAt,
+      authors: post.author ? [post.author] : undefined,
+      tags: post.tags.map((tag) => tag.name),
+      images,
+    },
     twitter: {
       card: "summary_large_image",
       title,
       description,
       images: images.map((entry) => entry.url),
     },
+    keywords: post.tags.length > 0 ? post.tags.map((t) => t.name) : undefined,
   };
 }
 
 /**
- * Blog detail page (LIST-05). The cover image is a full-bleed fixed background
- * with the article content placed over a flat dark overlay (design system — a
- * flat layer, never a gradient). Server-rendered for SEO; a missing or
- * unpublished slug renders the 404.
+ * Blog detail page (LIST-05 / SEO-05). The cover image is a full-bleed fixed
+ * background with the article over a flat dark overlay (design system — a flat
+ * layer, never a gradient).
+ *
+ * The body is Markdown rendered server-side into sanitized semantic HTML, so
+ * the page ships a real document outline: one `h1`, `h2`/`h3` sections with
+ * deep-linkable ids, captioned figures, lists and quotes. A `BlogPosting` +
+ * `BreadcrumbList` block describes the same structure to crawlers.
  */
 export default async function BlogDetailPage({ params }: BlogDetailRouteProps) {
   const { slug } = await params;
@@ -60,13 +79,26 @@ export default async function BlogDetailPage({ params }: BlogDetailRouteProps) {
 
   const t = await getTranslations("browse.blogs");
   const format = await getFormatter();
-  const paragraphs = post.content
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean);
+  const body = await renderBlogMarkdown(post.content);
+
+  const jsonLd = buildBlogJsonLd({
+    post,
+    bodyText: body.text,
+    wordCount: body.wordCount,
+    readingMinutes: body.readingMinutes,
+    headings: body.headings,
+    bodyImages: body.images.map((image) => image.src),
+  });
+
+  // A contents list only earns its space once a post has real sections.
+  const showContents = body.headings.length >= 3;
+  const modified =
+    post.updatedAt.slice(0, 10) !== post.publishedAt.slice(0, 10);
 
   return (
     <main className="relative flex flex-1 flex-col">
+      <JsonLd data={jsonLd} />
+
       {/* Full-bleed cover background (LIST-05). */}
       <div className="fixed inset-0 -z-10 bg-black">
         {post.coverImage && (
@@ -83,7 +115,10 @@ export default async function BlogDetailPage({ params }: BlogDetailRouteProps) {
         <div className="absolute inset-0 bg-black/80" />
       </div>
 
-      <article className="mx-auto w-full max-w-3xl px-4 pt-28 pb-20 sm:px-6 sm:pt-32">
+      <article
+        lang={post.language}
+        className="mx-auto w-full max-w-3xl px-4 pt-28 pb-20 sm:px-6 sm:pt-32"
+      >
         <Link
           href="/blogs"
           className="text-muted-foreground hover:text-foreground focus-visible:ring-ring mb-8 inline-flex items-center gap-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
@@ -93,7 +128,7 @@ export default async function BlogDetailPage({ params }: BlogDetailRouteProps) {
         </Link>
 
         <header className="border-border mb-8 border-b pb-8">
-          <p className="text-muted-foreground text-xs tracking-wide uppercase">
+          <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs tracking-wide uppercase">
             <time dateTime={post.publishedAt}>
               {format.dateTime(new Date(post.publishedAt), {
                 year: "numeric",
@@ -101,23 +136,100 @@ export default async function BlogDetailPage({ params }: BlogDetailRouteProps) {
                 day: "numeric",
               })}
             </time>
-            {post.author ? ` · ${post.author}` : ""}
+            {post.author && <span aria-hidden>·</span>}
+            {post.author &&
+              (post.authorUrl ? (
+                <a
+                  href={post.authorUrl}
+                  rel="author noopener noreferrer"
+                  target="_blank"
+                  className="hover:text-foreground transition-colors"
+                >
+                  {post.author}
+                </a>
+              ) : (
+                <span>{post.author}</span>
+              ))}
+            <span aria-hidden>·</span>
+            <span className="inline-flex items-center gap-1">
+              <Clock className="size-3.5" aria-hidden />
+              {t("readingTime", { minutes: body.readingMinutes })}
+            </span>
           </p>
+
           <h1 className="text-foreground mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
             {post.title}
           </h1>
+
           {post.excerpt && (
             <p className="text-muted-foreground mt-4 text-lg">{post.excerpt}</p>
           )}
+
+          {post.tags.length > 0 && (
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {post.tags.map((tag) => (
+                <li key={tag.slug}>
+                  <Link
+                    href={`/blogs/tag/${tag.slug}`}
+                    rel="tag"
+                    className="border-border text-muted-foreground hover:border-primary hover:text-foreground focus-visible:ring-ring inline-flex border px-2.5 py-1 text-xs font-medium tracking-wide uppercase transition-colors outline-none focus-visible:ring-2"
+                  >
+                    {tag.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {modified && (
+            <p className="text-muted-foreground/70 mt-4 text-xs">
+              {t("updatedOn", {
+                date: format.dateTime(new Date(post.updatedAt), {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }),
+              })}
+            </p>
+          )}
         </header>
 
-        <div className="flex flex-col gap-5 text-base leading-relaxed text-neutral-200">
-          {paragraphs.map((block, index) => (
-            <p key={index} className="whitespace-pre-line">
-              {block}
+        {showContents && (
+          <nav
+            aria-label={t("tableOfContents")}
+            className="border-border mb-10 border p-4 sm:p-5"
+          >
+            <p className="text-muted-foreground mb-3 inline-flex items-center gap-2 text-xs font-semibold tracking-wide uppercase">
+              <List className="size-3.5" aria-hidden />
+              {t("tableOfContents")}
             </p>
-          ))}
-        </div>
+            <ol className="flex flex-col gap-2 text-sm">
+              {body.headings.map((heading) => (
+                <li
+                  key={heading.id}
+                  // Nested headings are indented rather than nested in markup:
+                  // a body may legitimately start at h3, and a real nested list
+                  // would then open with an empty level.
+                  style={{ paddingLeft: `${(heading.level - 2) * 0.875}rem` }}
+                >
+                  <a
+                    href={`#${heading.id}`}
+                    className="text-muted-foreground hover:text-primary focus-visible:ring-ring transition-colors outline-none focus-visible:ring-2"
+                  >
+                    {heading.text}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
+
+        {/* Sanitized by the Markdown renderer: raw HTML is parsed and then
+            whitelisted there, so nothing executable can reach this point. */}
+        <div
+          className="blog-prose"
+          dangerouslySetInnerHTML={{ __html: body.html }}
+        />
       </article>
     </main>
   );

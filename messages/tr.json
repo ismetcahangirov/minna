@@ -160,7 +160,10 @@
       "subtitle": "Minna ekibinden haberler, içerikler ve detaylı yazılar.",
       "empty": "Henüz gönderi yok",
       "emptyHint": "Haberler ve içerikler için yakında tekrar uğrayın.",
-      "backToBlogs": "Bloga dön"
+      "backToBlogs": "Bloga dön",
+      "readingTime": "{minutes} dk okuma",
+      "updatedOn": "{date} tarihinde güncellendi",
+      "tableOfContents": "İçindekiler"
     },
     "favorites": {
       "title": "Favoriler",

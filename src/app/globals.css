@@ -532,3 +532,223 @@
     animation: none;
   }
 }
+
+/* Blog post body (SEO-05). The body arrives as sanitized HTML from the
+   Markdown renderer, so it carries no utility classes — every element is
+   styled here instead. Sharp corners, flat fills and the Netflix red accent,
+   matching the rest of the UI (no radius, no gradient, no blur). */
+.blog-prose {
+  color: var(--color-neutral-200, #e5e5e5);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.blog-prose > * + * {
+  margin-top: 1.25rem;
+}
+
+.blog-prose h2,
+.blog-prose h3,
+.blog-prose h4,
+.blog-prose h5,
+.blog-prose h6 {
+  color: var(--foreground);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  /* Headings open a section, so they sit closer to what follows than to what
+     came before. `scroll-margin` keeps a `#id` deep link clear of the header. */
+  scroll-margin-top: 7rem;
+}
+
+.blog-prose > h2 + *,
+.blog-prose > h3 + *,
+.blog-prose > h4 + * {
+  margin-top: 0.75rem;
+}
+
+.blog-prose > * + h2 {
+  margin-top: 2.5rem;
+}
+.blog-prose > * + h3,
+.blog-prose > * + h4 {
+  margin-top: 2rem;
+}
+
+.blog-prose h2 {
+  font-size: 1.5rem;
+  /* A flat rule under every top-level section — the outline made visible. */
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+.blog-prose h3 {
+  font-size: 1.25rem;
+}
+.blog-prose h4 {
+  font-size: 1.0625rem;
+}
+.blog-prose h5,
+.blog-prose h6 {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+}
+
+.blog-prose a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 150ms ease;
+}
+.blog-prose a:hover {
+  color: var(--foreground);
+}
+
+.blog-prose strong {
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+.blog-prose ul,
+.blog-prose ol {
+  padding-left: 1.5rem;
+}
+.blog-prose ul {
+  list-style: disc;
+}
+.blog-prose ol {
+  list-style: decimal;
+}
+.blog-prose li::marker {
+  color: var(--primary);
+}
+.blog-prose li + li {
+  margin-top: 0.5rem;
+}
+.blog-prose li > ul,
+.blog-prose li > ol {
+  margin-top: 0.5rem;
+}
+
+.blog-prose blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 1.25rem;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+.blog-prose blockquote > * + * {
+  margin-top: 0.75rem;
+}
+
+/* An image dropped between two sections. The caption is the reason the figure
+   exists — it is what an image search reads. */
+.blog-prose figure {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+.blog-prose figure img,
+.blog-prose > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+}
+.blog-prose figcaption {
+  margin-top: 0.625rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  border-left: 2px solid var(--primary);
+  padding-left: 0.625rem;
+}
+
+/* A wide table must scroll inside the article, never widen the page. */
+.blog-prose table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+.blog-prose th,
+.blog-prose td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.blog-prose th {
+  background-color: #171717;
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+.blog-prose code {
+  background-color: #171717;
+  border: 1px solid var(--border);
+  padding: 0.1rem 0.35rem;
+  font-size: 0.875em;
+}
+.blog-prose pre {
+  background-color: #0a0a0a;
+  border: 1px solid var(--border);
+  padding: 1rem;
+  overflow-x: auto;
+}
+.blog-prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+.blog-prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+/* Editor-written semantic containers — a pull-out note beside the argument. */
+.blog-prose aside {
+  border-left: 3px solid var(--border);
+  background-color: #0d0d0d;
+  padding: 1rem 1.25rem;
+  color: var(--muted-foreground);
+  font-size: 0.9375rem;
+}
+.blog-prose aside > * + * {
+  margin-top: 0.75rem;
+}
+
+.blog-prose mark {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0 0.2rem;
+}
+
+.blog-prose abbr[title] {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+.blog-prose details {
+  border: 1px solid var(--border);
+  padding: 0.875rem 1rem;
+}
+.blog-prose summary {
+  color: var(--foreground);
+  font-weight: 600;
+  cursor: pointer;
+}
+.blog-prose details > * + * {
+  margin-top: 0.75rem;
+}
+
+.blog-prose dt {
+  color: var(--foreground);
+  font-weight: 700;
+}
+.blog-prose dd {
+  margin-left: 1.25rem;
+  color: var(--muted-foreground);
+}

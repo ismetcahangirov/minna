@@ -160,7 +160,10 @@
       "subtitle": "News, features and deep dives from the Minna team.",
       "empty": "No posts yet",
       "emptyHint": "Check back soon for news and features.",
-      "backToBlogs": "Back to blog"
+      "backToBlogs": "Back to blog",
+      "readingTime": "{minutes} min read",
+      "updatedOn": "Updated on {date}",
+      "tableOfContents": "Contents"
     },
     "favorites": {
       "title": "Favorites",
