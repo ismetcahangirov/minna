@@ -7,20 +7,25 @@ import { ProfileBackground } from "@/components/profile/profile-background";
 import { ProfileInfo } from "@/components/profile/profile-info";
 import { WatchHistoryPreview } from "@/components/profile/watch-history-preview";
 import { Button } from "@/components/ui/button";
+import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
 import { signInWithGoogle } from "@/lib/auth/actions";
 import { getCurrentUser } from "@/lib/auth/session";
 import { listFavorites } from "@/lib/favorites/queries";
+import { localeCanonical } from "@/lib/seo/locale-alternates";
 import { getUserProfile } from "@/lib/user/queries";
 import { listRecentWatchHistory } from "@/lib/watch/queries";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("profile");
+export async function generateMetadata({
+  params,
+}: LocaleRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
+  const t = await getTranslations({ locale, namespace: "profile" });
   return {
     title: `${t("title")} — Minna`,
     description: t("subtitle"),
     // Per-user and auth-gated — keep it out of the index.
     robots: { index: false, follow: false },
-    alternates: { canonical: "/profile" },
+    alternates: localeCanonical("/profile", locale),
   };
 }
 

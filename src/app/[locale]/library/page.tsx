@@ -7,24 +7,29 @@ import { LibraryTabs } from "@/components/library/library-tabs";
 import { VisibilityToggle } from "@/components/library/visibility-toggle";
 import { Button } from "@/components/ui/button";
 import { SimplePager } from "@/components/ui/simple-pager";
+import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
 import { signInWithGoogle } from "@/lib/auth/actions";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getLibraryCounts, listLibrary } from "@/lib/library/queries";
 import { isLibraryStatus, type LibraryStatus } from "@/lib/library/types";
 import { getUserVisibility } from "@/lib/members/queries";
+import { localeCanonical } from "@/lib/seo/locale-alternates";
 
 interface LibraryRouteProps {
   searchParams: Promise<{ status?: string; page?: string }>;
 }
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("library");
+export async function generateMetadata({
+  params,
+}: LocaleRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
+  const t = await getTranslations({ locale, namespace: "library" });
   return {
     title: `${t("title")} — Minna`,
     description: t("subtitle"),
     // Per-member and auth-gated — keep it out of the index.
     robots: { index: false, follow: false },
-    alternates: { canonical: "/library" },
+    alternates: localeCanonical("/library", locale),
   };
 }
 

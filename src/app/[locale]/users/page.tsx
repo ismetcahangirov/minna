@@ -6,21 +6,26 @@ import { MemberCard } from "@/components/members/member-card";
 import { Button } from "@/components/ui/button";
 import { SimplePager } from "@/components/ui/simple-pager";
 import { Link } from "@/i18n/navigation";
+import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
 import { listMembers } from "@/lib/members/queries";
 import { parseMemberQuery } from "@/lib/members/types";
+import { localeCanonical } from "@/lib/seo/locale-alternates";
 
 interface MembersRouteProps {
   searchParams: Promise<{ q?: string; page?: string }>;
 }
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("members");
+export async function generateMetadata({
+  params,
+}: LocaleRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
+  const t = await getTranslations({ locale, namespace: "members" });
   return {
     title: `${t("title")} — Minna`,
     description: t("subtitle"),
     // A people directory: findable inside the site, not something to index.
     robots: { index: false, follow: true },
-    alternates: { canonical: "/users" },
+    alternates: localeCanonical("/users", locale),
   };
 }
 

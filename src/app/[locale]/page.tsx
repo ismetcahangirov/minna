@@ -6,16 +6,34 @@ import { AdBanner } from "@/components/home/ad-banner";
 import { AnimeRow, AnimeRowSkeleton } from "@/components/home/anime-row";
 import { CatalogNotice } from "@/components/home/catalog-notice";
 import { HeroSection } from "@/components/home/hero-section";
+import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
+import {
+  localeAlternates,
+  openGraphLocaleSet,
+} from "@/lib/seo/locale-alternates";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations();
+export async function generateMetadata({
+  params,
+}: LocaleRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
+  const t = await getTranslations({ locale });
   const title = "Minna — Watch Anime Online";
   const description = t("home.hero.tagline");
 
   return {
     title,
     description,
-    openGraph: { title, description, type: "website" },
+    // Restated even though the layout sets the same block: a page's `openGraph`
+    // replaces the layout's wholesale rather than merging into it, so the
+    // locale tags would disappear from the home page alone if it relied on
+    // inheritance.
+    alternates: localeAlternates("/", locale),
+    openGraph: {
+      ...openGraphLocaleSet(locale),
+      title,
+      description,
+      type: "website",
+    },
     twitter: { card: "summary_large_image", title, description },
   };
 }

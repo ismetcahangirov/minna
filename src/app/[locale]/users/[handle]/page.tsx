@@ -13,14 +13,16 @@ import { LibraryCard } from "@/components/library/library-card";
 import { LibraryTabs } from "@/components/library/library-tabs";
 import { SimplePager } from "@/components/ui/simple-pager";
 import { Link } from "@/i18n/navigation";
+import { resolveLocale } from "@/i18n/route-locale";
 import { getMemberDiscussionStats } from "@/lib/discussions/queries";
 import { getLibraryCounts, listLibrary } from "@/lib/library/queries";
 import { isLibraryStatus, type LibraryStatus } from "@/lib/library/types";
 import { getMemberByHandle } from "@/lib/members/queries";
 import { memberHref } from "@/lib/members/types";
+import { localeCanonical } from "@/lib/seo/locale-alternates";
 
 interface MemberRouteProps {
-  params: Promise<{ handle: string }>;
+  params: Promise<{ locale: string; handle: string }>;
   searchParams: Promise<{ status?: string; page?: string }>;
 }
 
@@ -33,9 +35,10 @@ function parsePage(raw: string | undefined): number {
 export async function generateMetadata({
   params,
 }: MemberRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
   const { handle } = await params;
   const member = await getMemberByHandle(handle);
-  const t = await getTranslations("members");
+  const t = await getTranslations({ locale, namespace: "members" });
 
   if (!member) return { title: `${t("notFound")} — Minna` };
 
@@ -44,7 +47,7 @@ export async function generateMetadata({
     description: t("subtitle"),
     // A member's own page: reachable inside the site, kept out of search.
     robots: { index: false, follow: false },
-    alternates: { canonical: memberHref(member) },
+    alternates: localeCanonical(memberHref(member), locale),
   };
 }
 

@@ -5,17 +5,22 @@ import { getTranslations } from "next-intl/server";
 import { NewThreadForm } from "@/components/community/new-thread-form";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
 import { signInWithGoogle } from "@/lib/auth/actions";
 import { getCurrentUser } from "@/lib/auth/session";
+import { localeCanonical } from "@/lib/seo/locale-alternates";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("community");
+export async function generateMetadata({
+  params,
+}: LocaleRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
+  const t = await getTranslations({ locale, namespace: "community" });
   return {
     title: `${t("newHeading")} — Minna`,
     description: t("newSubtitle"),
     // A form, not content — nothing here belongs in the index.
     robots: { index: false, follow: true },
-    alternates: { canonical: "/discussions/new" },
+    alternates: localeCanonical("/discussions/new", locale),
   };
 }
 

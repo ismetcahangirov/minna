@@ -7,18 +7,22 @@ import { LoginBackground } from "@/components/auth/login-background";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/i18n/config";
 import { localePath } from "@/i18n/paths";
-import { resolveLocale } from "@/i18n/route-locale";
+import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
 import { signInWithGoogleTo } from "@/lib/auth/actions";
 import { getCurrentUser } from "@/lib/auth/session";
+import { localeCanonical } from "@/lib/seo/locale-alternates";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("login");
+export async function generateMetadata({
+  params,
+}: LocaleRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
+  const t = await getTranslations({ locale, namespace: "login" });
   return {
     title: `${t("title")} — Minna`,
     description: t("subtitle"),
     // Thin auth-only page — keep it out of the index but let links be followed.
     robots: { index: false, follow: true },
-    alternates: { canonical: "/login" },
+    alternates: localeCanonical("/login", locale),
   };
 }
 

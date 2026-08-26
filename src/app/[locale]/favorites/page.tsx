@@ -4,12 +4,17 @@ import { getTranslations } from "next-intl/server";
 
 import { Button } from "@/components/ui/button";
 import { FavoritesList } from "@/components/favorites/favorites-list";
+import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
 import { signInWithGoogle } from "@/lib/auth/actions";
 import { getCurrentUser } from "@/lib/auth/session";
 import { listFavorites } from "@/lib/favorites/queries";
+import { localeCanonical } from "@/lib/seo/locale-alternates";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("browse.favorites");
+export async function generateMetadata({
+  params,
+}: LocaleRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
+  const t = await getTranslations({ locale, namespace: "browse.favorites" });
   const title = `${t("title")} — Minna`;
   const description = t("subtitle");
 
@@ -18,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     // Per-user and auth-gated — keep it out of the index.
     robots: { index: false, follow: false },
-    alternates: { canonical: "/favorites" },
+    alternates: localeCanonical("/favorites", locale),
   };
 }
 

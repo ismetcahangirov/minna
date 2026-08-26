@@ -5,20 +5,33 @@ import { BlogList } from "@/components/blog/blog-list";
 import type { Locale } from "@/i18n/config";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Link } from "@/i18n/navigation";
+import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
 import { listBlogs } from "@/lib/blog/queries";
 import { listBlogTags } from "@/lib/blog/tags";
 import { buildBlogListJsonLd } from "@/lib/seo/blog-jsonld";
+import {
+  localeAlternates,
+  openGraphLocaleSet,
+} from "@/lib/seo/locale-alternates";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("browse.blogs");
+export async function generateMetadata({
+  params,
+}: LocaleRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
+  const t = await getTranslations({ locale, namespace: "browse.blogs" });
   const title = `${t("title")} — Minna`;
   const description = t("subtitle");
 
   return {
     title,
     description,
-    alternates: { canonical: "/blogs" },
-    openGraph: { title, description, type: "website" },
+    alternates: localeAlternates("/blogs", locale),
+    openGraph: {
+      ...openGraphLocaleSet(locale),
+      title,
+      description,
+      type: "website",
+    },
     twitter: { card: "summary_large_image", title, description },
   };
 }

@@ -2,18 +2,31 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
 import { PopularList } from "@/components/browse/popular-list";
+import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
 import { listPopularAnime } from "@/lib/anime/browse";
+import {
+  localeAlternates,
+  openGraphLocaleSet,
+} from "@/lib/seo/locale-alternates";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("browse.popular");
+export async function generateMetadata({
+  params,
+}: LocaleRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
+  const t = await getTranslations({ locale, namespace: "browse.popular" });
   const title = `${t("title")} — Minna`;
   const description = t("subtitle");
 
   return {
     title,
     description,
-    alternates: { canonical: "/popular" },
-    openGraph: { title, description, type: "website" },
+    alternates: localeAlternates("/popular", locale),
+    openGraph: {
+      ...openGraphLocaleSet(locale),
+      title,
+      description,
+      type: "website",
+    },
     twitter: { card: "summary_large_image", title, description },
   };
 }

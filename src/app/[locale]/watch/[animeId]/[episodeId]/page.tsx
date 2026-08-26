@@ -20,6 +20,10 @@ import {
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeEpisode } from "@/lib/anime/types";
 import { getCurrentUser } from "@/lib/auth/session";
+import {
+  localeAlternates,
+  openGraphLocaleSet,
+} from "@/lib/seo/locale-alternates";
 import { getWatchProgress } from "@/lib/watch/queries";
 
 interface WatchRouteProps {
@@ -88,6 +92,7 @@ function locateEpisode(
 export async function generateMetadata({
   params,
 }: WatchRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
   const { animeId, episodeId } = await params;
   const detail = await getAnimeInfo(parseAnimeParam(animeId));
 
@@ -105,8 +110,17 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: watchHref(detail.id, number, detail.title) },
-    openGraph: { title, description, type: "video.episode", images },
+    alternates: localeAlternates(
+      watchHref(detail.id, number, detail.title),
+      locale,
+    ),
+    openGraph: {
+      ...openGraphLocaleSet(locale),
+      title,
+      description,
+      type: "video.episode",
+      images,
+    },
     twitter: {
       card: "summary_large_image",
       title,

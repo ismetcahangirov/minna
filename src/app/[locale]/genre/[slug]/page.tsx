@@ -3,12 +3,17 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { GenreList } from "@/components/browse/genre-list";
+import { resolveLocale } from "@/i18n/route-locale";
 import { listGenreAnime } from "@/lib/anime/browse";
 import { getCategories } from "@/lib/anime/categories";
 import { findCategoryBySlug } from "@/lib/anime/genres";
+import {
+  localeAlternates,
+  openGraphLocaleSet,
+} from "@/lib/seo/locale-alternates";
 
 interface GenrePageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }
 
 export async function generateStaticParams() {
@@ -19,9 +24,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: GenrePageProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
   const { slug } = await params;
   const category = findCategoryBySlug(slug);
-  const t = await getTranslations("browse.genre");
+  const t = await getTranslations({ locale, namespace: "browse.genre" });
 
   if (!category) {
     return {
@@ -36,8 +42,13 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: "/genre/" + category.slug },
-    openGraph: { title, description, type: "website" },
+    alternates: localeAlternates("/genre/" + category.slug, locale),
+    openGraph: {
+      ...openGraphLocaleSet(locale),
+      title,
+      description,
+      type: "website",
+    },
     twitter: { card: "summary_large_image", title, description },
   };
 }

@@ -6,18 +6,23 @@ import { ThreadCard } from "@/components/community/thread-card";
 import { Button } from "@/components/ui/button";
 import { SimplePager } from "@/components/ui/simple-pager";
 import { Link } from "@/i18n/navigation";
+import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
 import { listThreads } from "@/lib/discussions/queries";
+import { localeAlternates } from "@/lib/seo/locale-alternates";
 
 interface DiscussionsRouteProps {
   searchParams: Promise<{ page?: string; anime?: string }>;
 }
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("community");
+export async function generateMetadata({
+  params,
+}: LocaleRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
+  const t = await getTranslations({ locale, namespace: "community" });
   return {
     title: `${t("title")} — Minna`,
     description: t("subtitle"),
-    alternates: { canonical: "/discussions" },
+    alternates: localeAlternates("/discussions", locale),
   };
 }
 

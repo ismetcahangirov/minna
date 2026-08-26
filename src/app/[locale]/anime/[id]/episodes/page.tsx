@@ -27,6 +27,7 @@ import {
 } from "@/lib/anime/href";
 import { getCurrentUser } from "@/lib/auth/session";
 import type { AnimeEpisode } from "@/lib/anime/types";
+import { localeAlternates } from "@/lib/seo/locale-alternates";
 import { getAnimeWatchStates } from "@/lib/watch/queries";
 
 interface EpisodesRouteProps {
@@ -86,6 +87,7 @@ export async function generateMetadata({
   params,
   searchParams,
 }: EpisodesRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
   const [{ id }, { page: pageParam, order, q }] = await Promise.all([
     params,
     searchParams,
@@ -106,9 +108,10 @@ export async function generateMetadata({
     return {
       title: `${detail.title} — Episodes — Minna`,
       description,
-      alternates: {
-        canonical: animeEpisodesPageHref(detail.id, detail.title),
-      },
+      alternates: localeAlternates(
+        animeEpisodesPageHref(detail.id, detail.title),
+        locale,
+      ),
       robots: { index: false, follow: true },
     };
   }
@@ -121,9 +124,10 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: {
-      canonical: animeEpisodesPageHref(detail.id, detail.title, { page }),
-    },
+    alternates: localeAlternates(
+      animeEpisodesPageHref(detail.id, detail.title, { page }),
+      locale,
+    ),
     ...(descending ? { robots: { index: false, follow: true } } : {}),
   };
 }

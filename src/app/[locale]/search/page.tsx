@@ -3,17 +3,30 @@ import { getTranslations } from "next-intl/server";
 
 import { SearchBackground } from "@/components/search/search-background";
 import { SearchExperience } from "@/components/search/search-experience";
+import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
+import {
+  localeAlternates,
+  openGraphLocaleSet,
+} from "@/lib/seo/locale-alternates";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("search");
+export async function generateMetadata({
+  params,
+}: LocaleRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
+  const t = await getTranslations({ locale, namespace: "search" });
   const title = `${t("title")} — Minna`;
   const description = t("subtitle");
 
   return {
     title,
     description,
-    alternates: { canonical: "/search" },
-    openGraph: { title, description, type: "website" },
+    alternates: localeAlternates("/search", locale),
+    openGraph: {
+      ...openGraphLocaleSet(locale),
+      title,
+      description,
+      type: "website",
+    },
     twitter: { card: "summary_large_image", title, description },
   };
 }

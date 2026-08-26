@@ -1,4 +1,4 @@
-import { locales, type Locale } from "@/i18n/config";
+import { locales, openGraphLocales, type Locale } from "@/i18n/config";
 import { getPathname } from "@/i18n/navigation";
 import { pickDefaultVersion } from "@/lib/seo/hreflang";
 
@@ -46,5 +46,44 @@ export function localeAlternates(
   return {
     canonical: versions[locale],
     languages: { ...versions, "x-default": pickDefaultVersion(versions) },
+  };
+}
+
+/**
+ * The canonical alone, for a page that is deliberately kept out of the index —
+ * the login form, a member's own page, the admin panel.
+ *
+ * Those pages still need a canonical that names the locale actually being
+ * served, or the three language versions would all claim the same URL. What
+ * they must not carry is `hreflang`: Google ignores an alternates set on a
+ * `noindex` page, and declaring one anyway only invites the "no return tag"
+ * error against a page that was never meant to rank.
+ */
+export function localeCanonical(
+  href: string,
+  locale: Locale,
+): { canonical: string } {
+  return { canonical: getPathname({ href, locale }) };
+}
+
+/**
+ * `og:locale` plus every `og:locale:alternate`, matching the `hreflang` set.
+ *
+ * Open Graph wants `language_TERRITORY` where the rest of the app uses the bare
+ * tag, so the mapping lives in `@/i18n/config` and is applied here. This has to
+ * be spread into every page's `openGraph` block rather than set once on the
+ * layout: Next replaces `openGraph` wholesale when a page declares its own, so
+ * an inherited locale would silently vanish from exactly the pages that set the
+ * richest cards.
+ */
+export function openGraphLocaleSet(locale: Locale): {
+  locale: string;
+  alternateLocale: string[];
+} {
+  return {
+    locale: openGraphLocales[locale],
+    alternateLocale: locales
+      .filter((other) => other !== locale)
+      .map((other) => openGraphLocales[other]),
   };
 }

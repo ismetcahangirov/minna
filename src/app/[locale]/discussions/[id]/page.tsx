@@ -8,13 +8,18 @@ import { PostItem } from "@/components/community/post-item";
 import { ReplyForm } from "@/components/community/reply-form";
 import { SimplePager } from "@/components/ui/simple-pager";
 import { Link } from "@/i18n/navigation";
+import { resolveLocale } from "@/i18n/route-locale";
 import { animeHref, watchHref } from "@/lib/anime/href";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getThread, listThreadPosts } from "@/lib/discussions/queries";
 import { memberHref } from "@/lib/members/types";
+import {
+  localeAlternates,
+  openGraphLocaleSet,
+} from "@/lib/seo/locale-alternates";
 
 interface ThreadRouteProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ locale: string; id: string }>;
   searchParams: Promise<{ page?: string }>;
 }
 
@@ -27,6 +32,7 @@ function parsePage(raw: string | undefined): number {
 export async function generateMetadata({
   params,
 }: ThreadRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
   const { id } = await params;
   const thread = await getThread(id);
 
@@ -39,8 +45,9 @@ export async function generateMetadata({
   return {
     title: `${thread.title} — Minna`,
     description,
-    alternates: { canonical: `/discussions/${thread.id}` },
+    alternates: localeAlternates(`/discussions/${thread.id}`, locale),
     openGraph: {
+      ...openGraphLocaleSet(locale),
       title: thread.title,
       description,
       type: "article",

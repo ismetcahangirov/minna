@@ -7,11 +7,16 @@ import { BlogCard } from "@/components/blog/blog-card";
 import { JsonLd } from "@/components/seo/json-ld";
 import type { Locale } from "@/i18n/config";
 import { Link } from "@/i18n/navigation";
+import { resolveLocale } from "@/i18n/route-locale";
 import { getBlogTagBySlug, listBlogsByTag } from "@/lib/blog/tags";
 import { buildBlogListJsonLd } from "@/lib/seo/blog-jsonld";
+import {
+  localeAlternates,
+  openGraphLocaleSet,
+} from "@/lib/seo/locale-alternates";
 
 interface TagArchiveRouteProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
   searchParams: Promise<{ page?: string }>;
 }
 
@@ -38,6 +43,7 @@ export async function generateMetadata({
   params,
   searchParams,
 }: TagArchiveRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
   const [{ slug }, { page }] = await Promise.all([params, searchParams]);
   const tag = await getBlogTagBySlug(slug);
 
@@ -52,13 +58,18 @@ export async function generateMetadata({
     description: copy.description,
     // Every page of an archive canonicalises to itself — pointing page 2 at
     // page 1 would tell Google the posts listed there do not exist.
-    alternates: {
-      canonical:
-        current > 1
-          ? `/blogs/tag/${tag.slug}?page=${current}`
-          : `/blogs/tag/${tag.slug}`,
+    alternates: localeAlternates(
+      current > 1
+        ? `/blogs/tag/${tag.slug}?page=${current}`
+        : `/blogs/tag/${tag.slug}`,
+      locale,
+    ),
+    openGraph: {
+      ...openGraphLocaleSet(locale),
+      title,
+      description: copy.description,
+      type: "website",
     },
-    openGraph: { title, description: copy.description, type: "website" },
     twitter: {
       card: "summary_large_image",
       title,

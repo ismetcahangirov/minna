@@ -10,6 +10,10 @@ import { stripHtml } from "@/lib/anime/text";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isFavorite } from "@/lib/favorites/queries";
 import { getLibraryEntry } from "@/lib/library/queries";
+import {
+  localeAlternates,
+  openGraphLocaleSet,
+} from "@/lib/seo/locale-alternates";
 
 interface AnimeDetailRouteProps {
   params: Promise<{ locale: string; id: string }>;
@@ -23,6 +27,7 @@ interface AnimeDetailRouteProps {
 export async function generateMetadata({
   params,
 }: AnimeDetailRouteProps): Promise<Metadata> {
+  const locale = await resolveLocale(params);
   const { id } = await params;
   const detail = await getAnimeInfo(parseAnimeParam(id));
 
@@ -40,8 +45,9 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: animeHref(detail.id, detail.title) },
+    alternates: localeAlternates(animeHref(detail.id, detail.title), locale),
     openGraph: {
+      ...openGraphLocaleSet(locale),
       title,
       description,
       type: "video.tv_show",
