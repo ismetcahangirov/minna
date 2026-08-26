@@ -111,18 +111,31 @@ function textOf(node: Nodes): string {
 }
 
 /**
- * Pushes every body heading down one level and clamps at h6.
+ * Shifts the body's headings so its shallowest one lands at `h2`.
  *
- * The page renders the post title as the document's only h1, so a body heading
- * written as `#` would produce a second one and flatten the outline. Shifting
- * instead of rejecting means an editor can write `#` for a top-level section
- * and still get a valid `h1 > h2 > h3` document.
+ * The page renders the post title as the document's only `h1`. A body that
+ * opens with `#` would produce a second one and flatten the outline; a body
+ * that opens with `###` would skip a level under the title. Normalising by the
+ * shallowest heading present fixes both while preserving the relative depth the
+ * editor actually wrote — `## / ###` stays two levels apart either way.
  */
-const demoteHeadings: Plugin<[], Root> = () => {
+const normalizeHeadingLevels: Plugin<[], Root> = () => {
   return (tree) => {
+    const levels: number[] = [];
     visit(tree, "element", (node: Element) => {
-      const match = /^h([1-5])$/.exec(node.tagName);
-      if (match) node.tagName = `h${Number(match[1]) + 1}`;
+      const match = /^h([1-6])$/.exec(node.tagName);
+      if (match) levels.push(Number(match[1]));
+    });
+    if (levels.length === 0) return;
+
+    const shift = 2 - Math.min(...levels);
+    if (shift === 0) return;
+
+    visit(tree, "element", (node: Element) => {
+      const match = /^h([1-6])$/.exec(node.tagName);
+      if (!match) return;
+      const level = Math.min(6, Math.max(2, Number(match[1]) + shift));
+      node.tagName = `h${level}`;
     });
   };
 };
@@ -276,7 +289,7 @@ export const renderBlogMarkdown = cache(
       .use(remarkRehype, { allowDangerousHtml: true })
       .use(rehypeRaw)
       .use(rehypeSanitize, SCHEMA)
-      .use(demoteHeadings)
+      .use(normalizeHeadingLevels)
       .use(rehypeSlug)
       .use(liftImagesIntoFigures)
       .use(markExternalLinks)
