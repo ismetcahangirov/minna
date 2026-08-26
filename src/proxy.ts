@@ -10,6 +10,11 @@ import {
 } from "@/i18n/config";
 import { localePath, splitLocalePath } from "@/i18n/paths";
 import { routing } from "@/i18n/routing";
+import {
+  canonicalRoutePath,
+  matchAnimeRoute,
+} from "@/lib/anime/canonical-path";
+import { readCanonicalSlug } from "@/lib/anime/canonical-slug";
 
 // Route segments that require an authenticated user. Extend this list as
 // login-only areas are built (profile — EPIC-09, favorites — EPIC-08, …).
@@ -100,6 +105,75 @@ const guarded = auth((request) => {
 });
 
 /**
+ * The canonical path for a slugged anime URL, or `null` when the request is
+ * already canonical, is not one of those routes, or cannot be resolved.
+ *
+ * This has to happen here rather than in the page, which is where it used to
+ * live and where it silently did nothing. `permanentRedirect` only produces a
+ * 308 while the response has not started; `src/app/[locale]/loading.tsx` puts a
+ * Suspense boundary above every page, so the shell is flushed long before
+ * `getAnimeInfo` resolves and Next degrades the redirect to a `<meta refresh>`
+ * inside a 200. A browser follows that and notices nothing — a crawler indexes
+ * the 200 it was served, and `/anime/21-anything-at-all` becomes an indexable
+ * duplicate of `/anime/21-one-piece`. Next's own guidance is explicit: "if
+ * you'd like to redirect before the render process, use next.config.js or
+ * Proxy".
+ *
+ * The cost is one Redis read on anime and watch URLs only — the registry is a
+ * bare `{id}-{slug}` string, not the anime record — and a miss returns `null`,
+ * which leaves the request behaving exactly as it did before.
+ */
+async function canonicalAnimePath(path: string): Promise<string | null> {
+  const match = matchAnimeRoute(path);
+  if (!match) return null;
+
+  const slug = await readCanonicalSlug(match.id);
+  if (!slug) return null;
+
+  const canonical = canonicalRoutePath(match, slug);
+  return canonical === path ? null : canonical;
+}
+
+/**
+ * Emits the canonical redirect, folding it into whatever the locale layer
+ * already decided so a visitor is never sent twice.
+ *
+ * A bare `/anime/21` from a Turkish reader is two moves at once: it has to gain
+ * a `/tr` prefix *and* a slug. next-intl answers the first with a redirect of
+ * its own, so rather than redirecting again on top of it, that response's
+ * `Location` is rewritten in place — keeping its status and its `NEXT_LOCALE`
+ * cookie. Everything else (an explicit `/tr/anime/21`, or `/anime/21` in
+ * English) was going to be rewritten, not redirected, and gets a plain 308.
+ */
+function withCanonicalPath(
+  request: NextRequest,
+  response: Response,
+  locale: Locale | null,
+  canonical: string,
+): Response {
+  const location = response.headers.get("location");
+
+  if (response.status >= 300 && response.status < 400 && location) {
+    const target = new URL(location, request.nextUrl.origin);
+    const { locale: targetLocale } = splitLocalePath(target.pathname);
+    target.pathname = localePath(canonical, targetLocale ?? defaultLocale);
+
+    response.headers.set("location", target.toString());
+    return response;
+  }
+
+  const target = new URL(
+    localePath(canonical, locale ?? defaultLocale),
+    request.nextUrl.origin,
+  );
+  target.search = request.nextUrl.search;
+
+  // 308 rather than 307: these URLs are consolidated permanently, and the
+  // method preservation is what keeps a POST from silently becoming a GET.
+  return NextResponse.redirect(target, 308);
+}
+
+/**
  * Next 16 renamed the `middleware` convention to `proxy`. One file gets to
  * handle a request, so the two concerns are composed rather than chained:
  * locale routing needs to see every public page, while the session decode is
@@ -112,15 +186,28 @@ type GuardedHandler = (
   event: unknown,
 ) => ReturnType<typeof guarded>;
 
-export default function proxy(
+export default async function proxy(
   request: NextRequest,
   event: unknown,
-): ReturnType<typeof handleI18nRouting> | ReturnType<typeof guarded> {
-  const { path } = splitLocalePath(request.nextUrl.pathname);
+): Promise<Response> {
+  const { locale, path } = splitLocalePath(request.nextUrl.pathname);
 
-  if (needsSession(path)) return (guarded as GuardedHandler)(request, event);
+  if (needsSession(path)) {
+    // `auth()` types its handler as optionally returning nothing, meaning "let
+    // the request through" — which is what `next()` is.
+    const gated = await (guarded as GuardedHandler)(request, event);
+    return gated ?? NextResponse.next();
+  }
 
-  return handleI18nRouting(request);
+  // Resolved before the locale layer runs so the two answers can be merged into
+  // a single hop; `null` for every path that is not a slugged anime URL, which
+  // costs one string match.
+  const canonical = await canonicalAnimePath(path);
+
+  const response = await handleI18nRouting(request);
+  if (!canonical) return response;
+
+  return withCanonicalPath(request, response, locale, canonical);
 }
 
 export const config = {

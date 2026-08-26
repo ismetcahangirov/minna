@@ -5,7 +5,8 @@ import { AnimeDetailView } from "@/components/anime/anime-detail";
 import { permanentRedirect } from "@/i18n/navigation";
 import { resolveLocale } from "@/i18n/route-locale";
 import { getAnimeInfo } from "@/lib/anime/detail";
-import { animeHref, parseAnimeParam } from "@/lib/anime/href";
+import { canonicalAnimeHref } from "@/lib/anime/canonical-slug";
+import { parseAnimeParam } from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isFavorite } from "@/lib/favorites/queries";
@@ -45,7 +46,10 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: localeAlternates(animeHref(detail.id, detail.title), locale),
+    alternates: localeAlternates(
+      await canonicalAnimeHref(detail.id, detail.title),
+      locale,
+    ),
     openGraph: {
       ...openGraphLocaleSet(locale),
       title,
@@ -75,10 +79,12 @@ export default async function AnimeDetailPage({
   const detail = await getAnimeInfo(parseAnimeParam(id));
   if (!detail) notFound();
 
-  // Consolidate SEO on one canonical URL: a bare id or a stale/wrong slug is
-  // 301'd (308) to `/anime/{id}-{slug}`. Old links and DB-stored id links keep
-  // working via this redirect.
-  const canonical = animeHref(detail.id, detail.title);
+  // Consolidate SEO on one canonical URL. The 308 itself is issued by the
+  // proxy, which is the only place a status code can still be set (see
+  // `canonicalAnimePath` in `src/proxy.ts`); this is the standby for the one
+  // case the proxy cannot cover — an id nothing has claimed a slug for yet —
+  // and degrades to the client-side redirect Next emits mid-stream.
+  const canonical = await canonicalAnimeHref(detail.id, detail.title);
   if (`/anime/${id}` !== canonical) {
     permanentRedirect({ href: canonical, locale });
   }

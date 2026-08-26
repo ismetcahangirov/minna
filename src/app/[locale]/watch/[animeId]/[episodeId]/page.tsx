@@ -12,11 +12,8 @@ import { permanentRedirect } from "@/i18n/navigation";
 import { resolveLocale } from "@/i18n/route-locale";
 import { getActivePreRollAd } from "@/lib/ads/queries";
 import { getAnimeInfo } from "@/lib/anime/detail";
-import {
-  parseAnimeParam,
-  parseEpisodeNumber,
-  watchHref,
-} from "@/lib/anime/href";
+import { canonicalWatchHref } from "@/lib/anime/canonical-slug";
+import { parseAnimeParam, parseEpisodeNumber } from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeEpisode } from "@/lib/anime/types";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -111,7 +108,7 @@ export async function generateMetadata({
     title,
     description,
     alternates: localeAlternates(
-      watchHref(detail.id, number, detail.title),
+      await canonicalWatchHref(detail.id, number, detail.title),
       locale,
     ),
     openGraph: {
@@ -150,16 +147,18 @@ export default async function WatchPage({ params }: WatchRouteProps) {
   if (!located) notFound();
 
   // Keep SEO on one canonical URL: a bare id, stale anime slug, legacy opaque
-  // episode id or bare number 308s to `/watch/{id}-{slug}/episode-{n}`.
-  if (located.known) {
-    const canonical = watchHref(
-      detail.id,
-      located.current.number,
-      detail.title,
-    );
-    if (`/watch/${animeId}/${episodeId}` !== canonical) {
-      permanentRedirect({ href: canonical, locale });
-    }
+  // episode id or bare number 308s to `/watch/{id}-{slug}/episode-{n}`. The
+  // proxy issues that 308 before the response starts (see `src/proxy.ts`); this
+  // is the standby for the two cases it cannot resolve on its own — an id whose
+  // slug nothing has claimed yet, and a legacy opaque episode id, whose number
+  // is only knowable from the episode list fetched above.
+  const canonical = await canonicalWatchHref(
+    detail.id,
+    located.current.number,
+    detail.title,
+  );
+  if (located.known && `/watch/${animeId}/${episodeId}` !== canonical) {
+    permanentRedirect({ href: canonical, locale });
   }
 
   const user = await getCurrentUser();
@@ -226,9 +225,7 @@ export default async function WatchPage({ params }: WatchRouteProps) {
           animeImage={detail.image}
           episodeNumber={current.number}
           isAuthenticated={Boolean(user?.id)}
-          loginHref={`/login?callbackUrl=${encodeURIComponent(
-            watchHref(detail.id, current.number, detail.title),
-          )}`}
+          loginHref={`/login?callbackUrl=${encodeURIComponent(canonical)}`}
         />
       </Suspense>
 

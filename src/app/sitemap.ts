@@ -1,8 +1,10 @@
 import type { MetadataRoute } from "next";
 
+import { canonicalSlugs } from "@/lib/anime/canonical-slug";
 import {
   animeEpisodesPageHref,
   animeHref,
+  animeSlug,
   episodesPageCount,
   watchHref,
 } from "@/lib/anime/href";
@@ -93,7 +95,7 @@ const STATIC_ROUTES: ReadonlyArray<{
  */
 async function sitemapEntries() {
   return getOrSet(
-    cacheKey("sitemap", "entries", "v4"),
+    cacheKey("sitemap", "entries", "v5"),
     SITEMAP_TTL,
     async () => {
       const [anime, posts, episodes, tags] = await Promise.all([
@@ -102,7 +104,35 @@ async function sitemapEntries() {
         listEpisodeSitemapEntries(),
         listBlogTagSitemapEntries(),
       ]);
-      return { anime, posts, episodes, tags };
+
+      // The URL segment comes from the canonical slug registry, not from the
+      // title this enumeration happens to hold — the catalogue feed and the
+      // detail record disagree about titles often enough (see
+      // `@/lib/anime/canonical-slug`) that a sitemap built from the feed's own
+      // title listed URLs the pages then disowned, and which the proxy now
+      // redirects. Both enumerations resolve in one registry read.
+      const slugs = await canonicalSlugs([
+        ...anime.map((entry) => ({ id: entry.id, title: entry.title })),
+        ...episodes.map((entry) => ({
+          id: entry.animeId,
+          title: entry.animeTitle,
+        })),
+      ]);
+
+      return {
+        anime: anime.map((entry) => ({
+          ...entry,
+          slug: slugs.get(entry.id) ?? animeSlug(entry.id, entry.title),
+        })),
+        episodes: episodes.map((entry) => ({
+          ...entry,
+          slug:
+            slugs.get(entry.animeId) ??
+            animeSlug(entry.animeId, entry.animeTitle),
+        })),
+        posts,
+        tags,
+      };
     },
   );
 }
@@ -125,8 +155,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const { anime, posts, episodes, tags } = await sitemapEntries();
 
+  // `entry.slug` is already the final `{id}-{slug}` segment, so the href
+  // builders below take it in place of the id and are given no title to
+  // slugify — that decision was made once, in the registry.
   const animeEntries: MetadataRoute.Sitemap = anime.flatMap((entry) =>
-    perLocale(animeHref(entry.id, entry.title), {
+    perLocale(animeHref(entry.slug), {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.8,
@@ -139,14 +172,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const episodeListEntries: MetadataRoute.Sitemap = anime.flatMap((entry) => {
     const pages = entry.episodes ? episodesPageCount(entry.episodes) : 1;
     return Array.from({ length: pages }, (_, index) =>
-      perLocale(
-        animeEpisodesPageHref(entry.id, entry.title, { page: index + 1 }),
-        {
-          lastModified: now,
-          changeFrequency: "weekly" as const,
-          priority: index === 0 ? 0.7 : 0.5,
-        },
-      ),
+      perLocale(animeEpisodesPageHref(entry.slug, null, { page: index + 1 }), {
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority: index === 0 ? 0.7 : 0.5,
+      }),
     ).flat();
   });
 
@@ -193,7 +223,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   const watchEntries: MetadataRoute.Sitemap = episodes.flatMap((ep) =>
-    perLocale(watchHref(ep.animeId, ep.episodeNumber, ep.animeTitle), {
+    perLocale(watchHref(ep.slug, ep.episodeNumber), {
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.7,
