@@ -8,9 +8,9 @@ import {
   blogTags,
   blogsToTags,
   type Blog,
-  type BlogMedia,
   type BlogTag,
 } from "@/db/schema";
+import type { BlogMediaItem } from "@/lib/admin/blog/media-actions";
 
 /**
  * All blog posts for the admin table (ADMIN-05), newest first — including
@@ -54,11 +54,19 @@ export async function getAdminBlog(id: string): Promise<Blog | null> {
  * editor scans it visually. Beyond a few screens of thumbnails the search box
  * is the answer, not another page of scrolling.
  */
-export async function listBlogMedia(limit = 120): Promise<BlogMedia[]> {
+export async function listBlogMedia(limit = 120): Promise<BlogMediaItem[]> {
   try {
     const { db } = await import("@/db");
+    // Only what the picker renders — the Cloudinary public id stays server-side.
     return await db
-      .select()
+      .select({
+        id: blogMedia.id,
+        url: blogMedia.url,
+        alt: blogMedia.alt,
+        caption: blogMedia.caption,
+        width: blogMedia.width,
+        height: blogMedia.height,
+      })
       .from(blogMedia)
       .orderBy(desc(blogMedia.createdAt))
       .limit(limit);

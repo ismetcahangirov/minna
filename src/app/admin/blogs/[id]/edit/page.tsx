@@ -4,7 +4,12 @@ import { getTranslations } from "next-intl/server";
 
 import { BlogForm } from "@/components/admin/blog/blog-form";
 import { updateBlogAction } from "@/lib/admin/blog/actions";
-import { getAdminBlog } from "@/lib/admin/blog/queries";
+import {
+  getAdminBlog,
+  getAdminBlogTagNames,
+  listAdminBlogTags,
+  listBlogMedia,
+} from "@/lib/admin/blog/queries";
 
 interface EditBlogRouteProps {
   params: Promise<{ id: string }>;
@@ -21,12 +26,16 @@ export async function generateMetadata(): Promise<Metadata> {
 /** Edit-post form page (ADMIN-05). 404s when the post no longer exists. */
 export default async function EditBlogPage({ params }: EditBlogRouteProps) {
   const { id } = await params;
-  const [t, post] = await Promise.all([
+  const [t, post, library, tags] = await Promise.all([
     getTranslations("admin.blogs"),
     getAdminBlog(id),
+    listBlogMedia(),
+    listAdminBlogTags(),
   ]);
 
   if (!post) notFound();
+
+  const postTags = await getAdminBlogTagNames(post.id);
 
   return (
     <div className="flex flex-col gap-6">
@@ -42,13 +51,19 @@ export default async function EditBlogPage({ params }: EditBlogRouteProps) {
       <BlogForm
         action={updateBlogAction.bind(null, post.id, post.slug)}
         submitKey="save"
+        library={library}
+        tagSuggestions={tags.map((tag) => tag.name)}
         defaultValues={{
           title: post.title,
           slug: post.slug,
           excerpt: post.excerpt ?? "",
           content: post.content,
           coverImage: post.coverImage ?? "",
+          coverImageAlt: post.coverImageAlt ?? "",
           author: post.author ?? "",
+          authorUrl: post.authorUrl ?? "",
+          language: post.language,
+          tags: postTags.join(", "),
           published: post.published,
         }}
       />

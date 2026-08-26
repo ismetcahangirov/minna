@@ -401,19 +401,29 @@
         "excerpt": "Özet",
         "excerptHint": "Liste kartında görünen kısa özet.",
         "content": "İçerik",
-        "contentHint": "Düz metin. Boş satırlar paragrafları ayırır.",
+        "contentHint": "GFM tablolarıyla Markdown. Araç çubuğu başlıkları, listeleri, alıntıları ve anlamsal etiketleri (aside, details, time, abbr, mark) imlecin bulunduğu yere yazar.",
         "coverImage": "Kapak görseli URL",
         "coverImageHint": "Yazı sayfası için isteğe bağlı tam ekran arka plan.",
         "author": "Yazar",
         "published": "Yayında",
-        "date": "Tarih"
+        "date": "Tarih",
+        "coverImageAlt": "Kapak alternatif metni",
+        "coverImageAltHint": "Kapağı ekran okuyucular ve görsel araması için tanımlar.",
+        "authorUrl": "Yazar URL'si",
+        "authorUrlHint": "Profil veya ana sayfa; yazının yazar varlığı olarak yayımlanır.",
+        "language": "Dil",
+        "languageHint": "Yazının yazıldığı dil; inLanguage olarak yayımlanır.",
+        "tags": "Etiketler",
+        "tagsHint": "Virgülle ayırın. Her etiketin kendi dizine eklenen arşiv sayfası olur.",
+        "tagsPlaceholder": "Shonen, Studio Ghibli, İncelemeler"
       },
       "errors": {
         "required": "Bu alan zorunludur.",
         "invalidUrl": "Geçerli bir http(s) URL girin.",
         "invalidSlug": "Küçük harf, rakam ve tire kullanın.",
         "slugTaken": "Bu slug zaten kullanımda.",
-        "saveFailed": "Yazı kaydedilemedi. Lütfen tekrar deneyin."
+        "saveFailed": "Yazı kaydedilemedi. Lütfen tekrar deneyin.",
+        "invalidLanguage": "Desteklenen dillerden birini seçin."
       },
       "media": {
         "title": "Görseller",
@@ -440,6 +450,29 @@
           "uploadFailed": "Görsel yüklenemedi. Lütfen tekrar deneyin.",
           "saveFailed": "Görsel kaydedilemedi. Lütfen tekrar deneyin."
         }
+      },
+      "languages": {
+        "en": "İngilizce",
+        "tr": "Türkçe",
+        "ru": "Rusça"
+      },
+      "toolbar": {
+        "label": "Biçimlendirme",
+        "heading2": "Bölüm başlığı",
+        "heading3": "Alt bölüm başlığı",
+        "bold": "Kalın",
+        "italic": "İtalik",
+        "link": "Bağlantı",
+        "bulletList": "Madde işaretli liste",
+        "numberedList": "Numaralı liste",
+        "quote": "Alıntı",
+        "code": "Satır içi kod",
+        "table": "Tablo",
+        "note": "Yan not (aside)",
+        "details": "Katlanabilir blok (details)",
+        "time": "Tarih (time)",
+        "abbreviation": "Kısaltma (abbr)",
+        "highlight": "Vurgu (mark)"
       }
     },
     "users": {

@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useRef } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import type { BlogFormState } from "@/lib/admin/blog/actions";
+import type { BlogMediaItem } from "@/lib/admin/blog/media-actions";
+
+import { BlogImagePanel } from "./blog-image-panel";
+import { MarkdownToolbar } from "./markdown-toolbar";
 
 export interface BlogFormValues {
   title: string;
@@ -13,7 +17,12 @@ export interface BlogFormValues {
   excerpt: string;
   content: string;
   coverImage: string;
+  coverImageAlt: string;
   author: string;
+  authorUrl: string;
+  language: string;
+  /** Comma-separated tag names, as the field shows and submits them. */
+  tags: string;
   published: boolean;
 }
 
@@ -21,10 +30,17 @@ interface BlogFormProps {
   action: (prev: BlogFormState, formData: FormData) => Promise<BlogFormState>;
   submitKey: "create" | "save";
   defaultValues?: Partial<BlogFormValues>;
+  /** The shared image library, offered for insertion into the body. */
+  library: BlogMediaItem[];
+  /** Existing tag names, offered as suggestions on the tag field. */
+  tagSuggestions: string[];
 }
 
 const controlClass =
   "bg-input/30 border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/50 w-full border px-3 py-2 text-sm outline-none focus-visible:ring-3";
+
+/** The locales the site ships, so a post can declare which one it is written in. */
+const LANGUAGES = ["en", "tr", "ru"] as const;
 
 function Field({
   label,
@@ -54,13 +70,26 @@ function Field({
 }
 
 /**
- * Create/edit form for a blog post (ADMIN-05). Body content is plain text —
- * blank lines separate paragraphs on the public page — so a textarea is enough.
+ * Create/edit form for a blog post (ADMIN-05).
+ *
+ * The body is Markdown with hand-written semantic HTML allowed, so the textarea
+ * stays a textarea — a rich-text editor would hide the markup the whole point
+ * of this is to control. What it gains instead is a toolbar that writes the
+ * markup at the cursor and an image library that inserts a described figure
+ * wherever the caret sits.
+ *
  * `useActionState` returns field errors as i18n keys without dropping input; on
  * success the action redirects to the list.
  */
-export function BlogForm({ action, submitKey, defaultValues }: BlogFormProps) {
+export function BlogForm({
+  action,
+  submitKey,
+  defaultValues,
+  library,
+  tagSuggestions,
+}: BlogFormProps) {
   const t = useTranslations("admin.blogs");
+  const contentRef = useRef<HTMLTextAreaElement>(null);
   const [state, formAction, pending] = useActionState<BlogFormState, FormData>(
     action,
     {},
@@ -69,7 +98,7 @@ export function BlogForm({ action, submitKey, defaultValues }: BlogFormProps) {
   const err = (key?: string) => (key ? t(`errors.${key}`) : undefined);
 
   return (
-    <form action={formAction} className="flex max-w-2xl flex-col gap-5">
+    <form action={formAction} className="flex max-w-3xl flex-col gap-5">
       {state.error && (
         <p className="border-destructive/40 bg-destructive/10 text-destructive border px-3 py-2 text-sm">
           {t(`errors.${state.error}`)}
@@ -124,14 +153,42 @@ export function BlogForm({ action, submitKey, defaultValues }: BlogFormProps) {
         hint={t("fields.contentHint")}
         error={err(fe.content)}
       >
-        <textarea
-          id="content"
-          name="content"
-          rows={12}
-          required
-          defaultValue={defaultValues?.content ?? ""}
-          className={`${controlClass} resize-y`}
+        <div className="flex flex-col">
+          <MarkdownToolbar textareaRef={contentRef} />
+          <textarea
+            ref={contentRef}
+            id="content"
+            name="content"
+            rows={18}
+            required
+            defaultValue={defaultValues?.content ?? ""}
+            className={`${controlClass} resize-y font-mono text-[13px] leading-relaxed`}
+          />
+        </div>
+      </Field>
+
+      <BlogImagePanel textareaRef={contentRef} library={library} />
+
+      <Field
+        label={t("fields.tags")}
+        htmlFor="tags"
+        hint={t("fields.tagsHint")}
+      >
+        <input
+          id="tags"
+          name="tags"
+          type="text"
+          list="blog-tag-suggestions"
+          placeholder={t("fields.tagsPlaceholder")}
+          defaultValue={defaultValues?.tags ?? ""}
+          className={controlClass}
         />
+        {/* Suggestions only — a new name in the field creates a new tag. */}
+        <datalist id="blog-tag-suggestions">
+          {tagSuggestions.map((name) => (
+            <option key={name} value={name} />
+          ))}
+        </datalist>
       </Field>
 
       <Field
@@ -150,14 +207,67 @@ export function BlogForm({ action, submitKey, defaultValues }: BlogFormProps) {
         />
       </Field>
 
-      <Field label={t("fields.author")} htmlFor="author">
+      <Field
+        label={t("fields.coverImageAlt")}
+        htmlFor="coverImageAlt"
+        hint={t("fields.coverImageAltHint")}
+      >
         <input
-          id="author"
-          name="author"
+          id="coverImageAlt"
+          name="coverImageAlt"
           type="text"
-          defaultValue={defaultValues?.author ?? ""}
+          maxLength={200}
+          defaultValue={defaultValues?.coverImageAlt ?? ""}
           className={controlClass}
         />
+      </Field>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label={t("fields.author")} htmlFor="author">
+          <input
+            id="author"
+            name="author"
+            type="text"
+            defaultValue={defaultValues?.author ?? ""}
+            className={controlClass}
+          />
+        </Field>
+
+        <Field
+          label={t("fields.authorUrl")}
+          htmlFor="authorUrl"
+          hint={t("fields.authorUrlHint")}
+          error={err(fe.authorUrl)}
+        >
+          <input
+            id="authorUrl"
+            name="authorUrl"
+            type="url"
+            placeholder="https://"
+            defaultValue={defaultValues?.authorUrl ?? ""}
+            className={controlClass}
+          />
+        </Field>
+      </div>
+
+      <Field
+        label={t("fields.language")}
+        htmlFor="language"
+        hint={t("fields.languageHint")}
+        error={err(fe.language)}
+      >
+        <select
+          id="language"
+          name="language"
+          defaultValue={defaultValues?.language ?? "en"}
+          className={controlClass}
+        >
+          {LANGUAGES.map((code) => (
+            <option key={code} value={code}>
+              {t(`languages.${code}`)}
+            </option>
+          ))}
+        </select>
       </Field>
 
       <label className="flex items-center gap-2.5 text-sm">
