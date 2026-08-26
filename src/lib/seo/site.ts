@@ -21,8 +21,18 @@ export function getSiteUrlObject(): URL {
   return new URL(getSiteUrl());
 }
 
-/** Joins a root-relative path onto the site origin, e.g. `/blogs` → absolute. */
+/**
+ * Joins a root-relative path onto the site origin, e.g. `/blogs` → absolute.
+ *
+ * The home page is the one special case. Next resolves a `"/"` canonical
+ * against `metadataBase` and renders it *without* a trailing slash, so this
+ * matches that form and the two agree wherever both are emitted — the article
+ * breadcrumbs, `host` in robots.txt. (`sitemap.xml` is the exception: Next
+ * re-normalises every `<loc>` through the URL constructor, which puts the slash
+ * back. `https://site` and `https://site/` are the same URL, so that costs
+ * nothing — but it is why this cannot be fixed there.)
+ */
 export function absoluteUrl(path: string): string {
   const suffix = path.startsWith("/") ? path : `/${path}`;
-  return `${getSiteUrl()}${suffix}`;
+  return suffix === "/" ? getSiteUrl() : `${getSiteUrl()}${suffix}`;
 }
