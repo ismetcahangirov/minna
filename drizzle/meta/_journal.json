@@ -71,6 +71,13 @@
       "when": 1787735550365,
       "tag": "0009_glorious_peter_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787741031851,
+      "tag": "0010_hot_bedlam",
+      "breakpoints": true
     }
   ]
 }

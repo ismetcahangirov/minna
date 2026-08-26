@@ -151,36 +151,57 @@ export type NewWatchProgress = typeof watchProgress.$inferInsert;
 // headings, lists, quotes and inline figures — so the body carries a real
 // document outline instead of a flat run of paragraphs. Plain text written
 // before that change is still valid Markdown and renders unchanged.
-export const blogs = pgTable("blogs", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  slug: text("slug").notNull().unique(),
-  title: text("title").notNull(),
-  // Short summary shown on the listing card; falls back to none when empty.
-  excerpt: text("excerpt"),
-  content: text("content").notNull(),
-  coverImage: text("cover_image"),
-  // Alt text for the cover, so the one image every post has is described for
-  // screen readers and image search instead of falling back to the title.
-  coverImageAlt: text("cover_image_alt"),
-  author: text("author"),
-  // Author profile or homepage, published as the Person.url of the article
-  // JSON-LD — the one authorship signal a bare name cannot carry (E-E-A-T).
-  authorUrl: text("author_url"),
-  // BCP-47 language of the body, emitted as `inLanguage`. A post is authored
-  // in one language; the UI being EN/TR/RU does not translate it.
-  language: text("language").notNull().default("en"),
-  published: boolean("published").notNull().default(true),
-  publishedAt: timestamp("published_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
+export const blogs = pgTable(
+  "blogs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
+    // Short summary shown on the listing card; falls back to none when empty.
+    excerpt: text("excerpt"),
+    content: text("content").notNull(),
+    coverImage: text("cover_image"),
+    // Alt text for the cover, so the one image every post has is described for
+    // screen readers and image search instead of falling back to the title.
+    coverImageAlt: text("cover_image_alt"),
+    author: text("author"),
+    // Author profile or homepage, published as the Person.url of the article
+    // JSON-LD — the one authorship signal a bare name cannot carry (E-E-A-T).
+    authorUrl: text("author_url"),
+    // BCP-47 language of the body, emitted as `inLanguage`. A post is authored
+    // in one language; the UI being EN/TR/RU does not translate it.
+    language: text("language").notNull().default("en"),
+    // Ties a post to its translations. Every post gets its own group by default,
+    // so an untranslated post is simply a group of one; linking a translation
+    // means giving it the group of the post it translates. Kept as an opaque id
+    // rather than a "translation of" pointer at one original, because that
+    // pointer has to name a winner — and the translations then reference each
+    // other only through it, which breaks the moment the original is deleted.
+    translationGroupId: uuid("translation_group_id").notNull().defaultRandom(),
+    published: boolean("published").notNull().default(true),
+    publishedAt: timestamp("published_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    // A group holds at most one post per language. Two posts claiming to be
+    // the same article in the same language would make `hreflang` ambiguous,
+    // and Google drops an entire reciprocal set when one link is wrong.
+    uniqueIndex("blogs_translation_language_unique").on(
+      table.translationGroupId,
+      table.language,
+    ),
+    // The listing resolves every group to one post per render.
+    index("blogs_translation_group_idx").on(table.translationGroupId),
+  ],
+);
 
 export type Blog = typeof blogs.$inferSelect;
 export type NewBlog = typeof blogs.$inferInsert;
