@@ -33,7 +33,12 @@
  * import: `src/proxy.ts` reads it before a request is routed, and Next bundles
  * the proxy in a layer where `server-only` throws.
  */
-import { animeSlug } from "@/lib/anime/href";
+import {
+  animeEpisodesPageHref,
+  animeHref,
+  animeSlug,
+  watchHref,
+} from "@/lib/anime/href";
 import { getRedis } from "@/lib/cache/redis-client";
 
 /**
@@ -188,4 +193,38 @@ export async function canonicalSlugs(
   }
 
   return resolved;
+}
+
+/**
+ * The canonical `/anime/{id}-{slug}` path — what the page's `<link
+ * rel="canonical">` must claim and what the proxy redirects to.
+ *
+ * Every one of these takes the same `(id, title)` a plain `@/lib/anime/href`
+ * builder takes, so a call site only changes shape by gaining an `await`. The
+ * title is what the id is *claimed* for when nothing holds it yet; once it is
+ * claimed the title is ignored, which is exactly the point.
+ */
+export async function canonicalAnimeHref(
+  id: string,
+  title: string | null | undefined,
+): Promise<string> {
+  return animeHref(await canonicalSlug(id, title));
+}
+
+/** The canonical `/anime/{id}-{slug}/episodes` path, page and filter included. */
+export async function canonicalAnimeEpisodesHref(
+  id: string,
+  title: string | null | undefined,
+  options: { page?: number; descending?: boolean; query?: string | null } = {},
+): Promise<string> {
+  return animeEpisodesPageHref(await canonicalSlug(id, title), null, options);
+}
+
+/** The canonical `/watch/{id}-{slug}/episode-{n}` path. */
+export async function canonicalWatchHref(
+  id: string,
+  episodeNumber: number,
+  title: string | null | undefined,
+): Promise<string> {
+  return watchHref(await canonicalSlug(id, title), episodeNumber);
 }

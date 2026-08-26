@@ -16,10 +16,11 @@ import {
   withEpisodeTitles,
 } from "@/lib/anime/episode-titles";
 import {
+  canonicalAnimeEpisodesHref,
+  canonicalAnimeHref,
+} from "@/lib/anime/canonical-slug";
+import {
   EPISODES_PAGE_SIZE,
-  animeEpisodesHref,
-  animeEpisodesPageHref,
-  animeHref,
   episodesPageCount,
   parseAnimeParam,
   parseEpisodesPageParam,
@@ -109,7 +110,7 @@ export async function generateMetadata({
       title: `${detail.title} — Episodes — Minna`,
       description,
       alternates: localeAlternates(
-        animeEpisodesPageHref(detail.id, detail.title),
+        await canonicalAnimeEpisodesHref(detail.id, detail.title),
         locale,
       ),
       robots: { index: false, follow: true },
@@ -125,7 +126,7 @@ export async function generateMetadata({
     title,
     description,
     alternates: localeAlternates(
-      animeEpisodesPageHref(detail.id, detail.title, { page }),
+      await canonicalAnimeEpisodesHref(detail.id, detail.title, { page }),
       locale,
     ),
     ...(descending ? { robots: { index: false, follow: true } } : {}),
@@ -157,11 +158,16 @@ export default async function AnimeEpisodesPage({
   const query = parseEpisodesQueryParam(q);
 
   // Keep SEO on one canonical URL: a bare id or stale slug 308s to the slugged
-  // episodes path, params preserved.
-  const canonicalPath = animeEpisodesHref(detail.id, detail.title);
+  // episodes path, params preserved. The proxy issues that 308 before the
+  // response starts (see `src/proxy.ts`); this is the standby for an id whose
+  // slug nothing has claimed yet.
+  const canonicalPath = await canonicalAnimeEpisodesHref(
+    detail.id,
+    detail.title,
+  );
   if (`/anime/${id}/episodes` !== canonicalPath) {
     permanentRedirect({
-      href: animeEpisodesPageHref(detail.id, detail.title, {
+      href: await canonicalAnimeEpisodesHref(detail.id, detail.title, {
         page: parseEpisodesPageParam(pageParam) ?? 1,
         descending,
         query,
@@ -190,7 +196,7 @@ export default async function AnimeEpisodesPage({
     (requested === null || requested === 1 || requested > totalPages)
   ) {
     redirect({
-      href: animeEpisodesPageHref(detail.id, detail.title, {
+      href: await canonicalAnimeEpisodesHref(detail.id, detail.title, {
         descending,
         query,
       }),
@@ -201,6 +207,7 @@ export default async function AnimeEpisodesPage({
 
   const t = await getTranslations("detail");
   const user = await getCurrentUser();
+  const detailHref = await canonicalAnimeHref(detail.id, detail.title);
 
   const { slice, from, to } = pageSlice(matched, page, descending);
   const [watchStates, titles] = await Promise.all([
@@ -215,7 +222,7 @@ export default async function AnimeEpisodesPage({
       {/* pt clears the fixed 4rem header, which the back link sat behind. */}
       <div className="mx-auto w-full max-w-[1600px] px-4 pt-24 pb-8 sm:px-6 lg:px-8">
         <Link
-          href={animeHref(detail.id, detail.title)}
+          href={detailHref}
           className="text-muted-foreground hover:text-primary inline-flex items-center gap-1 text-sm font-medium transition-colors"
         >
           <ChevronLeft className="size-4" aria-hidden />
