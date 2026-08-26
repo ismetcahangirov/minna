@@ -10,6 +10,18 @@ interface GenrePageArg {
 }
 
 /**
+ * The blog listing collapses each translation group to one card per reader
+ * locale, so a page of it only means something alongside the locale it was
+ * selected for. `/api/blog` sits outside the `[locale]` segment — a fetch from
+ * `/tr/blogs` is still a request to `/api/blog` — so the locale travels as a
+ * parameter rather than being inferred from a path that does not carry it.
+ */
+interface BlogPageArg {
+  page: number;
+  locale: string;
+}
+
+/**
  * Client-side pagination endpoints for the infinite-scroll pages (EPIC-08):
  * Popular, Blogs and Favorites. All extend the single app-wide `baseApi` (never
  * a new `createApi`) so caching, tags and middleware stay unified, and all hit
@@ -42,10 +54,10 @@ export const browseApi = baseApi.injectEndpoints({
         { type: "Anime" as const, id: `genre:${slug}:${page}` },
       ],
     }),
-    getBlogPage: builder.query<PagedResult<BlogSummary>, number>({
-      query: (page) => ({ url: `/blog`, params: { page } }),
-      providesTags: (_result, _error, page) => [
-        { type: "Blogs" as const, id: `list:${page}` },
+    getBlogPage: builder.query<PagedResult<BlogSummary>, BlogPageArg>({
+      query: ({ page, locale }) => ({ url: `/blog`, params: { page, locale } }),
+      providesTags: (_result, _error, { page, locale }) => [
+        { type: "Blogs" as const, id: `list:${locale}:${page}` },
       ],
     }),
     getFavoritesPage: builder.query<PagedResult<FavoriteItem>, number>({

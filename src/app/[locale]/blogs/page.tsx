@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 
 import { BlogList } from "@/components/blog/blog-list";
-import type { Locale } from "@/i18n/config";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Link } from "@/i18n/navigation";
+import { localePath } from "@/i18n/paths";
 import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
 import { listBlogs } from "@/lib/blog/queries";
 import { listBlogTags } from "@/lib/blog/tags";
@@ -41,18 +41,21 @@ export async function generateMetadata({
  * server-rendered for SEO and a no-flash first paint; the {@link BlogList}
  * client island takes over for infinite scroll.
  */
-export default async function BlogsPage() {
-  const t = await getTranslations("browse.blogs");
-  const locale = await getLocale();
+export default async function BlogsPage({ params }: LocaleRouteProps) {
+  const locale = await resolveLocale(params);
+  const t = await getTranslations({ locale, namespace: "browse.blogs" });
   const [initialPage, tags] = await Promise.all([
-    listBlogs(1, locale as Locale),
+    // The listing collapses each translation group to the version that best
+    // matches the *routed* locale, not a cookie — so `/tr/blogs` and `/blogs`
+    // are two URLs with two stable selections rather than one URL that varies.
+    listBlogs(1, locale),
     listBlogTags(),
   ]);
 
   // Names the page as a curated collection and its first page of posts, so
   // `/blogs` reads as the blog's hub rather than one more page of prose.
   const jsonLd = buildBlogListJsonLd({
-    path: "/blogs",
+    path: localePath("/blogs", locale),
     name: t("heading"),
     description: t("subtitle"),
     posts: initialPage.items,

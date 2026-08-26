@@ -1,6 +1,8 @@
 import type { JsonLdData } from "@/components/seo/json-ld";
 import type { BlogHeading } from "@/lib/blog/markdown";
 import type { BlogDetail, BlogSummary } from "@/lib/blog/types";
+import { localePath } from "@/i18n/paths";
+import { blogPostHref, postLocale } from "@/lib/blog/href";
 import { absoluteUrl, getSiteUrl } from "@/lib/seo/site";
 
 /** How much body text a `BlogPosting.description` carries at most. */
@@ -69,7 +71,11 @@ export function buildBlogJsonLd({
   headings,
   bodyImages,
 }: BlogJsonLdInput): JsonLdData {
-  const url = absoluteUrl(`/blogs/${post.slug}`);
+  const url = absoluteUrl(blogPostHref(post));
+  // A post's surrounding pages are named in the post's own language, because
+  // that is the only locale the post is served in (I18N-07) — a Turkish
+  // article's breadcrumb has to lead to `/tr/blogs`, not to the English hub.
+  const locale = postLocale(post.language);
   const images = [post.coverImage, ...bodyImages].filter((src): src is string =>
     Boolean(src),
   );
@@ -103,7 +109,7 @@ export function buildBlogJsonLd({
     posting.about = post.tags.map((tag) => ({
       "@type": "Thing",
       name: tag.name,
-      url: absoluteUrl(`/blogs/tag/${tag.slug}`),
+      url: absoluteUrl(localePath(`/blogs/tag/${tag.slug}`, locale)),
     }));
   }
   if (headings.length > 0) {
@@ -122,13 +128,13 @@ export function buildBlogJsonLd({
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: absoluteUrl("/"),
+        item: absoluteUrl(localePath("/", locale)),
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Blogs",
-        item: absoluteUrl("/blogs"),
+        item: absoluteUrl(localePath("/blogs", locale)),
       },
       { "@type": "ListItem", position: 3, name: post.title, item: url },
     ],
@@ -167,7 +173,7 @@ export function buildBlogListJsonLd(options: {
     blogPost: options.posts.map((post) => ({
       "@type": "BlogPosting",
       headline: clamp(post.title, 110),
-      url: absoluteUrl(`/blogs/${post.slug}`),
+      url: absoluteUrl(blogPostHref(post)),
       datePublished: post.publishedAt,
       ...(post.coverImage ? { image: post.coverImage } : {}),
       ...(post.author

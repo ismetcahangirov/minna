@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Newspaper } from "lucide-react";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 
 import { BlogCard } from "@/components/blog/blog-card";
 import { JsonLd } from "@/components/seo/json-ld";
-import type { Locale } from "@/i18n/config";
 import { Link } from "@/i18n/navigation";
+import { localePath } from "@/i18n/paths";
 import { resolveLocale } from "@/i18n/route-locale";
 import { getBlogTagBySlug, listBlogsByTag } from "@/lib/blog/tags";
 import { buildBlogListJsonLd } from "@/lib/seo/blog-jsonld";
@@ -91,20 +91,20 @@ export default async function BlogTagArchivePage({
   searchParams,
 }: TagArchiveRouteProps) {
   const [{ slug }, { page }] = await Promise.all([params, searchParams]);
+  const locale = await resolveLocale(params);
   const tag = await getBlogTagBySlug(slug);
 
   if (!tag) notFound();
 
-  const t = await getTranslations("browse.blogs");
+  const t = await getTranslations({ locale, namespace: "browse.blogs" });
   const current = pageFrom(page);
-  const locale = await getLocale();
-  const result = await listBlogsByTag(tag.id, current, locale as Locale);
+  const result = await listBlogsByTag(tag.id, current, locale);
 
   // A tag with no published posts is not a page worth serving or indexing.
   if (result.items.length === 0 && current === 1) notFound();
 
   const copy = await archiveCopy(tag.name, tag.description);
-  const basePath = `/blogs/tag/${tag.slug}`;
+  const basePath = localePath(`/blogs/tag/${tag.slug}`, locale);
 
   const jsonLd = buildBlogListJsonLd({
     path: current > 1 ? `${basePath}?page=${current}` : basePath,

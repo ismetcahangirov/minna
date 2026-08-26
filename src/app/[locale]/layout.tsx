@@ -10,7 +10,6 @@ import { HeaderGate } from "@/components/header/header-gate";
 import { JsonLd } from "@/components/seo/json-ld";
 import { openGraphLocales } from "@/i18n/config";
 import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
-import { routing } from "@/i18n/routing";
 import { localeAlternates } from "@/lib/seo/locale-alternates";
 import { getSiteUrlObject } from "@/lib/seo/site";
 import { buildSiteJsonLd } from "@/lib/seo/site-jsonld";
@@ -28,13 +27,20 @@ const geistMono = Geist_Mono({
 
 type LocaleLayoutProps = LocaleRouteProps & { children: React.ReactNode };
 
-/**
- * Prerenders the three locale segments. Without this the segment is treated as
- * fully dynamic and every page under it opts out of static rendering.
+/*
+ * Deliberately no `generateStaticParams` for the locale segment.
+ *
+ * next-intl suggests it to enable static rendering, but nothing under this
+ * layout is statically renderable: every page reads the session, the Redis-
+ * cached catalogue or Neon. Declaring the params only makes the build attempt a
+ * prerender of each route in each locale, which fires live AniList/Kitsu
+ * requests at build time — the same failure mode `sitemap.ts` is marked
+ * `force-dynamic` to avoid, where a deploy fails because an upstream API
+ * happened to be down while it built.
+ *
+ * `setRequestLocale` below is still called, so the day a page does become
+ * static this is one line to add back.
  */
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
 
 export async function generateMetadata({
   params,

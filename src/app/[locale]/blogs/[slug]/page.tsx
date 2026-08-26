@@ -6,7 +6,9 @@ import { getFormatter, getTranslations } from "next-intl/server";
 
 import { JsonLd } from "@/components/seo/json-ld";
 import { isLocale, openGraphLocales, type Locale } from "@/i18n/config";
-import { Link } from "@/i18n/navigation";
+import { Link, permanentRedirect } from "@/i18n/navigation";
+import { resolveLocale } from "@/i18n/route-locale";
+import { blogPostHref, postLocale } from "@/lib/blog/href";
 import { renderBlogMarkdown } from "@/lib/blog/markdown";
 import { getBlogBySlug } from "@/lib/blog/queries";
 import { blogDescription, buildBlogJsonLd } from "@/lib/seo/blog-jsonld";
@@ -15,7 +17,7 @@ import { localeNames } from "@/i18n/config";
 import type { BlogDetail } from "@/lib/blog/types";
 
 interface BlogDetailRouteProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }
 
 /**
@@ -34,11 +36,14 @@ interface BlogDetailRouteProps {
 function hreflangMap(post: BlogDetail): Record<string, string> | undefined {
   if (post.translations.length === 0) return undefined;
 
+  // Each version is addressed under the prefix of the language it is written
+  // in — the same rule the canonical follows, so the set a page declares and
+  // the URL it claims cannot drift apart.
   const languages: Record<string, string> = {
-    [post.language]: `/blogs/${post.slug}`,
+    [post.language]: blogPostHref(post),
   };
   for (const sibling of post.translations) {
-    languages[sibling.language] = `/blogs/${sibling.slug}`;
+    languages[sibling.language] = blogPostHref(sibling);
   }
 
   return { ...languages, "x-default": pickDefaultVersion(languages) };
@@ -57,6 +62,8 @@ export async function generateMetadata({
 
   if (!post) return { title: "Blog not found — Minna" };
 
+  const canonical = blogPostHref(post);
+
   const body = await renderBlogMarkdown(post.content);
   const title = `${post.title} — Minna`;
   const description = blogDescription(post, body.text);
@@ -70,7 +77,7 @@ export async function generateMetadata({
     // Each translation stays its own canonical URL — pointing them all at one
     // would tell Google the other language versions should not be indexed.
     alternates: {
-      canonical: `/blogs/${post.slug}`,
+      canonical,
       languages: hreflangMap(post),
     },
     // `article:*` is what turns a generic OG card into a dated, attributed
@@ -79,7 +86,7 @@ export async function generateMetadata({
       title,
       description,
       type: "article",
-      url: `/blogs/${post.slug}`,
+      url: canonical,
       publishedTime: post.publishedAt,
       modifiedTime: post.updatedAt,
       authors: post.author ? [post.author] : undefined,
@@ -114,11 +121,24 @@ export async function generateMetadata({
  */
 export default async function BlogDetailPage({ params }: BlogDetailRouteProps) {
   const { slug } = await params;
+  const locale = await resolveLocale(params);
   const post = await getBlogBySlug(slug);
 
   if (!post) notFound();
 
-  const t = await getTranslations("browse.blogs");
+  // An article exists in the language it was written in and nowhere else, so
+  // reading it under another prefix is a request for a URL that should not be
+  // indexed. Send it to the one address the post actually has, permanently, in
+  // a single hop — a Turkish article reached at `/blogs/…` or `/ru/blogs/…`
+  // resolves to `/tr/blogs/…` and stays there.
+  if (locale !== postLocale(post.language)) {
+    permanentRedirect({
+      href: `/blogs/${post.slug}`,
+      locale: postLocale(post.language),
+    });
+  }
+
+  const t = await getTranslations({ locale, namespace: "browse.blogs" });
   const format = await getFormatter();
   const body = await renderBlogMarkdown(post.content);
 
@@ -236,6 +256,7 @@ export default async function BlogDetailPage({ params }: BlogDetailRouteProps) {
                         `hreflang` claim with a link a crawler can follow. */}
                     <Link
                       href={`/blogs/${sibling.slug}`}
+                      locale={postLocale(sibling.language)}
                       hrefLang={sibling.language}
                       lang={sibling.language}
                       title={sibling.title}
