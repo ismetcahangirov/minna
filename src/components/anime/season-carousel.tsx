@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 
+import { TapHint } from "@/components/anime/tap-hint";
 import { Link } from "@/i18n/navigation";
 import { animeEpisodesHref } from "@/lib/anime/href";
 import type { AnimeSeason } from "@/lib/anime/seasons";
@@ -188,7 +189,7 @@ export function SeasonCarousel({ seasons }: SeasonCarouselProps) {
           onPointerLeave={endDrag}
           onClickCapture={onClickCapture}
         >
-          {seasons.map((season) => (
+          {seasons.map((season, index) => (
             <li key={season.id} className="w-28 shrink-0 snap-start sm:w-32">
               <Link
                 href={animeEpisodesHref(season.id, season.title)}
@@ -215,6 +216,15 @@ export function SeasonCarousel({ seasons }: SeasonCarouselProps) {
                     <div className="text-muted-foreground flex h-full w-full items-center justify-center">
                       <Film className="size-6" aria-hidden />
                     </div>
+                  )}
+
+                  {/* The same looping tap the standalone-title episodes button
+                      carries, on the first poster only: the rail reads as
+                      artwork rather than as a control, so one card has to say
+                      it is tappable. Sits in the bottom-right corner, clear of
+                      the "current season" border and of the label below. */}
+                  {index === 0 && (
+                    <TapHint className="right-1 bottom-1 text-white/90" />
                   )}
                 </div>
                 <span
