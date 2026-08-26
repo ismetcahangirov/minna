@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Newspaper } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { BlogCard } from "@/components/blog/blog-card";
 import { JsonLd } from "@/components/seo/json-ld";
+import type { Locale } from "@/i18n/config";
 import { getBlogTagBySlug, listBlogsByTag } from "@/lib/blog/tags";
 import { buildBlogListJsonLd } from "@/lib/seo/blog-jsonld";
 
@@ -85,7 +86,8 @@ export default async function BlogTagArchivePage({
 
   const t = await getTranslations("browse.blogs");
   const current = pageFrom(page);
-  const result = await listBlogsByTag(tag.id, current);
+  const locale = await getLocale();
+  const result = await listBlogsByTag(tag.id, current, locale as Locale);
 
   // A tag with no published posts is not a page worth serving or indexing.
   if (result.items.length === 0 && current === 1) notFound();
