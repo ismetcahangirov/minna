@@ -138,6 +138,12 @@ Implemented in `src/lib/cache/**` over `ioredis`.
   | `medium` | 30 minutes | Home sections, popular/trending listings. |
   | `long`   | 24 hours   | Anime detail, categories (rarely change). |
 
+- **The canonical slug registry** (`src/lib/anime/canonical-slug.ts`) sits
+  outside those tiers: `anime:slug:{version}:{id}` holds the `{id}-{slug}`
+  segment of an anime's URL, written only when absent and refreshed on every
+  read, so a URL that is being crawled never moves. It is the one cache the
+  proxy reads — see [SEO & performance](#seo--performance).
+
 Only anime/Consumet data is cached. Neon-backed data (favorites, watch history,
 blogs, admin data) is read directly.
 
@@ -230,3 +236,31 @@ a running deployment.
   `NEXT_PUBLIC_WEB_VITALS_ENDPOINT` is set, beaconed via `navigator.sendBeacon`.
 - Server-side data flows through the Redis cache; the client uses code-splitting
   and lazy loading. SSR/ISR render initial content without client round-trips.
+
+### One anime, one URL
+
+`/anime/[id]`, `/anime/[id]/episodes` and `/watch/[animeId]/[episodeId]` all
+resolve their record from the _leading digits_ of a path segment and ignore the
+rest, so a bare id and a stale slug keep working. Every form but one therefore
+has to redirect, and the redirect has to be a real 308:
+
+- **The redirect is issued in `src/proxy.ts`**, not in the page. A page's
+  `permanentRedirect` only sets a status while the response has not started, and
+  `src/app/[locale]/loading.tsx` puts a Suspense boundary above every page — the
+  shell is flushed long before the anime record resolves, so Next degrades the
+  redirect to a `<meta refresh>` inside a 200. Browsers follow that; crawlers
+  index it. The pages keep their `permanentRedirect` as the standby for the two
+  cases the proxy cannot resolve on its own: an id whose slug is still
+  unclaimed, and a legacy opaque episode id.
+- **Which slug is canonical is a stored decision, not a derived one.** The
+  catalogue feed and the detail record disagree about titles whenever one of
+  them was served by the Kitsu standby, so the sitemap and the page's canonical
+  tag used to name different URLs for the same anime. All three producers — the
+  sitemap, the canonical tag, the proxy — read the registry described under
+  [Caching](#caching) instead.
+- **A bare URL from a non-English reader needs two moves at once**, a locale
+  prefix and a slug. The proxy folds its redirect into next-intl's rather than
+  stacking on top of it, so the visitor still travels one hop.
+
+`npm run verify:locale -- --base=<deployment>` asserts all of this against a
+running deployment.
