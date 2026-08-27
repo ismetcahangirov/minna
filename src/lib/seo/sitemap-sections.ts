@@ -166,109 +166,182 @@ export async function blogsSection(): Promise<SitemapUrl[]> {
 }
 
 /**
- * The catalog enumeration, cached on its own.
+ * What one catalog row contributes, reduced to the two fields that build URLs.
  *
- * Kept as compact entries rather than as built URLs: the entries are a few
- * hundred kilobytes, the URLs they expand into are megabytes, and only the
- * former has any business living in Redis.
+ * `id` and `title` are deliberately absent. They exist only to resolve the
+ * canonical slug, which happens once at build time — carrying them into the
+ * cache would mean paying for them on every read forever. The payload is the
+ * cost that matters here: a 143 KB value took 4.6 seconds to read back, while a
+ * 1.7 KB value in the same round of measurements took 73 ms.
  */
-async function animeEntries() {
-  return getOrSet(cacheKey("sitemap", "anime", "v1"), SECTION_TTL, async () => {
-    const [anime, episodes] = await Promise.all([
-      listAnimeSitemapEntries(),
-      listEpisodeSitemapEntries(),
-    ]);
-
-    // The URL segment comes from the canonical slug registry, not from the
-    // title this enumeration happens to hold — the catalogue feed and the
-    // detail record disagree about titles often enough (see
-    // `@/lib/anime/canonical-slug`) that a sitemap built from the feed's own
-    // title listed URLs the pages then disowned, and which the proxy now
-    // redirects. Both enumerations resolve in one registry read.
-    const slugs = await canonicalSlugs([
-      ...anime.map((entry) => ({ id: entry.id, title: entry.title })),
-      ...episodes.map((entry) => ({
-        id: entry.animeId,
-        title: entry.animeTitle,
-      })),
-    ]);
-
-    return {
-      anime: anime.map((entry) => ({
-        ...entry,
-        slug: slugs.get(entry.id) ?? animeSlug(entry.id, entry.title),
-      })),
-      episodes: episodes.map((entry) => ({
-        ...entry,
-        slug:
-          slugs.get(entry.animeId) ??
-          animeSlug(entry.animeId, entry.animeTitle),
-      })),
-    };
-  });
+interface CatalogEntry {
+  /** The final `{id}-{slug}` segment, already resolved against the registry. */
+  slug: string;
+  /** Episode count, or null when unknown — decides the `?page=` span. */
+  episodes?: number | null;
+  /** Present on a watch entry instead of {@link episodes}. */
+  episodeNumber?: number;
 }
 
-/** Every catalog URL, in a stable order so chunk boundaries do not shift. */
-async function animeUrls(): Promise<SitemapUrl[]> {
-  const now = new Date();
-  const { anime, episodes } = await animeEntries();
-
-  // `entry.slug` is already the final `{id}-{slug}` segment, so the href
-  // builders take it in place of the id and are given no title to slugify —
-  // that decision was made once, in the registry.
-  const detail = anime.flatMap((entry) =>
-    perLocale(animeHref(entry.slug), {
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    }),
-  );
-
-  // The episodes list of a long series spans several `?page=` URLs — each is a
-  // distinct set of episodes, so each is listed. Titles whose episode count is
-  // unknown contribute their first page only.
-  const episodeLists = anime.flatMap((entry) => {
-    const pages = entry.episodes ? episodesPageCount(entry.episodes) : 1;
-    return Array.from({ length: pages }, (_, index) =>
-      perLocale(animeEpisodesPageHref(entry.slug, null, { page: index + 1 }), {
-        lastModified: now,
-        changeFrequency: "weekly" as const,
-        priority: index === 0 ? 0.7 : 0.5,
-      }),
-    ).flat();
-  });
-
-  const watch = episodes.flatMap((ep) =>
-    perLocale(watchHref(ep.slug, ep.episodeNumber), {
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    }),
-  );
-
-  return [...detail, ...episodeLists, ...watch];
+/** Cache key for one stored chunk of catalog entries. */
+function chunkKey(index: number): string {
+  return cacheKey("sitemap", "anime", "chunk", index, "v2");
 }
 
 /**
- * One chunk of the catalog, and the total number of chunks.
+ * Walks the catalog and stores it as chunks, returning how many there are.
  *
- * Building a chunk is what teaches the index how many there are: the count is
- * written back to Redis here, and {@link animeChunkCount} reads it. That order
- * is deliberate — the index must stay cheap, and it cannot know the count
- * without doing the very walk the split exists to avoid.
+ * Chunking happens here, at write time, rather than when a request slices a
+ * shared list. That is the whole point: a chunk request reads one chunk's
+ * entries, not the entire catalog's, so its Redis payload is a fraction of the
+ * whole and it builds only the URLs it is going to emit.
+ *
+ * Boundaries are drawn by URL budget rather than by row count, because one row
+ * is worth anywhere from three URLs to several dozen — a long series spans many
+ * `?page=` URLs — so cutting every N rows would produce wildly uneven files.
+ */
+async function buildCatalogChunks(): Promise<number> {
+  const [anime, episodes] = await Promise.all([
+    listAnimeSitemapEntries(),
+    listEpisodeSitemapEntries(),
+  ]);
+
+  // The URL segment comes from the canonical slug registry, not from the title
+  // this enumeration happens to hold — the catalogue feed and the detail record
+  // disagree about titles often enough (see `@/lib/anime/canonical-slug`) that a
+  // sitemap built from the feed's own title listed URLs the pages then
+  // disowned, and which the proxy now redirects. Both enumerations resolve in
+  // one registry read.
+  const slugs = await canonicalSlugs([
+    ...anime.map((entry) => ({ id: entry.id, title: entry.title })),
+    ...episodes.map((entry) => ({
+      id: entry.animeId,
+      title: entry.animeTitle,
+    })),
+  ]);
+
+  const rows: CatalogEntry[] = [
+    ...anime.map((entry) => ({
+      slug: slugs.get(entry.id) ?? animeSlug(entry.id, entry.title),
+      episodes: entry.episodes,
+    })),
+    ...episodes.map((entry) => ({
+      slug:
+        slugs.get(entry.animeId) ?? animeSlug(entry.animeId, entry.animeTitle),
+      episodeNumber: entry.episodeNumber,
+    })),
+  ];
+
+  const chunks: CatalogEntry[][] = [];
+  let current: CatalogEntry[] = [];
+  let budget = 0;
+
+  for (const row of rows) {
+    budget += urlsPerRow(row);
+    current.push(row);
+    if (budget >= ANIME_CHUNK_SIZE) {
+      chunks.push(current);
+      current = [];
+      budget = 0;
+    }
+  }
+  if (current.length > 0) chunks.push(current);
+  if (chunks.length === 0) chunks.push([]);
+
+  await Promise.all([
+    ...chunks.map((entries, index) =>
+      cacheSet(chunkKey(index), entries, SECTION_TTL),
+    ),
+    cacheSet(CHUNK_COUNT_KEY, chunks.length, SECTION_TTL),
+  ]);
+
+  return chunks.length;
+}
+
+/** How many URLs one row expands into, across all three locales. */
+function urlsPerRow(row: CatalogEntry): number {
+  if (row.episodeNumber !== undefined) return locales.length;
+  const pages = row.episodes ? episodesPageCount(row.episodes) : 1;
+  // The detail page plus one URL per episodes-list page.
+  return locales.length * (1 + pages);
+}
+
+/** Expands stored entries into the URLs one chunk emits. */
+function catalogUrls(entries: CatalogEntry[]): SitemapUrl[] {
+  const now = new Date();
+  const urls: SitemapUrl[] = [];
+
+  for (const entry of entries) {
+    // A watch entry carries an episode number and nothing else to expand.
+    if (entry.episodeNumber !== undefined) {
+      urls.push(
+        ...perLocale(watchHref(entry.slug, entry.episodeNumber), {
+          lastModified: now,
+          changeFrequency: "weekly",
+          priority: 0.7,
+        }),
+      );
+      continue;
+    }
+
+    // `entry.slug` is already the final `{id}-{slug}` segment, so the href
+    // builders take it in place of the id and are given no title to slugify —
+    // that decision was made once, in the registry.
+    urls.push(
+      ...perLocale(animeHref(entry.slug), {
+        lastModified: now,
+        changeFrequency: "weekly",
+        priority: 0.8,
+      }),
+    );
+
+    // The episodes list of a long series spans several `?page=` URLs — each is
+    // a distinct set of episodes, so each is listed. Titles whose episode count
+    // is unknown contribute their first page only.
+    const pages = entry.episodes ? episodesPageCount(entry.episodes) : 1;
+    for (let page = 1; page <= pages; page++) {
+      urls.push(
+        ...perLocale(animeEpisodesPageHref(entry.slug, null, { page }), {
+          lastModified: now,
+          changeFrequency: "weekly",
+          priority: page === 1 ? 0.7 : 0.5,
+        }),
+      );
+    }
+  }
+
+  return urls;
+}
+
+/**
+ * One chunk of the catalog.
+ *
+ * Reads that chunk's stored entries; a miss rebuilds every chunk, because the
+ * boundaries are only meaningful as a set — rebuilding one in isolation would
+ * leave it overlapping whatever the others still hold.
  */
 export async function animeChunk(
   index: number,
 ): Promise<{ urls: SitemapUrl[]; chunkCount: number } | null> {
-  const all = await animeUrls();
-  const chunkCount = Math.max(1, Math.ceil(all.length / ANIME_CHUNK_SIZE));
+  if (index < 0 || !Number.isSafeInteger(index)) return null;
 
-  await cacheSet(CHUNK_COUNT_KEY, chunkCount, SECTION_TTL);
+  // Range is checked against the known count first, so an out-of-range request
+  // is refused for the price of one small read. Without this, a crawler holding
+  // a stale index — or anything probing `anime-99.xml` — would trigger a full
+  // catalog walk just to be told the chunk does not exist.
+  const known = await cachedChunkCount();
+  if (known !== null && index >= known) return null;
 
-  if (index < 0 || index >= chunkCount) return null;
+  const cached = await cacheGet<CatalogEntry[]>(chunkKey(index));
+  if (cached) return { urls: catalogUrls(cached), chunkCount: known ?? 1 };
 
-  const start = index * ANIME_CHUNK_SIZE;
-  return { urls: all.slice(start, start + ANIME_CHUNK_SIZE), chunkCount };
+  // Either nothing is cached yet or this chunk expired out from under a set
+  // that is still partly warm. Rebuilding is the only way to know the count.
+  const chunkCount = await buildCatalogChunks();
+  if (index >= chunkCount) return null;
+
+  const rebuilt = await cacheGet<CatalogEntry[]>(chunkKey(index));
+  return rebuilt ? { urls: catalogUrls(rebuilt), chunkCount } : null;
 }
 
 /**
@@ -281,6 +354,18 @@ export async function animeChunk(
  * only on a cold cache.
  */
 export async function animeChunkCount(): Promise<number> {
+  return (await cachedChunkCount()) ?? 1;
+}
+
+/**
+ * The stored chunk count, or `null` when nothing has built one yet.
+ *
+ * Distinct from {@link animeChunkCount} because the two callers need different
+ * answers to a cold cache: the index has to print *something*, while a chunk
+ * request has to tell "out of range" apart from "not built yet" — one is a 404,
+ * the other is a rebuild.
+ */
+async function cachedChunkCount(): Promise<number | null> {
   const cached = await cacheGet<number>(CHUNK_COUNT_KEY);
-  return typeof cached === "number" && cached > 0 ? cached : 1;
+  return typeof cached === "number" && cached > 0 ? cached : null;
 }
