@@ -16,8 +16,13 @@ interface BlogCardProps {
 
 /**
  * Vertical blog card for the Blogs listing (LIST-03): full-bleed cover image in
- * a portrait frame, title and excerpt below, with a flat dark scrim on hover
- * (design system — no gradient/glassmorphism, sharp corners, lucide icons).
+ * a portrait frame, title and excerpt below (design system — no
+ * gradient/glassmorphism, sharp corners, lucide icons).
+ *
+ * The cover carries no scrim. A card's job is to show the artwork, and a
+ * cover is already composed at its intended exposure — a tint on top only
+ * darkens it a second time. Hover is carried by the border, the lift and the
+ * title colour, which say "this is a link" without touching the picture.
  */
 export function BlogCard({ blog, priority }: BlogCardProps) {
   const format = useFormatter();
@@ -49,7 +54,6 @@ export function BlogCard({ blog, priority }: BlogCardProps) {
             <Newspaper className="size-8" aria-hidden />
           </div>
         )}
-        <div className="absolute inset-0 bg-black/20 transition-colors duration-300 group-hover:bg-black/50" />
       </div>
 
       <time
