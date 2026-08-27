@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Cover composition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /*
+       * Editorial cover, composed rather than generated.
+       *
+       * Every picture on this canvas is real official artwork loaded from its
+       * own CDN; the only thing this file invents is typography and layout. A
+       * generative model asked for "an anime cover" invents a character who
+       * does not exist and letterforms that are not letters — this cannot,
+       * because it never draws either.
+       *
+       * EVERY size is in viewport units, deliberately. The canvas is whatever
+       * the viewport is, so a plain viewport screenshot comes back filled edge
+       * to edge at any device pixel ratio. Fixed pixel sizes render at
+       * `1 / devicePixelRatio` of the frame on a scaled Windows display and
+       * come back padded with black on two sides.
+       *
+       * Resize the viewport to 16:9 (1600x900) before rendering.
+       */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        color: #fff;
+        font-family: Inter, "Segoe UI", system-ui, sans-serif;
+        /* Sharp corners throughout — the house style forbids rounding. */
+      }
+      .canvas {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+
+      /* The artwork strip: real posters, edge to edge, dimmed so type wins. */
+      .strip {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        gap: 0.25vw;
+      }
+      .strip img {
+        flex: 1;
+        /* Without this, a flex item refuses to shrink below its intrinsic
+           width: five posters then measure ~3200px, the canvas scrolls, and
+           the screenshot comes back cropped with the right edge missing. */
+        min-width: 0;
+        height: 100%;
+        object-fit: cover;
+        filter: grayscale(0.35) brightness(0.55);
+      }
+      /* Flat scrim over the atmospheric layer — its only job is to hold
+         contrast under the headline. */
+      .scrim {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.96) 0%,
+          rgba(0, 0, 0, 0.82) 38%,
+          rgba(0, 0, 0, 0.35) 68%,
+          rgba(0, 0, 0, 0.55) 100%
+        );
+      }
+
+      .text {
+        position: relative;
+        padding: 0 5.5vw 5vw;
+      }
+      .kicker {
+        display: inline-block;
+        background: #e50914;
+        color: #fff;
+        font-size: 1.375vw;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        padding: 0.6vw 1.1vw;
+        margin-bottom: 1.6vw;
+      }
+      h1 {
+        font-size: 5.75vw;
+        line-height: 1.02;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        max-width: 77.5vw;
+        text-wrap: balance;
+      }
+      .sub {
+        margin-top: 1.5vw;
+        font-size: 1.875vw;
+        font-weight: 400;
+        color: #b8b8b8;
+        max-width: 69vw;
+      }
+      .rule {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 0.625vw;
+        background: #e50914;
+      }
+      .brand {
+        position: absolute;
+        top: 3.5vw;
+        left: 5.5vw;
+        font-size: 1.5vw;
+        font-weight: 800;
+        letter-spacing: 0.32em;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="canvas">
+      <!-- REPLACE: one <img> per real poster. 4-6 reads best at this size.
+           Use official CDN URLs (s4.anilist.co/...), never generated art. -->
+      <div class="strip">
+        <img src="POSTER_URL_1" alt="" />
+        <img src="POSTER_URL_2" alt="" />
+        <img src="POSTER_URL_3" alt="" />
+        <img src="POSTER_URL_4" alt="" />
+        <img src="POSTER_URL_5" alt="" />
+      </div>
+      <div class="scrim"></div>
+
+      <div class="brand">MINNA</div>
+
+      <div class="text">
+        <!-- REPLACE: kicker is the category, headline is the post title. -->
+        <span class="kicker">KICKER_TEXT</span>
+        <h1>HEADLINE_TEXT</h1>
+        <p class="sub">SUBHEAD_TEXT</p>
+      </div>
+      <div class="rule"></div>
+    </div>
+  </body>
+</html>

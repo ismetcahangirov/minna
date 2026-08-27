@@ -41,6 +41,12 @@ const nextConfig: NextConfig = {
         hostname: "res.cloudinary.com",
         pathname: "/**",
       },
+      // imgbb, the host behind editorial artwork produced outside the panel
+      // (composed covers, sourced press stills). Body images reach the page as
+      // plain `<img>` and would render without this; the cover goes through
+      // `next/image`, which answers 400 for an unlisted host — so a post would
+      // look fine in the editor and ship with a broken hero.
+      { protocol: "https", hostname: "i.ibb.co", pathname: "/**" },
     ],
     // Serve AVIF first (best compression), then WebP, then the original
     // format for unsupported browsers (PERF-02). AVIF/WebP shrink the
