@@ -141,19 +141,24 @@
 
       /*
        * Background mode: the page supplies the type, so this supplies only
-       * picture. The scrim goes flat and heavier — text will be laid over the
-       * whole frame rather than over one corner of it, so contrast has to hold
-       * everywhere instead of just along the bottom edge.
+       * picture. The scrim goes flat rather than bottom-weighted, because text
+       * will sit over the whole frame rather than over one corner of it.
+       *
+       * Dimming is split between the two so neither has to do it alone — a
+       * scrim dark enough by itself turns the artwork into a grey sheet, and
+       * brightness alone leaves bright patches where a poster is pale. Together
+       * they land near 29% of the source luminance: dark enough to read white
+       * text over, light enough that the posters are still pictures.
        */
       body.bare .text,
       body.bare .brand {
         display: none;
       }
       body.bare .scrim {
-        background: rgba(0, 0, 0, 0.72);
+        background: rgba(0, 0, 0, 0.55);
       }
       body.bare .strip img {
-        filter: grayscale(0.45) brightness(0.5);
+        filter: grayscale(0.3) brightness(0.65);
       }
     </style>
   </head>
