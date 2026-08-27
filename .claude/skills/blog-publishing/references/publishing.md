@@ -100,6 +100,7 @@ Yoxlama siyahısı:
 - [ ] Başlıq iyerarxiyası `h1` → `h2` → `h3`, sıçrayışsız
 - [ ] Xarici linklər `target="_blank"` ilə açılır
 - [ ] Post `/en/blogs` siyahısında görünür
+- [ ] **Teq sayı doğrudur** — `curl -s "<URL>" | grep -o 'blogs/tag/[a-z0-9-]*' | sort -u`
 
 JSON-LD-ni yoxlamaq üçün:
 
@@ -140,9 +141,25 @@ Slug **bütün postlar arasında unikaldır**, ona görə üç dilin üç ayrı 
 | TR  | `2026-yaz-sezonu-en-iyi-animeler` |
 | RU  | `luchshie-anime-leta-2026`        |
 
-**RU üçün slug-u həmişə ƏLLƏ yaz.** `slugify` ASCII olmayan hər şeyi atır, ona görə tam kiril başlıq **boş** slug qaytarır və forma `invalidSlug` xətası verir. Kiril başlığı latın hərfləri ilə transliterasiya et.
+`slugify` artıq **transliterasiya edir** (2026-08-27 düzəlişi): kiril latına çevrilir, `ı`/`ş`/`ğ`/`ü` diakritikadan təmizlənir. Yəni `Лучшие аниме лета 2026` → `luchshie-anime-leta-2026`, `Sıralama` → `siralama`.
 
-Türk başlığında da eyni tələ var, amma yumşaq formada: `ə, ı, ş, ğ, ü, ö, ç` atılır — `Yaz Sezonu'nun En İyisi` → `yaz-sezonunun-en-yisi`. Gözlə yoxla, lazımsa düzəlt.
+Buna baxmayaraq **slug-u özün yaz**. Səbəb SEO-dur, texnika deyil: avtomatik slug başlığın hərfi transliterasiyasıdır, sən isə açar sözü qısa və hədəflənmiş saxlamaq istəyirsən.
+
+Transliterasiya olunmayan yazı (CJK, emoji) hələ də **boş** slug verir və forma `invalidSlug` qaytarır — o halda əl ilə yazmaq məcburidir.
+
+### Teqlər: səssiz itki (düzəldilib, amma bilməyə dəyər)
+
+Bu düzəlişdən əvvəl kiril teqlər **xəbərdarlıqsız yox olurdu** — `parseTagNames` slug-u boş çıxan adı atır. Yeddi rus teqindən dördü itmişdi, ikisi isə yalnız içində rəqəm olduğu üçün sağ qalıb `/tag/2026` və `/tag/10` kimi mənasız arxivlərə düşmüşdü.
+
+**Köhnə postu düzəltmək üçün:** teq sətrini tam yenidən yaz və saxla. İtən teqlər DB-də yoxdur, ona görə redaktə formasında da görünmür — sadəcə "saxla" basmaq onları geri gətirmir.
+
+Dərcdən sonra teq slug-larını həmişə yoxla:
+
+```bash
+curl -s "<canlı URL>" | grep -o 'blogs/tag/[a-z0-9-]*' | sort -u
+```
+
+Gözlədiyin sayda teq görmürsənsə — biri slug verməyib.
 
 ### Nə dəyişir, nə dəyişmir
 
