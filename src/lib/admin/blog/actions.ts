@@ -51,11 +51,80 @@ const UUID_PATTERN =
 /** Languages a post may be authored in — the locales the UI itself ships. */
 const LANGUAGES = ["en", "tr", "ru"] as const;
 
-/** URL-safe slug from arbitrary text; empty when the input has no ASCII words
- * (e.g. a fully Cyrillic title), in which case the admin must supply one. */
+/**
+ * Cyrillic to Latin, so a Russian tag or title becomes a readable slug rather
+ * than nothing at all. Mapped per character — `щ` is one letter, not `ш` + `ч`,
+ * so it carries its own multi-letter romanization.
+ */
+const CYRILLIC: Record<string, string> = {
+  а: "a",
+  б: "b",
+  в: "v",
+  г: "g",
+  д: "d",
+  е: "e",
+  ё: "e",
+  ж: "zh",
+  з: "z",
+  и: "i",
+  й: "y",
+  к: "k",
+  л: "l",
+  м: "m",
+  н: "n",
+  о: "o",
+  п: "p",
+  р: "r",
+  с: "s",
+  т: "t",
+  у: "u",
+  ф: "f",
+  х: "kh",
+  ц: "ts",
+  ч: "ch",
+  ш: "sh",
+  щ: "shch",
+  ъ: "",
+  ы: "y",
+  ь: "",
+  э: "e",
+  ю: "yu",
+  я: "ya",
+};
+
+/**
+ * Folds text down to ASCII letters.
+ *
+ * Two passes, because they fix different things. `NFKD` splits a letter from
+ * its accent (`ü` → `u` + diaeresis), which handles most of Turkish and every
+ * Latin diacritic for free. What it cannot handle is a letter that is not an
+ * accented form of anything — Turkish dotless `ı`, and the whole Cyrillic
+ * alphabet — so those are mapped explicitly first.
+ */
+function transliterate(input: string): string {
+  const mapped = [...input.toLowerCase()]
+    .map((char) => CYRILLIC[char] ?? (char === "ı" ? "i" : char))
+    .join("");
+
+  // Decompose, then drop the combining marks the decomposition produced.
+  return mapped.normalize("NFKD").replace(/[̀-ͯ]/g, "");
+}
+
+/**
+ * URL-safe slug from arbitrary text.
+ *
+ * Transliterates first, so a Russian or Turkish heading yields a real slug
+ * instead of an empty string. This matters most for tags: `parseTagNames`
+ * drops any name that slugifies to nothing, so before transliteration a
+ * Cyrillic tag did not become a bad archive URL — it silently vanished, and
+ * only the tags that happened to contain a digit survived, under slugs like
+ * `/tag/2026`.
+ *
+ * Still empty for input with no transliterable letters at all (CJK, emoji), in
+ * which case the admin must supply a slug by hand.
+ */
 function slugify(input: string): string {
-  return input
-    .toLowerCase()
+  return transliterate(input)
     .trim()
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/[\s_-]+/g, "-")
