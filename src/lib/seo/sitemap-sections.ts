@@ -48,9 +48,6 @@ const ANIME_CHUNK_SIZE = 4000;
 /** Where the index reads the catalog's chunk count from. */
 const CHUNK_COUNT_KEY = cacheKey("sitemap", "anime-chunks", "v1");
 
-/** The sections the index lists, in the order it lists them. */
-export type SectionName = "pages" | "blogs";
-
 /**
  * One entry per locale for a page that exists in all three (I18N-05).
  *
