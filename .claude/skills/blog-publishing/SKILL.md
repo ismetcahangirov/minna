@@ -17,6 +17,24 @@ Hər postun üç sütunu var və heç biri buraxıla bilməz:
 | **Səs**       | İnsan kimi düşünən, yumorlu, fəlsəfi, emosional, öz fikri olan mətn     |
 | **Sübut**     | Hər fakt yoxlanılıb; hər şəkil realdır və heç nə uydurulmayıb           |
 
+## Hər Post ÜÇ Dildə Dərc Olunur
+
+> **Bir mövzu = üç post: EN, TR, RU. İş yalnız üçü də canlı olanda bitir.**
+
+Sayt üç dil daşıyır və hər post yalnız öz dilinin prefiksi altında xidmət olunur. Yalnız ingiliscə dərc etmək — türk və rus oxucusuna həmin səhifəni ümumiyyətlə göstərməmək deməkdir.
+
+Üç post ayrı sətirlərdir: ayrı `slug`, ayrı `language`, ayrı URL. Onları bir-birinə **`Translation of`** sahəsi bağlayır və `hreflang` siqnalını yaradan da elə odur.
+
+| Addım | Post      | `Translation of`                        |
+| ----- | --------- | --------------------------------------- |
+| 1     | EN (əsas) | `Not a translation` — yeni qrup yaranır |
+| 2     | TR        | siyahıdan EN postu seç                  |
+| 3     | RU        | siyahıdan **eyni** EN postu seç         |
+
+**Tərcümə etmə — yenidən yaz.** Detallar: `references/voice.md` → Çoxdilli Postlar. Slug və xəta tələləri: `references/publishing.md` → Üç Dilin Axını.
+
+Şəkillər üçüncü dəfə yüklənmir — hər üç post **eyni imgbb URL-lərini** işlədir. Yalnız `alt` mətni və altyazılar öz dilində yazılır.
+
 ## İş Axını
 
 ```dot
@@ -40,6 +58,13 @@ digraph publish {
     "Mətni yaz" -> "Şəkilləri hazırla + imgbb";
     "Şəkilləri hazırla + imgbb" -> "Formanı doldur";
     "Formanı doldur" -> "Dərc et, canlı URL-i yoxla";
+    "Dərc et, canlı URL-i yoxla" -> "Üç dil də hazırdır?";
+    "Üç dil də hazırdır?" [shape=diamond];
+    "Növbəti dildə yenidən yaz" [shape=box];
+    "Üç dil də hazırdır?" -> "Növbəti dildə yenidən yaz" [label="yox"];
+    "Növbəti dildə yenidən yaz" -> "Formanı doldur";
+    "Üç dil də hazırdır?" -> "BİTDİ" [label="hə"];
+    "BİTDİ" [shape=doublecircle];
 }
 ```
 
@@ -127,6 +152,8 @@ Yoxlamadan "dərc olundu" demə.
 | AI ilə şəkil üzərində mətn yazdırmaq                | Generativ modellər hərfləri korlayır. Mətn HTML/CSS ilə yazılır. |
 | Şəklə baxmadan yükləmək                             | Məntiq xətaları (əl, say, kadr) yalnız baxanda görünür.          |
 | Bir ChatGPT söhbətində 3-dən çox şəkil              | Üslub donur, limit tükənir. Yeni söhbət aç.                      |
+| Yalnız bir dildə dərc edib dayanmaq                 | EN + TR + RU məcburidir. İkisi qalıbsa iş bitməyib.              |
+| TR/RU-nu `Translation of` seçmədən yaratmaq         | `hreflang` bağlanmır — üç yetim post qalır.                      |
 | Yoxlanmamış fakt (tarix, epizod sayı, studiya)      | AniList/rəsmi mənbədən təsdiqlə, yoxsa yazma.                    |
 | Emoji                                               | Layihə qaydası — yalnız SVG ikonlar.                             |
 | İstifadəçinin adından Google/ChatGPT-yə daxil olmaq | Parol onundur. Gözlə.                                            |

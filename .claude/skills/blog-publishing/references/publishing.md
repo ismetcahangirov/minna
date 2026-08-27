@@ -109,6 +109,68 @@ browser_evaluate → () => JSON.parse(document.querySelector('script[type="appli
 
 `BlogPosting` daxilində gözlənilənlər: `headline`, `description`, `image` (cover + bədən şəkilləri), `datePublished`, `author`, `keywords`, `hasPart` (başlıqlar), `timeRequired`.
 
+## Üç Dilin Axını
+
+Hər mövzu üç dəfə dərc olunur. Sıra vacibdir: **əvvəl EN, sonra TR, sonra RU** — çünki tərcümə qrupu birinci postla yaranır və qalan ikisi ona qoşulur.
+
+### 1. EN — əsas post
+
+`Language` = `English`, `Translation of` = `Not a translation`.
+
+Server boş qrup sahəsini görüb **yeni `translationGroupId` yaradır**. Bu postun mövcudluğu qalan ikisinin şərtidir.
+
+Dərc et, canlı URL-i yoxla, sonra növbətiyə keç.
+
+### 2. TR və 3. RU
+
+Yenidən `/admin/blogs/new`. Bu dəfə:
+
+- `Language` = `Turkish` / `Russian`
+- `Translation of` = açılan siyahıdan **EN postu** seç. Seçimlər `Başlıq (EN)` formatında görünür.
+
+RU postunda da **eyni** EN postu seçilir — RU-nu TR-ə bağlamağa çalışma, qrup birdir və üçü də ona qoşulur.
+
+### Slug: burada iş xarab olur
+
+Slug **bütün postlar arasında unikaldır**, ona görə üç dilin üç ayrı slug-u olmalıdır. Onları da öz dilində yaz — slug SEO səthidir:
+
+| Dil | Slug nümunəsi                     |
+| --- | --------------------------------- |
+| EN  | `best-anime-summer-2026-ranked`   |
+| TR  | `2026-yaz-sezonu-en-iyi-animeler` |
+| RU  | `luchshie-anime-leta-2026`        |
+
+**RU üçün slug-u həmişə ƏLLƏ yaz.** `slugify` ASCII olmayan hər şeyi atır, ona görə tam kiril başlıq **boş** slug qaytarır və forma `invalidSlug` xətası verir. Kiril başlığı latın hərfləri ilə transliterasiya et.
+
+Türk başlığında da eyni tələ var, amma yumşaq formada: `ə, ı, ş, ğ, ü, ö, ç` atılır — `Yaz Sezonu'nun En İyisi` → `yaz-sezonunun-en-yisi`. Gözlə yoxla, lazımsa düzəlt.
+
+### Nə dəyişir, nə dəyişmir
+
+| Sahə                               | Dillər arasında                        |
+| ---------------------------------- | -------------------------------------- |
+| `title`, `excerpt`, `content`      | **Yenidən yazılır** — tərcümə yox      |
+| `slug`                             | Hər dildə fərqli, öz dilində           |
+| `tags`                             | Öz dilində (hər dil öz arxivini qurur) |
+| `coverImage`, bədən şəkil URL-ləri | **Eynidir** — imgbb-yə təkrar yükləmə  |
+| `coverImageAlt`, altyazılar        | Öz dilində yazılır                     |
+| `author`, `authorUrl`              | Eynidir                                |
+| `translationGroupId`               | EN-də boş, TR/RU-da EN postu seçilir   |
+
+### Xəta: `That article already has a version in this language.`
+
+Həmin qrupda o dildən post artıq var. Yenisini yaratma — mövcudu redaktə et. Bu xəta adətən ikinci dəfə RU yaratmağa çalışanda çıxır.
+
+### Yoxlama
+
+Üçü də dərc olunandan sonra hər üç URL-i aç və `hreflang` bağlantılarını təsdiqlə:
+
+```
+browser_evaluate → () => [...document.querySelectorAll('link[rel=alternate]')]
+    .map(l => l.hreflang + ' -> ' + l.href)
+```
+
+Hər səhifədə digər iki dilin `hreflang` sətri görünməlidir. Görünmürsə `Translation of` seçilməyib.
+
 ## Redaktə
 
 `/en/admin/blogs/<id>/edit`. Eyni forma, `Save changes` düyməsi ilə. Slug dəyişdirsən köhnə URL **404 olur** — dərc olunmuş və indekslənmiş postun slug-unu dəyişmə.

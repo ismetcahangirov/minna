@@ -141,10 +141,34 @@ Spoiler mətni burada.
 
 Söz sayı hədəf deyil — **rəqiblərdən dərin olmaq** hədəfdir. Doldurucu paraqraf yazsan, oxuma vaxtı yox, tərk etmə nisbəti artır.
 
-## Çoxdilli Postlar
+## Çoxdilli Postlar (MƏCBURİ)
 
-Hər dil ayrı postdur (`language` sahəsi), ayrı URL-i var. Tərcümə edərkən:
+Hər mövzu **üç dildə** dərc olunur: EN, TR, RU. Mexanika: `references/publishing.md` → Üç Dilin Axını. Burada mətnin özü haqqındadır.
 
-- **Tərcümə etmə — yenidən yaz.** Yumor birbaşa tərcümədə ölür.
-- İkinci postda `Translation of` sahəsində birincini seç → `hreflang` qoşulur.
-- Hər dilin öz açar sözü var. Türk oxucu "en iyi anime" axtarır, "best anime"in tərcüməsini yox.
+### Tərcümə etmə — yenidən yaz
+
+Bu qaydanın səbəbi zövq deyil. Bu səsin işlədiyi yer yumor, ritm və mövqedir, və üçü də birbaşa tərcümədə ölür:
+
+- **Yumor kontekstlidir.** "A ranking nobody objects to is a ranking nobody read" ingiliscə iti səslənir; sözbəsöz tərcüməsi türkcə sadəcə uzun cümlədir. Türkcə eyni fikri türkcə iti olan bir cümlə ilə de.
+- **Deyim tərcümə olunmur.** İngilis deyimini rusca hərfi versən, oxucu mətnin maşından çıxdığını birinci abzasda anlayır.
+- **Cümlə uzunluğu dilə görə dəyişir.** Rus dilində eyni fikir daha uzun gedir; ingilis ritmini məcbur etsən, mətn kəkələyir.
+
+### Hər dilin öz açar sözü var
+
+Bu, tərcümənin ən bahalı səhvidir. Oxucular fərqli şeylər yazır:
+
+| Dil | Real sorğu                  | Tərcümə (səhv)             |
+| --- | --------------------------- | -------------------------- |
+| EN  | `best summer 2026 anime`    | —                          |
+| TR  | `2026 yaz sezonu animeleri` | `en iyi yaz 2026 anime`    |
+| RU  | `лучшее аниме лета 2026`    | `лучший летний аниме 2026` |
+
+Hər dil üçün açar sözü **ayrıca yoxla** (`WebSearch` həmin dildə), sonra başlıq və excerpt-i onun ətrafında qur.
+
+### Nə sabit qalır
+
+Faktlar, rəqəmlər, sıralama və mövqe **üç dildə eynidir**. Türkcə versiyada başqa bir anime birinci ola bilməz — o, artıq başqa məqalədir. Dəyişən yalnız həmin fikri necə dediyin.
+
+### Uzunluq
+
+TR və RU versiyaları EN-dən **qısa ola bilər** (~%80), amma bölmələr eyni qalır — hər `h2` üçlükdə mövcud olmalıdır, yoxsa `hreflang` cütləri fərqli məzmuna işarə edir.
