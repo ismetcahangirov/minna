@@ -26,6 +26,15 @@
        * come back padded with black on two sides.
        *
        * Resize the viewport to 16:9 (1600x900) before rendering.
+       *
+       * TWO MODES, and picking the wrong one is visible immediately:
+       *
+       * - `<body class="bare">` — artwork only. This is what the `coverImage`
+       *   field wants. The post page renders the cover full-bleed behind its
+       *   own title, so a cover carrying its own headline puts two different
+       *   sets of type on top of each other.
+       * - default (no class) — headline burned in. For a social card or any
+       *   surface that shows the image without the article's own heading.
        */
       * {
         margin: 0;
@@ -128,6 +137,23 @@
         font-weight: 800;
         letter-spacing: 0.32em;
         color: #fff;
+      }
+
+      /*
+       * Background mode: the page supplies the type, so this supplies only
+       * picture. The scrim goes flat and heavier — text will be laid over the
+       * whole frame rather than over one corner of it, so contrast has to hold
+       * everywhere instead of just along the bottom edge.
+       */
+      body.bare .text,
+      body.bare .brand {
+        display: none;
+      }
+      body.bare .scrim {
+        background: rgba(0, 0, 0, 0.72);
+      }
+      body.bare .strip img {
+        filter: grayscale(0.45) brightness(0.5);
       }
     </style>
   </head>
