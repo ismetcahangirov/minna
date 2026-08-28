@@ -85,6 +85,29 @@ Postda yazılan **hər** rəqəm və tarix yoxlanılmalıdır:
 
 Yoxlaya bilmirsənsə — **yazma**. Anime auditoriyası səhvi dərhal görür və bir səhv bütün siyahının etibarını aparır.
 
+## 5. Mənbə Mətndə Adlandırılmır
+
+Faktları yuxarıdakı kimi yoxlamaqda davam et — amma **dərc olunan postda AniList-in adını çəkmə**. Nə bədəndə, nə başlıqda, nə altyazıda, nə `<aside>`-da, nə də link kimi.
+
+Bu, gizlətmək deyil. AniList bizim **iş alətimizdir**, oxucunun məsələsi deyil: postu bir platformun daxili siyahı statistikasına bağlamaq həm mətni həmin platformun reklamına çevirir, həm də rəqəm dəyişəndə məqaləni yalanlayır.
+
+Eyni qayda şəkillərə də aiddir: `references/images.md` → **Mənbənin Adı ŞƏKLİN ÜZƏRİNDƏ YAZILMIR**.
+
+### Metodikanı mənbə adlandırmadan yaz
+
+Rəqəm verirsənsə, onun nə olduğunu izah et — haradan gəldiyini yox:
+
+| ❌ Yazma                                   | ✅ Yaz                                                 |
+| ------------------------------------------ | ------------------------------------------------------ |
+| "AniList-dən çəkdim"                       | "Mövsümün elan olunmuş cədvəlini bütövlükdə saydım"    |
+| "AniList list-adds"                        | "yayımdan əvvəl izləmə siyahılarına əlavə olunma sayı" |
+| "AniList `averageScore` 87"                | "orta izləyici balı 87"                                |
+| "AniList relation qrafında prequel yoxdur" | "elan olunmuş öncül seriyası yoxdur"                   |
+
+**Tarixi saxla.** "28 Avqust 2026 tarixinə görə" cümləsi mənbə adı olmadan da dürüstlük siqnalıdır və rəqəm sonradan dəyişəndə səni qoruyur.
+
+**Rəsmi elana istisna yoxdur, sadəcə fərq var:** studiya elanı, naşir hesabı və ya xəbər mənbəyi — bunlar **oxucu üçün dəyərli** olduğu üçün adlandırıla və linklənə bilər. Qadağa data bağçılığına aiddir, jurnalistikaya yox.
+
 ## Araşdırma Çıxışı
 
 Yazmağa keçməzdən əvvəl bunlar əlində olmalıdır:
@@ -93,5 +116,6 @@ Yazmağa keçməzdən əvvəl bunlar əlində olmalıdır:
 - [ ] Trend siqnalının səbəbi (nə baş verdi, nə vaxt)
 - [ ] İlk 3 rəqibin başlıq/struktur/uzunluq xülasəsi
 - [ ] Onların əskik qoyduğu bir şey — məqalənin bucağı
-- [ ] Adı çəkiləcək hər anime üçün AniList ID + təsdiqlənmiş faktlar
+- [ ] Adı çəkiləcək hər anime üçün AniList ID + təsdiqlənmiş faktlar (ID daxili qeyddir — posta düşmür)
+- [ ] Postda işlənəcək hər rəqəm üçün mənbə adlandırmayan bir izah cümləsi
 - [ ] Rəsmi artwork URL-ləri
