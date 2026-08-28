@@ -23,24 +23,51 @@ const LOADER_TIMEOUT_MS = 5_000;
  */
 let loaderChain: Promise<void> = Promise.resolve();
 
-/** Appends one unit's config + loader into `container`, resolving when it settles. */
-function mountUnit(container: HTMLDivElement, unit: AdUnit): Promise<void> {
+/**
+ * HilltopAds' loader reads its options off a `settings` property hung on its
+ * own script element, and `appendTo` is the one that matters here: without it
+ * the ad is inserted next to whichever script element the loader finds, which
+ * is not necessarily our reserved box.
+ */
+interface HilltopScript extends HTMLScriptElement {
+  settings?: { appendTo: string };
+}
+
+/** Appends one unit's loader into `container`, resolving when it settles. */
+function mountUnit(
+  container: HTMLDivElement,
+  containerId: string,
+  unit: AdUnit,
+): Promise<void> {
   return new Promise((resolve) => {
-    const configScript = document.createElement("script");
-    configScript.type = "text/javascript";
-    configScript.text = `atOptions = {
+    const loader = document.createElement("script") as HilltopScript;
+    loader.type = "text/javascript";
+    loader.async = true;
+
+    if (unit.network === "hilltopads") {
+      loader.src = unit.src;
+      loader.settings = { appendTo: `#${containerId}` };
+      // The network's own snippet sets this, and its ad server reads the
+      // referring URL — keep it on the element rather than relying on the
+      // document-level policy alone.
+      loader.referrerPolicy = "no-referrer-when-downgrade";
+    } else {
+      // Adsterra's loader reads a global `atOptions` written immediately
+      // before it, and locates its insertion point via `document.currentScript`
+      // — so both scripts have to live inside the target container.
+      const configScript = document.createElement("script");
+      configScript.type = "text/javascript";
+      configScript.text = `atOptions = {
       'key': '${unit.key}',
       'format': 'iframe',
       'height': ${unit.height},
       'width': ${unit.width},
       'params': {}
     };`;
-    container.appendChild(configScript);
+      container.appendChild(configScript);
 
-    const invokeScript = document.createElement("script");
-    invokeScript.type = "text/javascript";
-    invokeScript.src = `${unit.host}/${unit.key}/invoke.js`;
-    invokeScript.async = true;
+      loader.src = `${unit.host}/${unit.key}/invoke.js`;
+    }
 
     let settled = false;
     const release = () => {
@@ -51,27 +78,27 @@ function mountUnit(container: HTMLDivElement, unit: AdUnit): Promise<void> {
     };
     // A blocked loader (ad blocker, dead host) must not strand the queue.
     const timer = setTimeout(release, LOADER_TIMEOUT_MS);
-    invokeScript.addEventListener("load", release);
-    invokeScript.addEventListener("error", release);
+    loader.addEventListener("load", release);
+    loader.addEventListener("error", release);
 
-    container.appendChild(invokeScript);
+    container.appendChild(loader);
   });
 }
 
 interface AdBannerProps {
-  /** Which Adsterra unit this slot carries — see `@/lib/ads/placements`. */
+  /** Which ad unit this slot carries — see `@/lib/ads/placements`. */
   placement: AdPlacementName;
   /** Spacing for the slot, so each host page keeps its own rhythm. */
   className?: string;
 }
 
 /**
- * One Adsterra slot (HOME-08), carried by the home, anime, episodes and watch
- * pages — always between two sections rather than inside one, so nothing it
- * loads can push a layout around. Adsterra's `invoke.js` locates its insertion
- * point via `document.currentScript`, so the config/invoke scripts must be
- * created and appended imperatively into the target div rather than mounted
- * through `next/script` (which detaches them from that DOM position).
+ * One ad slot (HOME-08), carried by the home, anime, episodes and watch pages
+ * — always between two sections rather than inside one, so nothing it loads
+ * can push a layout around. Both networks locate their insertion point from
+ * the loader script's own position in the DOM, so the scripts are created and
+ * appended imperatively into the target div rather than mounted through
+ * `next/script` (which detaches them from that DOM position).
  *
  * The slot's box is reserved in CSS at the same `md` breakpoint the unit is
  * chosen at, so the 300x250 (phones) and 728x90 (desktop) boxes are laid out
@@ -82,6 +109,9 @@ interface AdBannerProps {
 export function AdBanner({ placement, className }: AdBannerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { desktop, mobile } = adPlacement(placement);
+  // HilltopAds is handed a selector rather than an element, so the box needs a
+  // real id. Placements are unique per page, which makes this unique too.
+  const containerId = `ad-slot-${placement}`;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -104,13 +134,13 @@ export function AdBanner({ placement, className }: AdBannerProps) {
 
     let cancelled = false;
     loaderChain = loaderChain.then(() =>
-      cancelled ? undefined : mountUnit(container, unit),
+      cancelled ? undefined : mountUnit(container, containerId, unit),
     );
 
     return () => {
       cancelled = true;
     };
-  }, [desktop, mobile]);
+  }, [desktop, mobile, containerId]);
 
   if (!desktop && !mobile) return null;
 
@@ -131,6 +161,7 @@ export function AdBanner({ placement, className }: AdBannerProps) {
       >
         <div
           ref={containerRef}
+          id={containerId}
           className="absolute top-0 left-0 origin-top-left"
         />
       </div>
