@@ -281,7 +281,7 @@ export async function AnimeDetailView({
           </aside>
         </div>
 
-        <AdBanner className="mt-10" />
+        <AdBanner placement="anime" className="mt-10" />
       </div>
     </article>
   );
