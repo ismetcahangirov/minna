@@ -95,6 +95,8 @@ Səs, struktur və "Top 10" formatı: `references/voice.md`.
 
 Body **Markdown**-dır; `figure`, `aside`, `details`, `time`, `abbr`, `mark` kimi semantik HTML də icazəlidir (`src/lib/blog/markdown.ts` sanitizer).
 
+**Data mənbəyini adlandırma.** Faktları AniList-dən yoxlayırsan, amma post AniList-in adını çəkməməlidir — nə mətndə, nə altyazıda, nə link kimi. Əvəzinə rəqəmin nə olduğunu izah et ("yayımdan əvvəl izləmə siyahılarına əlavə olunma sayı"). Tam qayda: `references/research.md` → Mənbə Mətndə Adlandırılmır.
+
 Başlıq səviyyələri: bədəndə `h1` YAZMA — səhifənin özü `h1`-dir. `##`-dan başla. Hər başlıq JSON-LD-də `hasPart` bölməsinə çevrilir, ona görə başlıqlar suala cavab verən olmalıdır ("Niyə bu il isekai bezdirdi?"), "Bölmə 3" yox.
 
 ### 4. Şəkilləri hazırla
@@ -105,9 +107,11 @@ Başlıq səviyyələri: bədəndə `h1` YAZMA — səhifənin özü `h1`-dir. `
 
 1. **Referans topla:** rəsmi artwork/portret üçün AniList CDN, səhnə/kadr üçün Google Şəkillər (`udm=2`). `.playwright-mcp/refs/` altına endir və `Read` ilə BAX — doğru personajdırmı?
 2. **Referansı ChatGPT söhbətinə əlavə et** (`browser_file_upload`), sonra promptu yaz: `references/chatgpt-images.md`. Bir söhbətdə bir personaj, maksimum 3 şəkil.
-3. Cover-i `assets/cover-template.html` ilə qur, Playwright ilə screenshot al (kompozisiya, generasiya yox).
+3. Cover-i `assets/cover-template.html` ilə qur (`<body class="bare">`), Playwright ilə screenshot al (kompozisiya, generasiya yox). **Cover həmişə parlaq qalır** — şəklə scrim/qaraltı yandırma; səhifə öz örtüyünü onsuz da qoyur.
 4. **Nəticəni `Read` ilə AÇ VƏ REFERANSLA TUTUŞDUR** — saç, göz, paltar uyğundurmu; mətn/deformasiya varmı.
 5. `scripts/imgbb-upload.mjs` ilə imgbb-yə yüklə, dönən `i.ibb.co` URL-ini istifadə et. Referans faylı yüklənmir.
+
+Kompozisiya şəkillərində (qrafik, cədvəl, kart) **data mənbəyinin adını yazma**: `ANILIST DATA …` → `SEASONAL DATA …`.
 
 imgbb API açarı skriptin içindədir — heç kimdən istəmə.
 
@@ -145,25 +149,29 @@ imgbb API açarı skriptin içindədir — heç kimdən istəmə.
 - Cover şəkli görünür (sınıq deyil — `next/image` `i.ibb.co`-nu qəbul edir, `next.config.ts`-də icazəlidir).
 - Bədəndəki bütün şəkillər yüklənir.
 - Başlıq iyerarxiyası düzgündür, mündəricat doludur.
+- **Cover parlaqdır** — həm post səhifəsində, həm də `/blogs` siyahı kartında yoxla.
+- **Postda AniList sözü keçmir:** `curl -s "<URL>" | grep -ci anilist` → `0`.
 
 Yoxlamadan "dərc olundu" demə.
 
 ## Mütləq Qadağalar
 
-| Qadağa                                                | Səbəb                                                            |
-| ----------------------------------------------------- | ---------------------------------------------------------------- |
-| Referans əlavə etmədən personaj generasiya etmək      | Model təxmin edir — oxucunun tanımadığı yad personaj çıxır.      |
-| Generasiyanı "rəsmi kadr/screenshot" kimi təqdim et   | Oxucunu aldadır. Epizod iddiası varsa rəsmi mənbə lazımdır.      |
-| Fan-art və ya watermark-lı şəkli referans vermək      | Model imzanı və üslub təhrifini də kopyalayır.                   |
-| AI ilə şəkil üzərində mətn yazdırmaq                  | Generativ modellər hərfləri korlayır. Mətn HTML/CSS ilə yazılır. |
-| Şəklə baxmadan (və referansla tutuşdurmadan) yükləmək | Uyğunsuzluq və məntiq xətaları yalnız yan-yana baxanda görünür.  |
-| Bir ChatGPT söhbətində 3-dən çox şəkil / 2 personaj   | Üslub donur, referanslar qarışır. Yeni söhbət aç.                |
-| Yalnız bir dildə dərc edib dayanmaq                   | EN + TR + RU məcburidir. İkisi qalıbsa iş bitməyib.              |
-| TR/RU-nu `Translation of` seçmədən yaratmaq           | `hreflang` bağlanmır — üç yetim post qalır.                      |
-| Yoxlanmamış fakt (tarix, epizod sayı, studiya)        | AniList/rəsmi mənbədən təsdiqlə, yoxsa yazma.                    |
-| Emoji                                                 | Layihə qaydası — yalnız SVG ikonlar.                             |
-| İstifadəçinin adından Google/ChatGPT-yə daxil olmaq   | Parol onundur. Gözlə.                                            |
-| Yoxlamadan "hazırdır" demək                           | Canlı URL-i aç, gözünlə gör.                                     |
+| Qadağa                                                | Səbəb                                                                                    |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Referans əlavə etmədən personaj generasiya etmək      | Model təxmin edir — oxucunun tanımadığı yad personaj çıxır.                              |
+| Generasiyanı "rəsmi kadr/screenshot" kimi təqdim et   | Oxucunu aldadır. Epizod iddiası varsa rəsmi mənbə lazımdır.                              |
+| Fan-art və ya watermark-lı şəkli referans vermək      | Model imzanı və üslub təhrifini də kopyalayır.                                           |
+| AI ilə şəkil üzərində mətn yazdırmaq                  | Generativ modellər hərfləri korlayır. Mətn HTML/CSS ilə yazılır.                         |
+| Şəklə baxmadan (və referansla tutuşdurmadan) yükləmək | Uyğunsuzluq və məntiq xətaları yalnız yan-yana baxanda görünür.                          |
+| Bir ChatGPT söhbətində 3-dən çox şəkil / 2 personaj   | Üslub donur, referanslar qarışır. Yeni söhbət aç.                                        |
+| Yalnız bir dildə dərc edib dayanmaq                   | EN + TR + RU məcburidir. İkisi qalıbsa iş bitməyib.                                      |
+| TR/RU-nu `Translation of` seçmədən yaratmaq           | `hreflang` bağlanmır — üç yetim post qalır.                                              |
+| Cover-ə qaraltı / scrim yandırmaq                     | Post səhifəsi onsuz da `bg-black/80` qoyur — şəkil ~6%-ə düşür. Cover **həmişə** parlaq. |
+| Postda AniList-in (data mənbəyinin) adını çəkmək      | Mətn platformun reklamına çevrilir və rəqəm dəyişəndə yalanlanır. Yoxla, adlandırma.     |
+| Yoxlanmamış fakt (tarix, epizod sayı, studiya)        | AniList/rəsmi mənbədən təsdiqlə (mənbəni postda adlandırmadan), yoxsa yazma.             |
+| Emoji                                                 | Layihə qaydası — yalnız SVG ikonlar.                                                     |
+| İstifadəçinin adından Google/ChatGPT-yə daxil olmaq   | Parol onundur. Gözlə.                                                                    |
+| Yoxlamadan "hazırdır" demək                           | Canlı URL-i aç, gözünlə gör.                                                             |
 
 ## Tez-tez Rast Gəlinən Səhvlər
 
