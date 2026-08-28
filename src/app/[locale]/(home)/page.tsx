@@ -49,7 +49,7 @@ export default function Home() {
     <main className="flex flex-1 flex-col gap-10 pb-16 sm:gap-12">
       <HeroSection />
 
-      <AdBanner />
+      <AdBanner placement="home" />
 
       <div className="flex flex-col gap-10 sm:gap-12">
         <Suspense fallback={<AnimeRowSkeleton />}>

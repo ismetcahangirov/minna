@@ -214,7 +214,7 @@ export default async function WatchPage({ params }: WatchRouteProps) {
         </p>
       </div>
 
-      <AdBanner className="mt-8" />
+      <AdBanner placement="watch" className="mt-8" />
 
       {/* Member reviews of this episode (COMM-07). Streamed in a boundary of
           its own so its two queries never hold up the player. */}
@@ -228,6 +228,12 @@ export default async function WatchPage({ params }: WatchRouteProps) {
           loginHref={`/login?callbackUrl=${encodeURIComponent(canonical)}`}
         />
       </Suspense>
+
+      {/* Second slot, deep in the page where the watch session actually dwells
+          — an episode runs ~24 minutes against a single impression up top.
+          Renders only once `NEXT_PUBLIC_ADSTERRA_WATCH_SECONDARY` names a unit
+          of its own, so the two watch slots never share one key. */}
+      <AdBanner placement="watchSecondary" className="mt-10" />
 
       {/* Full episode list for jumping around (DETAIL-02 reuse). */}
       {detail.episodes.length > 0 && (

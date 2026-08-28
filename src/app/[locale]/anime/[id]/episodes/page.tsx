@@ -235,7 +235,7 @@ export default async function AnimeEpisodesPage({
 
         <div className="mt-8 flex flex-col gap-10">
           <SeasonSwitcher detail={detail} />
-          <AdBanner />
+          <AdBanner placement="episodes" />
           <EpisodeCards
             animeId={detail.id}
             animeTitle={detail.title}
