@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import "../globals.css";
 
+import { WebAnalytics } from "@/components/analytics/web-analytics";
 import { WebVitals } from "@/components/analytics/web-vitals";
 import { SiteHeader } from "@/components/header";
 import { HeaderGate } from "@/components/header/header-gate";
@@ -94,6 +95,7 @@ export default async function LocaleLayout({
       <body className="flex min-h-full flex-col">
         <JsonLd data={buildSiteJsonLd()} />
         <WebVitals />
+        <WebAnalytics />
         <NextIntlClientProvider>
           <StoreProvider>
             <HeaderGate>
