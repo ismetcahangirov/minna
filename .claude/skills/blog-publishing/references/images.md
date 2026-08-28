@@ -60,6 +60,21 @@ Personaj referansı lazımdırsa `characters` bloku ilə soruş — `image.large
 
 ## Cover Kompozisiyası (sınaqdan keçib)
 
+### Cover HƏMİŞƏ PARLAQ OLUR
+
+> Şəklə qaraltı **yandırma**. Nə scrim, nə `brightness()`, nə `grayscale()`.
+
+İstifadəçi bunu hər dəfə demək məcburiyyətində qalmamalıdır — qayda budur və `bare` rejimi artıq belə qurulub.
+
+Səbəb ölçülüb: cover-i göstərən iki səth öz kontrastını özü həll edir.
+
+| Səth          | Kodda nə edir                                                                                              | Qırmızı xətt                                                                   |
+| ------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Post səhifəsi | Cover-i tam ekran fon kimi çəkir və üzərinə `bg-black/80` qoyur (`src/app/[locale]/blogs/[slug]/page.tsx`) | Şəkildə 29%-ə qaraltsan, səhifədə ~**6%** olur — demək olar qapqara            |
+| Siyahı kartı  | Heç bir örtük qoymur (`src/components/blog/blog-card.tsx` — scrim oradan bilərəkdən silinib)               | Şəklə nə yandırmısansa, oxucu məhz onu görür — qaraltı sadəcə palçıqlı görünür |
+
+Yalnız bir istisna: `bare` **olmayan** rejim (başlıq şəklin üzərinə yazılır) öz scrim-ini saxlayır, çünki orada mətn birbaşa artwork-un üstündədir. O rejim sosial kart / OG şəkli üçündür; `coverImage` sahəsi üçün həmişə `bare`.
+
 ### 1. Şablonu doldur
 
 `assets/cover-template.html`-i `.playwright-mcp/` altına kopyala və əvəzləyiciləri doldur:
@@ -103,6 +118,8 @@ Bu addım **buraxıla bilməz**. Yoxladıqların:
 - Bütün posterlər tam görünür (kənar kəsilməyib)?
 - Qara boşluq yoxdur?
 - Personajlar rəsmi artwork-dandır — heç bir uydurma sifət, əl, silah yoxdur?
+- **Cover parlaqdır** — posterlər solmayıb, üzərinə qara pərdə yandırılmayıb
+- **Şəkildə data mənbəyinin adı yazılmayıb** — aşağıdakı qaydaya bax
 
 ### 5. imgbb-yə yüklə
 
@@ -174,3 +191,16 @@ Yüklədiyin **hər** şəkil üçün:
 - [ ] Sifət, əl, göz sayı normaldır
 - [ ] Konkret epizod/tarix iddiası varsa şəkil rəsmi mənbədəndir — generasiya deyil
 - [ ] Fayl adı və alt mətn şəklin əslində göstərdiyini deyir, "rəsmi kadr" iddiası etmir
+
+## Mənbənin Adı ŞƏKLİN ÜZƏRİNDƏ YAZILMIR
+
+Kompozisiya şəkillərində (qrafik, müqayisə cədvəli, kart) **AniList və ya başqa data mənbəyinin adını yazma** — nə kicker-də, nə altyazıda, nə də şəklin içindəki foot sətrində.
+
+Bu, `references/research.md` → **Mənbə Mətndə Adlandırılmır** qaydasının davamıdır: fakt yoxlanılır, amma mənbə oxucuya göstərilmir. Şəkil daha təhlükəlidir, çünki mətni redaktə etməklə düzəlmir — PNG-ni yenidən render edib imgbb-yə təkrar yükləmək lazım gəlir.
+
+Tarix və metodika göstərmək istəyirsəns, mənbəni adlandırmadan yaz:
+
+| ❌ Yazma                                 | ✅ Yaz                                              |
+| ---------------------------------------- | --------------------------------------------------- |
+| `ANILIST DATA, 28 AUGUST 2026`           | `SEASONAL DATA, 28 AUGUST 2026`                     |
+| `Ranked by AniList list-adds per season` | `Ranked by pre-broadcast watchlist adds per season` |
