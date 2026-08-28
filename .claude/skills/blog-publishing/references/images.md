@@ -2,22 +2,27 @@
 
 ## Qızıl Qayda
 
-> **Postdakı hər insan/personaj real olmalıdır. Uydurma personaj generasiya edilmir.**
+> **Postun bölmə şəkilləri ChatGPT ilə yaradılır — amma heç biri "yaddaşdan" çəkilmir. Hər generasiyanın altında real referans şəkli durur.**
 
-Anime bloqunda generativ modelə "anime personajı çək" demək — mövcud olmayan bir personajı real kimi göstərmək deməkdir. Oxucu onu axtarır, tapmır; Google şəkli məqalənin mövzusu ilə uyğunsuz sayır. Ona görə **personajlar həmişə rəsmi artwork-dan gəlir**, kompozisiya isə koddan.
+Anime bloqunda generativ modelə quru-quruya "Frieren çək" demək — mövcud olmayan bir personajı real kimi göstərmək deməkdir. Oxucu onu tanımır; Google şəkli məqalənin mövzusu ilə uyğunsuz sayır. Ona görə axın **iki addımlıdır**: əvvəl rəsmi artwork/kadr referans kimi tapılır (AniList → Google Şəkillər), sonra həmin şəkil ChatGPT söhbətinə **əlavə olunur** və model onu yenidən səhnələşdirir.
+
+Yəni: **rəsmi artwork generasiyanın girişidir, postun şəkli isə generasiyanın çıxışıdır.** Kompozisiya (cover, Top 10 kartı) həmişə olduğu kimi koddan gəlir.
 
 ## Şəkil Mənbələri — Prioritet Sırası
 
-| Sıra | Mənbə                                   | Nə üçün                                             | Necə                                        |
-| ---- | --------------------------------------- | --------------------------------------------------- | ------------------------------------------- |
-| 1    | **AniList CDN**                         | Rəsmi cover/banner. Sıfır uydurma riski.            | GraphQL sorğusu (aşağıda)                   |
-| 2    | **Kompozisiya** (HTML→screenshot)       | Cover, "Top 10" kartları, müqayisə cədvəlləri       | `assets/cover-template.html`                |
-| 3    | **Brauzerdə tapılan rəsmi press şəkli** | Studiya/naşir elanları                              | `browser_navigate` + saxla, mənbəni qeyd et |
-| 4    | **ChatGPT generasiyası** (brauzerdən)   | **Yalnız abstrakt atmosfer** — personajsız, mətnsiz | **`references/chatgpt-images.md`**          |
+| Sıra | Mənbə                                       | Nə üçün                                            | Necə                                        |
+| ---- | ------------------------------------------- | -------------------------------------------------- | ------------------------------------------- |
+| 1    | **AniList CDN**                             | Personaj portreti, cover, banner — **referans**    | GraphQL sorğusu (aşağıda)                   |
+| 2    | **Google Şəkillər** (`udm=2`)               | Səhnə, kadr, poza — **referans**                   | `browser_navigate` + endir, `refs/` altına  |
+| 3    | **ChatGPT generasiyası** (referans əlavəli) | **Bölmə/bədən şəkilləri** — personaj, səhnə, əhval | **`references/chatgpt-images.md`**          |
+| 4    | **Kompozisiya** (HTML→screenshot)           | Cover, "Top 10" kartları, müqayisə cədvəlləri      | `assets/cover-template.html`                |
+| 5    | **Rəsmi press şəkli**                       | Studiya/naşir elanları, konkret epizod iddiası     | `browser_navigate` + saxla, mənbəni qeyd et |
 
-### AI generasiyası = brauzerdən ChatGPT
+Referanslar `.playwright-mcp/refs/` altında saxlanılır və **posta getmir, imgbb-yə yüklənmir** — onlar yalnız modelə verilən girişdir.
 
-Şəkil generasiyası `chatgpt.com`-da, istifadəçinin öz hesabında aparılır. Tam prosedur, prompt şablonu, çıxarma üsulları və **bir söhbətdə maksimum 3 şəkil** qaydası: `references/chatgpt-images.md`.
+### AI generasiyası = brauzerdən ChatGPT, referans əlavə edilmiş
+
+Şəkil generasiyası `chatgpt.com`-da, istifadəçinin öz hesabında aparılır. Referans tapmaq, `browser_file_upload` ilə söhbətə əlavə etmək, prompt şablonu, nəticəni referansla tutuşdurmaq və **bir söhbətdə maksimum 3 şəkil / bir personaj** qaydası: `references/chatgpt-images.md`.
 
 ### Codex CLI şəkil çəkmir
 
@@ -45,7 +50,13 @@ curl -s -X POST https://graphql.anilist.co -H "Content-Type: application/json" \
 
 Faydalı `sort` dəyərləri: `TRENDING_DESC` (indi danışılan), `POPULARITY_DESC` (hər zaman məşhur), `SCORE_DESC` (ən yüksək bal). Konkret mövsüm üçün `season: WINTER, seasonYear: 2026` əlavə et.
 
-`bannerImage` geniş (1900×400) — bədən içi bölmə ayırıcısı üçün ideal. `coverImage.extraLarge` şaquli — cover strip-i üçün.
+`bannerImage` geniş (1900×400) — mühit/atmosfer referansı üçün ideal. `coverImage.extraLarge` şaquli — cover strip-i üçün.
+
+Personaj referansı lazımdırsa `characters` bloku ilə soruş — `image.large` rəsmi portretdir:
+
+```
+{Media(search:"Frieren",type:ANIME){title{romaji} characters(perPage:6,sort:FAVOURITES_DESC){nodes{name{full} image{large}}}}}
+```
 
 ## Cover Kompozisiyası (sınaqdan keçib)
 
@@ -157,8 +168,9 @@ Alt mətn **şəkli təsvir edir**, açar söz yığmır. Ekran oxuyucusu üçü
 Yüklədiyin **hər** şəkil üçün:
 
 - [ ] Şəkil məqalənin həmin bölməsinin mövzusunu göstərir (təsadüfi artwork deyil)
+- [ ] Generasiya olunubsa: referans şəkli əlavə edilib və nəticə referansla tutuşdurulub (saç, göz, paltar)
 - [ ] Sırada göstərilən anime həqiqətən o sıradadır (Top 10-da 3-cü şəkil 3-cü animeninkidir)
 - [ ] Şəkildəki mətn (varsa) düzgün yazılıb — kompozisiyadan gəlir, generasiyadan yox
-- [ ] Sifət, əl, göz sayı normaldır (generasiya olunmuş abstrakt fonda da yoxla)
-- [ ] Şəkil rəsmi mənbədəndir və məqalədə iddia edilən səhnə/personajla uyğundur
-- [ ] Fayl adı və alt mətn şəklin əslində göstərdiyini deyir
+- [ ] Sifət, əl, göz sayı normaldır
+- [ ] Konkret epizod/tarix iddiası varsa şəkil rəsmi mənbədəndir — generasiya deyil
+- [ ] Fayl adı və alt mətn şəklin əslində göstərdiyini deyir, "rəsmi kadr" iddiası etmir

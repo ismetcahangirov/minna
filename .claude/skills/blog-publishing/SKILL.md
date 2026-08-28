@@ -15,7 +15,7 @@ Hər postun üç sütunu var və heç biri buraxıla bilməz:
 | ------------- | ----------------------------------------------------------------------- |
 | **Araşdırma** | Mövzu Google-da bu həftə axtarılandır; rəqiblərin nə yazdığını bilirsən |
 | **Səs**       | İnsan kimi düşünən, yumorlu, fəlsəfi, emosional, öz fikri olan mətn     |
-| **Sübut**     | Hər fakt yoxlanılıb; hər şəkil realdır və heç nə uydurulmayıb           |
+| **Sübut**     | Hər fakt yoxlanılıb; hər şəkil real referans üzərində qurulub           |
 
 ## Hər Post ÜÇ Dildə Dərc Olunur
 
@@ -45,7 +45,7 @@ digraph publish {
     "GÖZLƏ — istifadəçidən soruş" [shape=box];
     "Trend + rəqib araşdırması" [shape=box];
     "Mətni yaz" [shape=box];
-    "Şəkilləri hazırla + imgbb" [shape=box];
+    "Referans topla → GPT ilə çək → imgbb" [shape=box];
     "Formanı doldur" [shape=box];
     "Dərc et, canlı URL-i yoxla" [shape=doublecircle];
 
@@ -55,8 +55,8 @@ digraph publish {
     "GÖZLƏ — istifadəçidən soruş" -> "İstifadəçi daxil olub?";
     "İstifadəçi daxil olub?" -> "Trend + rəqib araşdırması" [label="hə"];
     "Trend + rəqib araşdırması" -> "Mətni yaz";
-    "Mətni yaz" -> "Şəkilləri hazırla + imgbb";
-    "Şəkilləri hazırla + imgbb" -> "Formanı doldur";
+    "Mətni yaz" -> "Referans topla → GPT ilə çək → imgbb";
+    "Referans topla → GPT ilə çək → imgbb" -> "Formanı doldur";
     "Formanı doldur" -> "Dərc et, canlı URL-i yoxla";
     "Dərc et, canlı URL-i yoxla" -> "Üç dil də hazırdır?";
     "Üç dil də hazırdır?" [shape=diamond];
@@ -99,23 +99,27 @@ Başlıq səviyyələri: bədəndə `h1` YAZMA — səhifənin özü `h1`-dir. `
 
 ### 4. Şəkilləri hazırla
 
+**Postun bölmə şəkilləri ChatGPT ilə yaradılır — amma heç biri yaddaşdan çəkilmir: hər generasiyaya real referans şəkli əlavə olunur.**
+
 **Tam prosedur və qadağalar: `references/images.md`.** Qısası:
 
-1. Real rəsmi artwork topla (AniList CDN) — heç vaxt personaj generasiya etmə.
-2. Cover-i `assets/cover-template.html` ilə qur, Playwright ilə screenshot al.
-3. Atmosfer/metafora şəkli lazımdırsa — brauzerdən ChatGPT: `references/chatgpt-images.md`.
-4. **Şəkli `Read` ilə AÇ VƏ BAX** — yükləməzdən əvvəl gözünlə yoxla.
-5. `scripts/imgbb-upload.mjs` ilə imgbb-yə yüklə, dönən `i.ibb.co` URL-ini istifadə et.
+1. **Referans topla:** rəsmi artwork/portret üçün AniList CDN, səhnə/kadr üçün Google Şəkillər (`udm=2`). `.playwright-mcp/refs/` altına endir və `Read` ilə BAX — doğru personajdırmı?
+2. **Referansı ChatGPT söhbətinə əlavə et** (`browser_file_upload`), sonra promptu yaz: `references/chatgpt-images.md`. Bir söhbətdə bir personaj, maksimum 3 şəkil.
+3. Cover-i `assets/cover-template.html` ilə qur, Playwright ilə screenshot al (kompozisiya, generasiya yox).
+4. **Nəticəni `Read` ilə AÇ VƏ REFERANSLA TUTUŞDUR** — saç, göz, paltar uyğundurmu; mətn/deformasiya varmı.
+5. `scripts/imgbb-upload.mjs` ilə imgbb-yə yüklə, dönən `i.ibb.co` URL-ini istifadə et. Referans faylı yüklənmir.
 
 imgbb API açarı skriptin içindədir — heç kimdən istəmə.
 
 **Hansı şəkil haradan:**
 
-| Şəkil nə göstərir                | Mənbə                                  |
-| -------------------------------- | -------------------------------------- |
-| Konkret anime / personaj / səhnə | AniList rəsmi artwork — generasiya YOX |
-| Cover, Top 10 kartı, müqayisə    | HTML kompozisiya + screenshot          |
-| Atmosfer, metafora, ayırıcı      | ChatGPT (bir söhbətdə maks. 3 şəkil)   |
+| Şəkil nə göstərir                       | Mənbə                                         |
+| --------------------------------------- | --------------------------------------------- |
+| Bölmə şəkli — personaj, səhnə, əhval    | **ChatGPT + referans şəkli** (maks. 3/söhbət) |
+| Atmosfer, metafora, ayırıcı (insansız)  | ChatGPT, referanssız da olar                  |
+| Cover, Top 10 kartı, müqayisə           | HTML kompozisiya + screenshot                 |
+| Referans mənbəyi (posta getmir)         | AniList CDN → Google Şəkillər (`udm=2`)       |
+| Konkret epizod/tarix iddiası olan şəkil | Rəsmi mənbə — generasiya YOX                  |
 
 ### 5. Formanı doldur
 
@@ -146,18 +150,20 @@ Yoxlamadan "dərc olundu" demə.
 
 ## Mütləq Qadağalar
 
-| Qadağa                                              | Səbəb                                                            |
-| --------------------------------------------------- | ---------------------------------------------------------------- |
-| Uydurma anime personajı generasiya etmək            | Mövcud olmayan personaj = yalan məlumat. Yalnız rəsmi artwork.   |
-| AI ilə şəkil üzərində mətn yazdırmaq                | Generativ modellər hərfləri korlayır. Mətn HTML/CSS ilə yazılır. |
-| Şəklə baxmadan yükləmək                             | Məntiq xətaları (əl, say, kadr) yalnız baxanda görünür.          |
-| Bir ChatGPT söhbətində 3-dən çox şəkil              | Üslub donur, limit tükənir. Yeni söhbət aç.                      |
-| Yalnız bir dildə dərc edib dayanmaq                 | EN + TR + RU məcburidir. İkisi qalıbsa iş bitməyib.              |
-| TR/RU-nu `Translation of` seçmədən yaratmaq         | `hreflang` bağlanmır — üç yetim post qalır.                      |
-| Yoxlanmamış fakt (tarix, epizod sayı, studiya)      | AniList/rəsmi mənbədən təsdiqlə, yoxsa yazma.                    |
-| Emoji                                               | Layihə qaydası — yalnız SVG ikonlar.                             |
-| İstifadəçinin adından Google/ChatGPT-yə daxil olmaq | Parol onundur. Gözlə.                                            |
-| Yoxlamadan "hazırdır" demək                         | Canlı URL-i aç, gözünlə gör.                                     |
+| Qadağa                                                | Səbəb                                                            |
+| ----------------------------------------------------- | ---------------------------------------------------------------- |
+| Referans əlavə etmədən personaj generasiya etmək      | Model təxmin edir — oxucunun tanımadığı yad personaj çıxır.      |
+| Generasiyanı "rəsmi kadr/screenshot" kimi təqdim et   | Oxucunu aldadır. Epizod iddiası varsa rəsmi mənbə lazımdır.      |
+| Fan-art və ya watermark-lı şəkli referans vermək      | Model imzanı və üslub təhrifini də kopyalayır.                   |
+| AI ilə şəkil üzərində mətn yazdırmaq                  | Generativ modellər hərfləri korlayır. Mətn HTML/CSS ilə yazılır. |
+| Şəklə baxmadan (və referansla tutuşdurmadan) yükləmək | Uyğunsuzluq və məntiq xətaları yalnız yan-yana baxanda görünür.  |
+| Bir ChatGPT söhbətində 3-dən çox şəkil / 2 personaj   | Üslub donur, referanslar qarışır. Yeni söhbət aç.                |
+| Yalnız bir dildə dərc edib dayanmaq                   | EN + TR + RU məcburidir. İkisi qalıbsa iş bitməyib.              |
+| TR/RU-nu `Translation of` seçmədən yaratmaq           | `hreflang` bağlanmır — üç yetim post qalır.                      |
+| Yoxlanmamış fakt (tarix, epizod sayı, studiya)        | AniList/rəsmi mənbədən təsdiqlə, yoxsa yazma.                    |
+| Emoji                                                 | Layihə qaydası — yalnız SVG ikonlar.                             |
+| İstifadəçinin adından Google/ChatGPT-yə daxil olmaq   | Parol onundur. Gözlə.                                            |
+| Yoxlamadan "hazırdır" demək                           | Canlı URL-i aç, gözünlə gör.                                     |
 
 ## Tez-tez Rast Gəlinən Səhvlər
 
@@ -169,7 +175,9 @@ Yoxlamadan "dərc olundu" demə.
 
 **"Codex CLI şəkil çəkəcək"** — Çəkmir. Codex-in şəkil generasiya aləti yoxdur (`references/images.md`). Generasiya brauzerdən ChatGPT ilə aparılır.
 
-**"Top 10-un şəkillərini ChatGPT çəksin"** — Yox. Onda heç bir animeyə aid olmayan on şəkil alırsan. Konkret anime = rəsmi artwork; ChatGPT yalnız atmosfer üçündür.
+**"Top 10-un şəkillərini ChatGPT bir söhbətdə çəksin"** — Yox. Referanssız — heç bir animeyə aid olmayan on şəkil alırsan; hamısı bir söhbətdə — hamısı bir-birinə oxşayır. Hər bənd üçün **öz rəsmi referansı** tapılır, öz söhbətində çəkilir. Siyahı kartı və cover isə generasiya deyil, HTML kompozisiyadır.
+
+**"Referansı posta qoyum, hazır şəkildir"** — Yox. Referans generasiyanın girişidir; posta generasiya olunmuş şəkil gedir. İstisna: konkret epizod/kadr iddiası edən şəkil — o, rəsmi mənbədən getməlidir.
 
 ## Fayllar
 
@@ -178,7 +186,7 @@ Yoxlamadan "dərc olundu" demə.
 | `references/research.md`       | Trend axtarışı, rəqib analizi, açar söz seçimi       |
 | `references/voice.md`          | Redaksiya səsi, Top 10 strukturu, başlıq düsturları  |
 | `references/images.md`         | Şəkil boru xətti, imgbb açarı, qadağalar, DPR tələsi |
-| `references/chatgpt-images.md` | Brauzerdən ChatGPT ilə generasiya, 3-şəkil qaydası   |
+| `references/chatgpt-images.md` | Referans tapmaq, ChatGPT-yə əlavə etmək, generasiya  |
 | `references/publishing.md`     | Brauzer addımları, sahə xəritəsi, xəta mesajları     |
 | `assets/cover-template.html`   | 16:9 cover kompozisiya şablonu                       |
 | `scripts/imgbb-upload.mjs`     | `node ... <fayl-və-ya-URL> <ad>` → `i.ibb.co` URL-i  |
