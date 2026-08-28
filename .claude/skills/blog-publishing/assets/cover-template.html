@@ -141,24 +141,33 @@
 
       /*
        * Background mode: the page supplies the type, so this supplies only
-       * picture. The scrim goes flat rather than bottom-weighted, because text
-       * will sit over the whole frame rather than over one corner of it.
+       * picture — at full brightness, no scrim and no filter.
        *
-       * Dimming is split between the two so neither has to do it alone — a
-       * scrim dark enough by itself turns the artwork into a grey sheet, and
-       * brightness alone leaves bright patches where a poster is pale. Together
-       * they land near 29% of the source luminance: dark enough to read white
-       * text over, light enough that the posters are still pictures.
+       * DO NOT DIM ANYTHING HERE. Both surfaces that display this file already
+       * decide their own contrast, and neither wants help:
+       *
+       * - The post page paints the cover full-bleed behind its own title and
+       *   lays `bg-black/80` over it
+       *   (`src/app/[locale]/blogs/[slug]/page.tsx`). A cover pre-dimmed to 29%
+       *   then renders at roughly 6% of the source — effectively black.
+       * - The listing card draws the cover with no overlay at all
+       *   (`src/components/blog/blog-card.tsx` — the scrim was deliberately
+       *   removed there), so whatever is baked in is exactly what the reader
+       *   sees. Baked-in dimming only looks muddy.
+       *
+       * The artwork therefore ships bright and each surface darkens its own
+       * copy. The headline mode below still needs its scrim, because there the
+       * type sits on the image itself.
        */
       body.bare .text,
       body.bare .brand {
         display: none;
       }
       body.bare .scrim {
-        background: rgba(0, 0, 0, 0.55);
+        display: none;
       }
       body.bare .strip img {
-        filter: grayscale(0.3) brightness(0.65);
+        filter: none;
       }
     </style>
   </head>
