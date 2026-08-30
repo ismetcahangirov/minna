@@ -7,6 +7,7 @@ import { EpisodeList } from "@/components/anime/episode-list";
 import { WatchEpisodeList } from "@/components/anime/watch-episode-list";
 import { AdBanner } from "@/components/home/ad-banner";
 import { EpisodeReviews } from "@/components/community/episode-reviews";
+import { WatchEpisodeLabel } from "@/components/watch/watch-episode-label";
 import { WatchExperience } from "@/components/watch/watch-experience";
 import { permanentRedirect } from "@/i18n/navigation";
 import { resolveLocale } from "@/i18n/route-locale";
@@ -208,9 +209,15 @@ export default async function WatchPage({ params }: WatchRouteProps) {
           {detail.title}
         </h1>
         <p className="text-muted-foreground text-sm">
-          {current.title
-            ? `${t("episodeLabel", { number: current.number })} · ${current.title}`
-            : t("episodeLabel", { number: current.number })}
+          {/* The name streams in behind the number, so a cold title lookup
+              never holds up the player above it. */}
+          <Suspense fallback={t("episodeLabel", { number: current.number })}>
+            <WatchEpisodeLabel
+              animeId={detail.id}
+              episodeNumber={current.number}
+              title={current.title}
+            />
+          </Suspense>
         </p>
       </div>
 
