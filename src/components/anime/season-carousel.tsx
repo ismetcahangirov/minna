@@ -13,7 +13,7 @@ import {
 
 import { CurrentEpisodeBeam } from "@/components/anime/current-episode-beam";
 import { Link } from "@/i18n/navigation";
-import { episodeListHref } from "@/lib/anime/href";
+import { animeHref } from "@/lib/anime/href";
 import type { AnimeSeason } from "@/lib/anime/seasons";
 import { cn } from "@/lib/utils";
 
@@ -26,11 +26,7 @@ const PEEK_HOLD_MS = 450;
 
 interface SeasonCarouselProps {
   seasons: AnimeSeason[];
-  /**
-   * Path the cards select a season on — the anime detail page. The selected
-   * season rides along as `?season=`, so the list under the rail swaps without
-   * leaving the page.
-   */
+  /** This title's own canonical detail path — what the active card points at. */
   basePath: string;
   /** Id of the season whose episodes are listed under the rail. */
   activeId: string;
@@ -41,9 +37,11 @@ interface SeasonCarouselProps {
  * a horizontal slider rail with touch swipe, mouse drag, and side navigation
  * arrows matching the home page rows. On desktop (lg+), wraps neatly in a grid.
  *
- * The cards act as tabs over the episode list below them: picking one sets
- * `?season=` on the current page, which re-renders the list for that season
- * without moving the viewer off the detail page.
+ * Every card but the active one is a real link to that season's own detail
+ * page — each season is a distinct AniList entry with its own canonical URL,
+ * JSON-LD and heading, so this is what gives every season in the chain an
+ * internal link pointing at it instead of leaving it discoverable only
+ * through the sitemap.
  *
  * On first render (mobile/tablet only), performs a short peek nudge so the user
  * can see at a glance that there are more seasons to scroll through.
@@ -210,13 +208,13 @@ export function SeasonCarousel({
             return (
               <li key={season.id} className="w-28 shrink-0 snap-start sm:w-32">
                 <Link
-                  // The hash carries the viewer down to the list the card
-                  // opens — the section starts at this rail, so the cards stay
-                  // in view above it.
+                  // The hash carries the viewer down to the episode list on
+                  // whichever page this points at — its own for the active
+                  // card, the season's own detail page otherwise.
                   href={`${
                     season.isCurrent
                       ? basePath
-                      : episodeListHref(basePath, { season: season.id })
+                      : animeHref(season.id, season.title)
                   }#episodes`}
                   aria-current={isActive ? "true" : undefined}
                   className="group focus-visible:ring-ring block w-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
