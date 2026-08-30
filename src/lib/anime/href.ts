@@ -102,17 +102,31 @@ export function episodesPageCount(total: number): number {
 }
 
 /**
- * Builds an episodes-list URL for one page, sort order and search term. Page 1
- * of the unfiltered list in ascending order is the bare canonical path — a
- * param is only added when it changes what is rendered, so the default view
- * keeps exactly one URL.
+ * The URL state an episode list carries: which season of the chain is open,
+ * which page of it, in which order, filtered by which term. The detail page
+ * uses all four (its list is inline, under the season cards); the episodes
+ * route never sets `season`, since its season is the one in its path.
  */
-export function animeEpisodesPageHref(
-  id: string,
-  title: string | null | undefined,
-  options: { page?: number; descending?: boolean; query?: string | null } = {},
+export interface EpisodeListQuery {
+  /** Selected season's anime id — omitted for the page's own title. */
+  season?: string | null;
+  page?: number;
+  descending?: boolean;
+  query?: string | null;
+}
+
+/**
+ * Appends the episode-list state to `basePath` (an anime detail path, or an
+ * episodes-route path). A param is only added when it changes what is
+ * rendered, so the default view of any list keeps exactly one URL.
+ */
+export function episodeListHref(
+  basePath: string,
+  options: EpisodeListQuery = {},
 ): string {
   const params = new URLSearchParams();
+  const season = options.season?.trim();
+  if (season) params.set("season", season);
   const search = options.query?.trim();
   if (search) params.set("q", search);
   if (options.page && options.page > 1)
@@ -120,8 +134,32 @@ export function animeEpisodesPageHref(
   if (options.descending) params.set("order", "desc");
 
   const query = params.toString();
-  const base = animeEpisodesHref(id, title);
-  return query ? `${base}?${query}` : base;
+  return query ? `${basePath}?${query}` : basePath;
+}
+
+/**
+ * Builds an episodes-list URL for one page, sort order and search term. Page 1
+ * of the unfiltered list in ascending order is the bare canonical path.
+ */
+export function animeEpisodesPageHref(
+  id: string,
+  title: string | null | undefined,
+  options: EpisodeListQuery = {},
+): string {
+  return episodeListHref(animeEpisodesHref(id, title), options);
+}
+
+/**
+ * Reads the `?season=` param: the anime id of the season card the viewer
+ * opened, or `null` when absent or not an id. The value is only trusted after
+ * the caller has matched it against the title's own season chain.
+ */
+export function parseSeasonParam(
+  raw: string | string[] | undefined,
+): string | null {
+  if (typeof raw !== "string") return null;
+  const id = raw.trim();
+  return /^\d+$/.test(id) ? id : null;
 }
 
 /**
