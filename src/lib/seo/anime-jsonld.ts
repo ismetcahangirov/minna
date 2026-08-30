@@ -1,4 +1,3 @@
-import { animeHref } from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeDetail } from "@/lib/anime/types";
 import type { JsonLdData } from "@/components/seo/json-ld";
@@ -10,9 +9,17 @@ import { absoluteUrl } from "@/lib/seo/site";
  * result. `aggregateRating` is deliberately omitted — AniList gives an average
  * score but no reliable rating count, and rating markup without a count trips
  * Google's rich-result validator.
+ *
+ * @param canonicalPath The page's already-resolved canonical path (from
+ * `canonicalAnimeHref`) — never re-derived from the title here, so this can
+ * never disagree with the page's own `<link rel="canonical">`. See
+ * `@/lib/anime/canonical-slug` for why a title-derived slug is not enough.
  */
-export function buildAnimeJsonLd(detail: AnimeDetail): JsonLdData {
-  const url = absoluteUrl(animeHref(detail.id, detail.title));
+export function buildAnimeJsonLd(
+  detail: AnimeDetail,
+  canonicalPath: string,
+): JsonLdData {
+  const url = absoluteUrl(canonicalPath);
   const image = detail.banner ?? detail.image ?? undefined;
   const description = detail.description
     ? stripHtml(detail.description).slice(0, 500)

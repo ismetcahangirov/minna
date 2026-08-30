@@ -71,6 +71,7 @@
     "loginToFavorite": "Войдите, чтобы сохранить",
     "synopsis": "Описание",
     "episodes": "Эпизоды",
+    "episodesHeading": "{title}: эпизоды",
     "episodeLabel": "Эпизод {number}",
     "back": "Назад",
     "watched": "Просмотрено",

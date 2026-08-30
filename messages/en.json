@@ -71,6 +71,7 @@
     "loginToFavorite": "Log in to save",
     "synopsis": "Synopsis",
     "episodes": "Episodes",
+    "episodesHeading": "{title} Episodes",
     "episodeLabel": "Episode {number}",
     "back": "Back",
     "watched": "Watched",
