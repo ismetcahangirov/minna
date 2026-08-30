@@ -56,6 +56,14 @@ export type AdUnit = AdsterraUnit | HilltopUnit;
 export interface AdPlacement {
   desktop: AdUnit | null;
   mobile: AdUnit | null;
+  /**
+   * Stand-in for {@link desktop} when that unit renders nothing — a network
+   * that has no ad to serve leaves the reserved box empty, which reads as a
+   * hole in the page rather than as an absent ad. Same size as `desktop`, and
+   * only ever mounted after it has had its chance, so the primary unit keeps
+   * every impression it can actually fill.
+   */
+  desktopFallback: AdUnit | null;
 }
 
 /** The single Adsterra key every slot shared before per-placement units existed. */
@@ -84,6 +92,14 @@ const MOBILE_SIZE = { width: 300, height: 250 } as const;
 const ANIME_DESKTOP_UNIT: HilltopUnit = {
   network: "hilltopads",
   src: "https://relieved-understanding.com/bvXPVCsjd.GglZ0kY-W/cr/TePmB9OuHZ/UtlXkuPtTpcyzqN/jZc/zPMgjykbtSN/z/MU2iNDztMfzLMXwN",
+  ...DESKTOP_SIZE,
+};
+
+/** The shared Adsterra leaderboard, as a unit. */
+const LEGACY_DESKTOP_UNIT: AdsterraUnit = {
+  network: "adsterra",
+  key: LEGACY_KEY,
+  host: DEFAULT_HOST,
   ...DESKTOP_SIZE,
 };
 
@@ -152,6 +168,11 @@ function resolve(name: AdPlacementName): AdPlacement {
     return {
       desktop: ANIME_DESKTOP_UNIT,
       mobile: parseUnit(env.mobile, MOBILE_SIZE),
+      // The only placement served by a network that is not also the site's
+      // default: if it has nothing to serve, the slot would sit empty where an
+      // Adsterra leaderboard used to be. The other placements need no
+      // stand-in — they already are the default network.
+      desktopFallback: LEGACY_DESKTOP_UNIT,
     };
   }
 
@@ -162,16 +183,9 @@ function resolve(name: AdPlacementName): AdPlacement {
     // of its own: falling back to the legacy key would run the same unit twice
     // on one page and merge the two placements' numbers all over again.
     desktop:
-      desktop ??
-      (name === "watchSecondary"
-        ? null
-        : {
-            network: "adsterra",
-            key: LEGACY_KEY,
-            host: DEFAULT_HOST,
-            ...DESKTOP_SIZE,
-          }),
+      desktop ?? (name === "watchSecondary" ? null : LEGACY_DESKTOP_UNIT),
     mobile: parseUnit(env.mobile, MOBILE_SIZE),
+    desktopFallback: null,
   };
 }
 
