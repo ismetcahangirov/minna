@@ -163,6 +163,11 @@ export function HeroCarousel({
               isActive ? "opacity-100" : "opacity-0",
             )}
           >
+            {/* One element covers two of the three backdrops, so the poster is
+                fetched and preloaded once: sharp and full-bleed on phones,
+                and from `md` up the softly blurred backdrop behind the two
+                columns — the same artwork the right-hand block shows sharp.
+                Scaled past the frame so the blur has no soft edge to show. */}
             {portraitArtwork && (
               <Image
                 src={portraitArtwork}
@@ -171,7 +176,7 @@ export function HeroCarousel({
                 priority={index === 0}
                 quality={95}
                 sizes="100vw"
-                className="object-cover object-top sm:hidden"
+                className="object-cover object-top sm:hidden md:block md:scale-110 md:object-center md:blur-[3px]"
               />
             )}
             {bannerArtwork && (
@@ -182,9 +187,13 @@ export function HeroCarousel({
                 priority={index === 0}
                 quality={95}
                 sizes="100vw"
-                className="hidden object-cover object-top sm:block"
+                className="hidden object-cover object-top sm:block md:hidden"
               />
             )}
+            {/* From `md` up the layout is two columns, so the backdrop is faded
+                to black across the text side and left readable on the poster
+                side. Flat black over black — no colour, no blur pane. */}
+            <div className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(to_right,#000_0%,rgba(0,0,0,0.9)_38%,rgba(0,0,0,0.68)_70%,rgba(0,0,0,0.5)_100%)] md:block" />
             {/* Legibility scrim + seam — matched to the detail hero: a scrim
                 that ramps gradually to solid black at the bottom, plus a soft
                 shadow seam where the hero meets the sections below. */}
@@ -193,71 +202,98 @@ export function HeroCarousel({
 
             <div className="relative flex h-full flex-col justify-end">
               <div className="mx-auto w-full max-w-[1600px] px-4 pb-8 sm:px-6 sm:pb-12 lg:px-8 lg:pb-16">
-                <div className="max-w-2xl">
-                  {anime.genres.length > 0 && (
-                    <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">
-                      {anime.genres.slice(0, 3).map((genre) => (
-                        <span
-                          key={genre}
-                          className="border-border/80 text-foreground/90 border px-2 py-0.5 text-[11px] font-medium tracking-wide uppercase"
-                        >
-                          {genre}
+                {/* Below `md` this is a plain block and the text keeps the hero
+                    to itself, exactly as before; from `md` up it becomes the
+                    left column of a row whose right column is the poster. */}
+                <div className="md:flex md:items-end md:justify-between md:gap-10">
+                  <div className="max-w-2xl md:min-w-0">
+                    {anime.genres.length > 0 && (
+                      <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">
+                        {anime.genres.slice(0, 3).map((genre) => (
+                          <span
+                            key={genre}
+                            className="border-border/80 text-foreground/90 border px-2 py-0.5 text-[11px] font-medium tracking-wide uppercase"
+                          >
+                            {genre}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <h1 className="text-foreground text-2xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+                      {anime.title}
+                    </h1>
+
+                    <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:mt-3 sm:text-sm">
+                      {score && (
+                        <span className="text-foreground inline-flex items-center gap-1 font-semibold">
+                          <Star
+                            className="text-primary size-4 fill-current"
+                            aria-hidden
+                          />
+                          {score}
                         </span>
-                      ))}
+                      )}
+                      {anime.releaseYear && <span>{anime.releaseYear}</span>}
+                      {anime.type && <span>{anime.type}</span>}
+                      {anime.totalEpisodes && (
+                        <span>{anime.totalEpisodes} ep</span>
+                      )}
                     </div>
-                  )}
 
-                  <h1 className="text-foreground text-2xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-                    {anime.title}
-                  </h1>
+                    {anime.description && (
+                      <p className="text-muted-foreground mt-3 line-clamp-2 text-xs leading-relaxed sm:mt-4 sm:line-clamp-3 sm:text-sm">
+                        {stripHtml(anime.description)}
+                      </p>
+                    )}
 
-                  <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:mt-3 sm:text-sm">
-                    {score && (
-                      <span className="text-foreground inline-flex items-center gap-1 font-semibold">
-                        <Star
-                          className="text-primary size-4 fill-current"
+                    <div className="mt-4 flex flex-wrap gap-2.5 sm:mt-6 sm:gap-3">
+                      <Button
+                        size="default"
+                        className="sm:h-11 sm:px-8 sm:text-base"
+                        nativeButton={false}
+                        render={
+                          <Link href={animeHref(anime.id, anime.title)} />
+                        }
+                      >
+                        <Play
+                          className="size-4 fill-current sm:size-5"
                           aria-hidden
                         />
-                        {score}
-                      </span>
-                    )}
-                    {anime.releaseYear && <span>{anime.releaseYear}</span>}
-                    {anime.type && <span>{anime.type}</span>}
-                    {anime.totalEpisodes && (
-                      <span>{anime.totalEpisodes} ep</span>
-                    )}
+                        {t("watchNow")}
+                      </Button>
+                      <Button
+                        size="default"
+                        variant="outline"
+                        className="sm:h-11 sm:px-8 sm:text-base"
+                        nativeButton={false}
+                        render={
+                          <Link href={animeHref(anime.id, anime.title)} />
+                        }
+                      >
+                        <Info className="size-4 sm:size-5" aria-hidden />
+                        {t("moreInfo")}
+                      </Button>
+                    </div>
                   </div>
 
-                  {anime.description && (
-                    <p className="text-muted-foreground mt-3 line-clamp-2 text-xs leading-relaxed sm:mt-4 sm:line-clamp-3 sm:text-sm">
-                      {stripHtml(anime.description)}
-                    </p>
-                  )}
-
-                  <div className="mt-4 flex flex-wrap gap-2.5 sm:mt-6 sm:gap-3">
-                    <Button
-                      size="default"
-                      className="sm:h-11 sm:px-8 sm:text-base"
-                      nativeButton={false}
-                      render={<Link href={animeHref(anime.id, anime.title)} />}
-                    >
-                      <Play
-                        className="size-4 fill-current sm:size-5"
-                        aria-hidden
+                  {/* Right column: the same artwork the backdrop carries, shown
+                    sharp beside the copy, at the 2:3 the art is drawn at.
+                    Phones and small tablets do without it — the hero is already
+                    the poster there. The widths are a poster's 176/224px grown
+                    15%. */}
+                  {portraitArtwork && (
+                    <div className="border-border bg-surface relative hidden aspect-[2/3] w-[202px] shrink-0 overflow-hidden border md:block lg:w-[258px]">
+                      <Image
+                        src={portraitArtwork}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1024px) 258px, 202px"
+                        quality={95}
+                        className="object-cover"
                       />
-                      {t("watchNow")}
-                    </Button>
-                    <Button
-                      size="default"
-                      variant="outline"
-                      className="sm:h-11 sm:px-8 sm:text-base"
-                      nativeButton={false}
-                      render={<Link href={animeHref(anime.id, anime.title)} />}
-                    >
-                      <Info className="size-4 sm:size-5" aria-hidden />
-                      {t("moreInfo")}
-                    </Button>
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
