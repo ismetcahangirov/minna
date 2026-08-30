@@ -71,6 +71,7 @@
     "loginToFavorite": "Kaydetmek için giriş yap",
     "synopsis": "Özet",
     "episodes": "Bölümler",
+    "episodesHeading": "{title} Bölümleri",
     "episodeLabel": "{number}. Bölüm",
     "back": "Geri",
     "watched": "İzlendi",

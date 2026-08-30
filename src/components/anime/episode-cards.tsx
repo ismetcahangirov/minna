@@ -80,7 +80,7 @@ export async function EpisodeCards({
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-foreground text-lg font-bold tracking-tight sm:text-xl">
-            {t("episodes")}
+            {t("episodesHeading", { title: animeTitle })}
             <span className="text-muted-foreground ml-2 text-sm font-normal">
               {query ? `${matchCount} / ${totalEpisodes}` : totalEpisodes}
             </span>
