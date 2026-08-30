@@ -11,9 +11,8 @@ import {
   useState,
 } from "react";
 
-import { TapHint } from "@/components/anime/tap-hint";
 import { Link } from "@/i18n/navigation";
-import { animeEpisodesHref } from "@/lib/anime/href";
+import { episodeListHref } from "@/lib/anime/href";
 import type { AnimeSeason } from "@/lib/anime/seasons";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +25,14 @@ const PEEK_HOLD_MS = 450;
 
 interface SeasonCarouselProps {
   seasons: AnimeSeason[];
+  /**
+   * Path the cards select a season on — the anime detail page. The selected
+   * season rides along as `?season=`, so the list under the rail swaps without
+   * leaving the page.
+   */
+  basePath: string;
+  /** Id of the season whose episodes are listed under the rail. */
+  activeId: string;
 }
 
 /**
@@ -33,10 +40,18 @@ interface SeasonCarouselProps {
  * a horizontal slider rail with touch swipe, mouse drag, and side navigation
  * arrows matching the home page rows. On desktop (lg+), wraps neatly in a grid.
  *
+ * The cards act as tabs over the episode list below them: picking one sets
+ * `?season=` on the current page, which re-renders the list for that season
+ * without moving the viewer off the detail page.
+ *
  * On first render (mobile/tablet only), performs a short peek nudge so the user
  * can see at a glance that there are more seasons to scroll through.
  */
-export function SeasonCarousel({ seasons }: SeasonCarouselProps) {
+export function SeasonCarousel({
+  seasons,
+  basePath,
+  activeId,
+}: SeasonCarouselProps) {
   const t = useTranslations("detail.seasons");
   const tHome = useTranslations("home.carousel");
 
@@ -189,62 +204,61 @@ export function SeasonCarousel({ seasons }: SeasonCarouselProps) {
           onPointerLeave={endDrag}
           onClickCapture={onClickCapture}
         >
-          {seasons.map((season, index) => (
-            <li key={season.id} className="w-28 shrink-0 snap-start sm:w-32">
-              <Link
-                href={animeEpisodesHref(season.id, season.title)}
-                aria-current={season.isCurrent ? "page" : undefined}
-                className="group focus-visible:ring-ring block w-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-              >
-                <div
-                  className={cn(
-                    "bg-surface relative aspect-[2/3] overflow-hidden border transition-colors",
+          {seasons.map((season) => {
+            const isActive = season.id === activeId;
+            return (
+              <li key={season.id} className="w-28 shrink-0 snap-start sm:w-32">
+                <Link
+                  href={
                     season.isCurrent
-                      ? "border-primary"
-                      : "border-border group-hover:border-primary/60",
-                  )}
+                      ? basePath
+                      : episodeListHref(basePath, { season: season.id })
+                  }
+                  scroll={false}
+                  aria-current={isActive ? "true" : undefined}
+                  className="group focus-visible:ring-ring block w-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
-                  {season.image ? (
-                    <Image
-                      src={season.image}
-                      alt=""
-                      fill
-                      sizes="128px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="text-muted-foreground flex h-full w-full items-center justify-center">
-                      <Film className="size-6" aria-hidden />
-                    </div>
-                  )}
-
-                  {/* The same looping tap the standalone-title episodes button
-                      carries, on the first poster only: the rail reads as
-                      artwork rather than as a control, so one card has to say
-                      it is tappable. Sits in the bottom-right corner, clear of
-                      the "current season" border and of the label below. */}
-                  {index === 0 && (
-                    <TapHint className="right-1 bottom-1 text-white/90" />
-                  )}
-                </div>
-                <span
-                  className={cn(
-                    "mt-1.5 block text-xs font-semibold whitespace-nowrap",
-                    season.isCurrent
-                      ? "text-primary"
-                      : "text-foreground group-hover:text-primary",
-                  )}
-                >
-                  {labelFor(season)}
-                </span>
-                {season.episodeCount !== null && (
-                  <span className="text-muted-foreground block text-[11px] whitespace-nowrap">
-                    {t("episodes", { count: season.episodeCount })}
+                  <div
+                    className={cn(
+                      "bg-surface relative aspect-[2/3] overflow-hidden border transition-colors",
+                      isActive
+                        ? "border-primary"
+                        : "border-border group-hover:border-primary/60",
+                    )}
+                  >
+                    {season.image ? (
+                      <Image
+                        src={season.image}
+                        alt=""
+                        fill
+                        sizes="128px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="text-muted-foreground flex h-full w-full items-center justify-center">
+                        <Film className="size-6" aria-hidden />
+                      </div>
+                    )}
+                  </div>
+                  <span
+                    className={cn(
+                      "mt-1.5 block text-xs font-semibold whitespace-nowrap",
+                      isActive
+                        ? "text-primary"
+                        : "text-foreground group-hover:text-primary",
+                    )}
+                  >
+                    {labelFor(season)}
                   </span>
-                )}
-              </Link>
-            </li>
-          ))}
+                  {season.episodeCount !== null && (
+                    <span className="text-muted-foreground block text-[11px] whitespace-nowrap">
+                      {t("episodes", { count: season.episodeCount })}
+                    </span>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
         {/* Right-edge gradient fade — indicates more seasons to the right. */}

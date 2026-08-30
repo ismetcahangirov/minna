@@ -6,7 +6,7 @@ import { EpisodePagination } from "@/components/anime/episode-pagination";
 import { EpisodeSearch } from "@/components/anime/episode-search";
 import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
-import { animeEpisodesPageHref, watchHref } from "@/lib/anime/href";
+import { episodeListHref, watchHref } from "@/lib/anime/href";
 import type { AnimeEpisode } from "@/lib/anime/types";
 import { cn } from "@/lib/utils";
 
@@ -14,9 +14,17 @@ import { cn } from "@/lib/utils";
 type WatchState = { completed: boolean; progress: number };
 
 interface EpisodeCardsProps {
+  /** Id of the title these episodes belong to — the watch URL resolves it. */
   animeId: string;
   /** Anime title — slugged into the readable watch URL. */
   animeTitle: string;
+  /**
+   * Path the sort, search and pagination controls point back at: the anime
+   * detail page for the inline list, the episodes route for the standalone one.
+   */
+  basePath: string;
+  /** Season id to keep in those links, when the list is not the page's own. */
+  season?: string | null;
   /** The episodes of the current page only, already in display order. */
   episodes: AnimeEpisode[];
   /** Episodes in the whole series (the heading count, not the page's). */
@@ -49,6 +57,8 @@ interface EpisodeCardsProps {
 export async function EpisodeCards({
   animeId,
   animeTitle,
+  basePath,
+  season = null,
   episodes,
   totalEpisodes,
   matchCount,
@@ -79,7 +89,8 @@ export async function EpisodeCards({
             // Sorting is a URL state like the page is, so the order survives a
             // reload and pagination always slices the list the viewer sees.
             <Link
-              href={animeEpisodesPageHref(animeId, animeTitle, {
+              href={episodeListHref(basePath, {
+                season,
                 descending: !descending,
                 query,
               })}
@@ -93,8 +104,8 @@ export async function EpisodeCards({
         </div>
         {totalEpisodes > 1 && (
           <EpisodeSearch
-            animeId={animeId}
-            animeTitle={animeTitle}
+            basePath={basePath}
+            season={season}
             query={query}
             descending={descending}
           />
@@ -194,8 +205,8 @@ export async function EpisodeCards({
       </ul>
 
       <EpisodePagination
-        animeId={animeId}
-        animeTitle={animeTitle}
+        basePath={basePath}
+        season={season}
         page={page}
         totalPages={totalPages}
         descending={descending}
