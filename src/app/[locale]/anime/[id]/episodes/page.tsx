@@ -45,43 +45,27 @@ interface EpisodesRouteProps {
 }
 
 /**
- * SEO metadata for the episodes list. Each page self-canonicalises to its own
- * `?page=` URL so paginated pages are indexed as distinct pages rather than
- * duplicates of the first; the reversed listing is the same content in another
- * order, so it is marked `noindex, follow` instead.
+ * SEO metadata for the episodes list. Every view of this route — any page,
+ * order or filter — canonicalises to the anime detail page, which renders the
+ * same list inline under the season cards. That is where the list lives now and
+ * where every internal link points, so pointing these URLs at it consolidates
+ * the two onto one address instead of leaving Search Console to pick between a
+ * page and its duplicate.
  */
 export async function generateMetadata({
   params,
   searchParams,
 }: EpisodesRouteProps): Promise<Metadata> {
   const locale = await resolveLocale(params);
-  const [{ id }, { page: pageParam, order, q }] = await Promise.all([
+  const [{ id }, { page: pageParam }] = await Promise.all([
     params,
     searchParams,
   ]);
   const detail = await getAnimeInfo(parseAnimeParam(id));
   if (!detail) return { title: "Anime not found — Minna" };
 
-  const descending = isDescending(order);
-  const query = parseEpisodesQueryParam(q);
   const totalPages = episodesPageCount(detail.episodes.length);
   const page = resolvePage(parseEpisodesPageParam(pageParam), totalPages);
-
-  const description = `Watch every episode of ${detail.title} on Minna.`;
-
-  // A filtered list is a view of the full one, not a page of its own: point it
-  // at the unfiltered list and keep it out of the index.
-  if (query) {
-    return {
-      title: `${detail.title} — Episodes — Minna`,
-      description,
-      alternates: localeAlternates(
-        await canonicalAnimeEpisodesHref(detail.id, detail.title),
-        locale,
-      ),
-      robots: { index: false, follow: true },
-    };
-  }
 
   const title =
     page > 1
@@ -90,12 +74,11 @@ export async function generateMetadata({
 
   return {
     title,
-    description,
+    description: `Watch every episode of ${detail.title} on Minna.`,
     alternates: localeAlternates(
-      await canonicalAnimeEpisodesHref(detail.id, detail.title, { page }),
+      await canonicalAnimeHref(detail.id, detail.title),
       locale,
     ),
-    ...(descending ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
