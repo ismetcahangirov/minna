@@ -11,6 +11,19 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "11mb" },
   },
   images: {
+    // Artwork is served straight from its own CDN rather than through Vercel's
+    // optimizer, which bills a transformation per (source, width, quality) and
+    // began answering 402 once the allowance ran out — see
+    // `@/lib/images/loader` for the whole story. Everything below except
+    // `deviceSizes`/`imageSizes` is inert while this loader is in place, and is
+    // kept so that removing these two lines restores the optimizer intact.
+    loader: "custom",
+    loaderFile: "./src/lib/images/loader.ts",
+    // The widths a srcset may offer. Trimmed from Next's defaults (which reach
+    // 3840) because the loader resolves them to one of two stored sizes: extra
+    // candidates buy nothing and every image carries them in its markup.
+    deviceSizes: [320, 640, 1080, 1920],
+    imageSizes: [64, 128, 256],
     // Artwork hosts for next/image optimization (HOME-06/07): the AniList CDN
     // for the primary provider, and Kitsu's for the standby one. An unlisted
     // host makes the optimizer answer 400, so every poster renders broken while

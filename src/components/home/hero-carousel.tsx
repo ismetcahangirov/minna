@@ -174,7 +174,7 @@ export function HeroCarousel({
                 alt=""
                 fill
                 priority={index === 0}
-                quality={95}
+                quality={90}
                 sizes="100vw"
                 className="object-cover object-top sm:hidden md:block md:scale-110 md:object-center md:blur-[3px]"
               />
@@ -185,7 +185,7 @@ export function HeroCarousel({
                 alt=""
                 fill
                 priority={index === 0}
-                quality={95}
+                quality={90}
                 sizes="100vw"
                 className="hidden object-cover object-top sm:block md:hidden"
               />
@@ -289,7 +289,7 @@ export function HeroCarousel({
                         alt=""
                         fill
                         sizes="(min-width: 1024px) 258px, 202px"
-                        quality={95}
+                        quality={90}
                         className="object-cover"
                       />
                     </div>
