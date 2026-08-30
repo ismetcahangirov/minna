@@ -4,12 +4,14 @@ import { useEffect, useRef, useState } from "react";
 
 import { EpisodeSearchField } from "@/components/anime/episode-search-field";
 import { useRouter } from "@/i18n/navigation";
-import { animeEpisodesPageHref } from "@/lib/anime/href";
+import { episodeListHref } from "@/lib/anime/href";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 
 interface EpisodeSearchProps {
-  animeId: string;
-  animeTitle: string;
+  /** Path the list lives under — the detail page, or the episodes route. */
+  basePath: string;
+  /** Selected season id, kept in the URL so a search stays in that season. */
+  season?: string | null;
   /** The `?q=` currently rendered by the server (empty when unfiltered). */
   query: string;
   /** Kept across searches so the sort order is not silently reset. */
@@ -26,8 +28,8 @@ interface EpisodeSearchProps {
  * would have pushed.
  */
 export function EpisodeSearch({
-  animeId,
-  animeTitle,
+  basePath,
+  season = null,
   query,
   descending,
 }: EpisodeSearchProps) {
@@ -44,20 +46,18 @@ export function EpisodeSearch({
     if (debounced === navigatedTo.current) return;
     navigatedTo.current = debounced;
     router.replace(
-      animeEpisodesPageHref(animeId, animeTitle, {
+      episodeListHref(basePath, {
+        season,
         query: debounced,
         descending,
       }),
       { scroll: false },
     );
-  }, [debounced, animeId, animeTitle, descending, router]);
+  }, [debounced, basePath, season, descending, router]);
 
   return (
-    <form
-      action={animeEpisodesPageHref(animeId, animeTitle)}
-      role="search"
-      className="w-full sm:max-w-sm"
-    >
+    <form action={basePath} role="search" className="w-full sm:max-w-sm">
+      {season && <input type="hidden" name="season" value={season} />}
       {descending && <input type="hidden" name="order" value="desc" />}
       <EpisodeSearchField name="q" value={input} onValueChange={setInput} />
     </form>

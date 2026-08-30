@@ -9,6 +9,11 @@ import { SeasonSwitcher } from "@/components/anime/season-tabs";
 import { Link, permanentRedirect, redirect } from "@/i18n/navigation";
 import { resolveLocale } from "@/i18n/route-locale";
 import { getAnimeInfo } from "@/lib/anime/detail";
+import {
+  isDescending,
+  pageSlice,
+  resolvePage,
+} from "@/lib/anime/episode-listing";
 import { filterEpisodes } from "@/lib/anime/episode-search";
 import {
   getEpisodeTitles,
@@ -20,14 +25,13 @@ import {
   canonicalAnimeHref,
 } from "@/lib/anime/canonical-slug";
 import {
-  EPISODES_PAGE_SIZE,
+  animeEpisodesHref,
   episodesPageCount,
   parseAnimeParam,
   parseEpisodesPageParam,
   parseEpisodesQueryParam,
 } from "@/lib/anime/href";
 import { getCurrentUser } from "@/lib/auth/session";
-import type { AnimeEpisode } from "@/lib/anime/types";
 import { localeAlternates } from "@/lib/seo/locale-alternates";
 import { getAnimeWatchStates } from "@/lib/watch/queries";
 
@@ -38,44 +42,6 @@ interface EpisodesRouteProps {
     order?: string | string[];
     q?: string | string[];
   }>;
-}
-
-/**
- * The page actually rendered for a requested page number: the first page when
- * the request is invalid (`null`) or points past the end, matching the redirect
- * the route issues for those URLs so the canonical tag never disagrees with it.
- */
-function resolvePage(requested: number | null, totalPages: number): number {
-  if (requested === null || requested < 1 || requested > totalPages) return 1;
-  return requested;
-}
-
-/** True when the `?order=` param asks for the newest-first listing. */
-function isDescending(order: string | string[] | undefined): boolean {
-  return order === "desc";
-}
-
-/**
- * The episodes rendered on `page`, in display order, together with the range of
- * episode numbers they cover (used to fetch just that window's titles).
- */
-function pageSlice(
-  episodes: AnimeEpisode[],
-  page: number,
-  descending: boolean,
-): { slice: AnimeEpisode[]; from: number; to: number } {
-  const ordered = [...episodes].sort((a, b) => a.number - b.number);
-  if (descending) ordered.reverse();
-
-  const start = (page - 1) * EPISODES_PAGE_SIZE;
-  const slice = ordered.slice(start, start + EPISODES_PAGE_SIZE);
-  const numbers = slice.map((episode) => episode.number);
-
-  return {
-    slice,
-    from: numbers.length ? Math.min(...numbers) : 0,
-    to: numbers.length ? Math.max(...numbers) : 0,
-  };
 }
 
 /**
@@ -134,11 +100,13 @@ export async function generateMetadata({
 }
 
 /**
- * Episodes list page (`/anime/[id]/episodes`). Reached from a season poster
- * card or the detail page's watch button.
+ * Episodes list page (`/anime/[id]/episodes`). Nothing in the UI links here any
+ * more — the same list is rendered inline on the detail page, under the season
+ * cards — but the route is kept so its URLs, which search engines have indexed,
+ * keep resolving.
  *
  * Server-rendered for SEO, including pagination: series longer than
- * {@link EPISODES_PAGE_SIZE} split into `?page=N` pages, and the sort order
+ * `EPISODES_PAGE_SIZE` split into `?page=N` pages, and the sort order
  * rides along as `?order=desc`, so every view has its own crawlable URL. Only
  * the current page's episode titles are fetched (see `@/lib/anime/episode-titles`).
  */
@@ -234,21 +202,28 @@ export default async function AnimeEpisodesPage({
         </h1>
 
         <div className="mt-8 flex flex-col gap-10">
-          <SeasonSwitcher detail={detail} />
-          <AdBanner placement="episodes" />
-          <EpisodeCards
-            animeId={detail.id}
-            animeTitle={detail.title}
-            episodes={withEpisodeTitles(slice, titles)}
-            totalEpisodes={detail.episodes.length}
-            matchCount={matched.length}
-            query={query ?? ""}
-            thumbnail={detail.banner ?? detail.image}
-            watchStates={watchStates}
-            page={page}
-            totalPages={totalPages}
-            descending={descending}
+          <SeasonSwitcher
+            detail={detail}
+            basePath={detailHref}
+            activeSeasonId={detail.id}
           />
+          <AdBanner placement="episodes" />
+          <section id="episodes" className="scroll-mt-20">
+            <EpisodeCards
+              animeId={detail.id}
+              animeTitle={detail.title}
+              basePath={animeEpisodesHref(detail.id, detail.title)}
+              episodes={withEpisodeTitles(slice, titles)}
+              totalEpisodes={detail.episodes.length}
+              matchCount={matched.length}
+              query={query ?? ""}
+              thumbnail={detail.banner ?? detail.image}
+              watchStates={watchStates}
+              page={page}
+              totalPages={totalPages}
+              descending={descending}
+            />
+          </section>
         </div>
       </div>
     </main>

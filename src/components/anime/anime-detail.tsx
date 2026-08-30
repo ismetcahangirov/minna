@@ -1,10 +1,14 @@
 import { Calendar, Film, Layers, Play, Star, Tv } from "lucide-react";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 
 import { FavoriteButton } from "@/components/anime/favorite-button";
 import { DetailBanner } from "@/components/anime/detail-banner";
+import {
+  DetailEpisodes,
+  DetailEpisodesSkeleton,
+} from "@/components/anime/detail-episodes";
 import { HeroInitialScroll } from "@/components/anime/hero-initial-scroll";
 import { SeasonSwitcher } from "@/components/anime/season-tabs";
 import { AdBanner } from "@/components/home/ad-banner";
@@ -12,8 +16,6 @@ import { LibraryProgressBar } from "@/components/library/progress-bar";
 import { LibraryStatusMenu } from "@/components/library/status-menu";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
-import { animeEpisodesHref } from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeDetail } from "@/lib/anime/types";
 import type { LibraryEntry } from "@/lib/library/types";
@@ -27,6 +29,16 @@ interface AnimeDetailViewProps {
   libraryEntry: LibraryEntry | null;
   /** Login flow target for the favorite button when signed out. */
   loginHref: string;
+  /** Canonical detail path — the episode list's own links point back at it. */
+  basePath: string;
+  /** `?season=` — which season card is open, unverified against the chain. */
+  season: string | null;
+  /** `?page=` of the episode list, or null when the value was junk. */
+  page: number | null;
+  /** `?order=desc` — the episode list is newest-first. */
+  descending: boolean;
+  /** `?q=` — the episode list's active filter. */
+  query: string | null;
 }
 
 /** One label/value row in the side info panel; renders nothing when empty. */
@@ -59,6 +71,11 @@ export async function AnimeDetailView({
   isFavorite,
   libraryEntry,
   loginHref,
+  basePath,
+  season,
+  page,
+  descending,
+  query,
 }: AnimeDetailViewProps) {
   const t = await getTranslations("detail");
   const tLibrary = await getTranslations("library");
@@ -172,12 +189,12 @@ export async function AnimeDetailView({
 
               <div className="mt-6 flex flex-wrap gap-3">
                 {hasEpisodes && (
+                  // The episode list is on this page now, so the button jumps
+                  // down to it instead of navigating anywhere.
                   <Button
                     size="lg"
                     nativeButton={false}
-                    render={
-                      <Link href={animeEpisodesHref(detail.id, detail.title)} />
-                    }
+                    render={<a href="#episodes" />}
                   >
                     <Play className="fill-current" aria-hidden />
                     {t("watchNow")}
@@ -243,8 +260,6 @@ export async function AnimeDetailView({
                 </p>
               </section>
             )}
-
-            <SeasonSwitcher detail={detail} />
           </div>
 
           <aside className="md:col-span-1">
@@ -280,6 +295,30 @@ export async function AnimeDetailView({
             </dl>
           </aside>
         </div>
+
+        {/* Seasons and the episodes of whichever one is open. Full width, so
+            the cards read exactly as they do on the episodes route, and one
+            anchor for the hero's watch button to jump to. */}
+        <section
+          id="episodes"
+          className="mt-10 flex scroll-mt-20 flex-col gap-10"
+        >
+          <SeasonSwitcher
+            detail={detail}
+            basePath={basePath}
+            activeSeasonId={season}
+          />
+          <Suspense fallback={<DetailEpisodesSkeleton />}>
+            <DetailEpisodes
+              detail={detail}
+              basePath={basePath}
+              season={season}
+              page={page}
+              descending={descending}
+              query={query}
+            />
+          </Suspense>
+        </section>
 
         <AdBanner placement="anime" className="mt-10" />
       </div>

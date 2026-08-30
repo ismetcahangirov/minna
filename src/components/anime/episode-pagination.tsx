@@ -2,12 +2,14 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
-import { animeEpisodesPageHref } from "@/lib/anime/href";
+import { episodeListHref } from "@/lib/anime/href";
 import { cn } from "@/lib/utils";
 
 interface EpisodePaginationProps {
-  animeId: string;
-  animeTitle: string;
+  /** Path the list lives under — the detail page, or the episodes route. */
+  basePath: string;
+  /** Selected season id, carried into every page link. */
+  season?: string | null;
   /** 1-based page currently rendered. */
   page: number;
   totalPages: number;
@@ -50,8 +52,8 @@ const LINK_BASE =
  * crawlable, linkable and survive a reload — no client state involved.
  */
 export async function EpisodePagination({
-  animeId,
-  animeTitle,
+  basePath,
+  season = null,
   page,
   totalPages,
   descending,
@@ -60,12 +62,15 @@ export async function EpisodePagination({
   if (totalPages <= 1) return null;
 
   const t = await getTranslations("detail.pagination");
+  // The hash keeps a page change landing on the list itself rather than at the
+  // top of the page, which on the detail page is the hero.
   const href = (target: number) =>
-    animeEpisodesPageHref(animeId, animeTitle, {
+    `${episodeListHref(basePath, {
+      season,
       page: target,
       descending,
       query,
-    });
+    })}#episodes`;
 
   return (
     <nav
