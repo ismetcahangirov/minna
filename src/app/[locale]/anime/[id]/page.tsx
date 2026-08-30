@@ -5,7 +5,7 @@ import { AnimeDetailView } from "@/components/anime/anime-detail";
 import { permanentRedirect } from "@/i18n/navigation";
 import { resolveLocale } from "@/i18n/route-locale";
 import { getAnimeInfo } from "@/lib/anime/detail";
-import { canonicalAnimeHref } from "@/lib/anime/canonical-slug";
+import { canonicalSeasonAwareHref } from "@/lib/anime/seasons";
 import { isDescending } from "@/lib/anime/episode-listing";
 import {
   episodeListHref,
@@ -65,7 +65,7 @@ export async function generateMetadata({
     title,
     description,
     alternates: localeAlternates(
-      await canonicalAnimeHref(detail.id, detail.title),
+      await canonicalSeasonAwareHref(detail),
       locale,
     ),
     openGraph: {
@@ -113,7 +113,7 @@ export default async function AnimeDetailPage({
   // `canonicalAnimePath` in `src/proxy.ts`); this is the standby for the one
   // case the proxy cannot cover — an id nothing has claimed a slug for yet —
   // and degrades to the client-side redirect Next emits mid-stream.
-  const canonical = await canonicalAnimeHref(detail.id, detail.title);
+  const canonical = await canonicalSeasonAwareHref(detail);
   if (`/anime/${id}` !== canonical) {
     permanentRedirect({
       href: episodeListHref(canonical, {

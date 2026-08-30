@@ -37,16 +37,21 @@ import {
   animeEpisodesPageHref,
   animeHref,
   animeSlug,
+  seasonSlug,
   watchHref,
+  type SeasonSlugKind,
 } from "@/lib/anime/href";
 import { getRedis } from "@/lib/cache/redis-client";
 
 /**
- * Bump to invalidate every stored slug at once — i.e. when {@link animeSlug} or
- * `slugifyTitle` changes shape, since existing entries would then disagree with
- * freshly derived ones.
+ * Bump to invalidate every stored slug at once — i.e. when {@link animeSlug},
+ * {@link seasonSlug} or `slugifyTitle` changes shape, since existing entries
+ * would then disagree with freshly derived ones. v2 added the season-chain
+ * suffix (`-season-2`, `-movie-1`, …) `canonicalSeasonSlugs` claims; v3 fixed
+ * it double-appending on titles that already spell the season out
+ * ("…-special-1-special-1").
  */
-const SLUG_CACHE_VERSION = "v1";
+const SLUG_CACHE_VERSION = "v3";
 
 /** 30 days, refreshed on read. See "Stability" above. */
 const SLUG_TTL = 60 * 60 * 24 * 30;
@@ -106,13 +111,56 @@ export async function canonicalSlug(
   id: string,
   title: string | null | undefined,
 ): Promise<string> {
-  const derived = animeSlug(id, title);
+  return resolveSlug(id, animeSlug(id, title));
+}
 
+/**
+ * Reads the stored slug for `id`, claiming `candidate` when nothing holds it
+ * yet. The shared read-then-claim step behind {@link canonicalSlug} (candidate
+ * derived from a bare title) and {@link canonicalSeasonSlugs} (candidate
+ * carries a season suffix), so both agree on what "already claimed" means.
+ */
+async function resolveSlug(id: string, candidate: string): Promise<string> {
   const stored = await readCanonicalSlug(id);
   if (stored) return stored;
 
-  await claimSlug(id, derived);
-  return derived;
+  await claimSlug(id, candidate);
+  return candidate;
+}
+
+/**
+ * Claims/reads canonical slugs for every member of a resolved season chain at
+ * once, each carrying its own `-{kind}-{index}` suffix ({@link seasonSlug}).
+ *
+ * Visiting any single page in a franchise is what gives its *siblings* a
+ * distinguishable canonical URL this way, not only the page that was actually
+ * opened — the whole chain is claimed together the first time any one
+ * member's chain is resolved. Never overwrites an id claimed before this ran
+ * (by this function, by {@link canonicalSlug}, or by the sitemap's
+ * plain-title bulk claim) — the stability guarantee documented above applies
+ * here exactly as it does everywhere else in this registry.
+ */
+export async function canonicalSeasonSlugs(
+  seasons: ReadonlyArray<{
+    id: string;
+    title: string;
+    kind: SeasonSlugKind;
+    index: number;
+  }>,
+): Promise<Map<string, string>> {
+  const results = new Map<string, string>();
+  await Promise.all(
+    seasons.map(async (season) => {
+      const candidate = seasonSlug(
+        season.id,
+        season.title,
+        season.kind,
+        season.index,
+      );
+      results.set(season.id, await resolveSlug(season.id, candidate));
+    }),
+  );
+  return results;
 }
 
 /** Writes `slug` as the canonical segment for `id` unless one already exists. */

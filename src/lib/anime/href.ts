@@ -42,6 +42,49 @@ export function animeHref(id: string, title?: string | null): string {
 }
 
 /**
+ * The structural kind a season-chain member falls under. Always spelled in
+ * English regardless of locale, matching every other structural URL segment
+ * (`episode-5`, `-episodes`) — a URL's language is the site's locale prefix,
+ * not the words inside it.
+ */
+export type SeasonSlugKind = "season" | "movie" | "ova" | "special";
+
+/**
+ * A season-chain member's own `{id}-{slug}-{kind}-{index}` segment — the same
+ * disambiguation the season switcher shows ("Season 2", "Movie 1"), appended
+ * after its own title-derived slug so two members that would otherwise share
+ * (or nearly share) a slug still resolve to distinct URLs. Safe to append
+ * after any slug: every route only ever reads a segment's *leading digits* to
+ * resolve the id, so anything after `animeSlug`'s output is purely
+ * decorative to routing.
+ *
+ * Skipped when the title-derived slug already ends in this exact suffix —
+ * AniList spells plenty of season entries with the number already in the
+ * title ("Attack on Titan Final Season The Final Chapters Special 1"), and
+ * appending on top of that would read as "…-special-1-special-1".
+ */
+export function seasonSlug(
+  id: string,
+  title: string | null | undefined,
+  kind: SeasonSlugKind,
+  index: number,
+): string {
+  const base = animeSlug(id, title);
+  const suffix = `${kind}-${index}`;
+  return base.endsWith(`-${suffix}`) ? base : `${base}-${suffix}`;
+}
+
+/** The `/anime/{id}-{slug}-{kind}-{index}` path for one season-chain member. */
+export function seasonAnimeHref(
+  id: string,
+  title: string | null | undefined,
+  kind: SeasonSlugKind,
+  index: number,
+): string {
+  return `/anime/${seasonSlug(id, title, kind, index)}`;
+}
+
+/**
  * Builds the canonical watch path,
  * `/watch/{id}-{anime-slug}/episode-{number}` (e.g.
  * `/watch/140960-jujutsu-kaisen/episode-5`), so the player URL is human- and
