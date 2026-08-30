@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 
+import { CurrentEpisodeBeam } from "@/components/anime/current-episode-beam";
 import { Link } from "@/i18n/navigation";
 import { episodeListHref } from "@/lib/anime/href";
 import type { AnimeSeason } from "@/lib/anime/seasons";
@@ -209,12 +210,14 @@ export function SeasonCarousel({
             return (
               <li key={season.id} className="w-28 shrink-0 snap-start sm:w-32">
                 <Link
-                  href={
+                  // The hash carries the viewer down to the list the card
+                  // opens — the section starts at this rail, so the cards stay
+                  // in view above it.
+                  href={`${
                     season.isCurrent
                       ? basePath
                       : episodeListHref(basePath, { season: season.id })
-                  }
-                  scroll={false}
+                  }#episodes`}
                   aria-current={isActive ? "true" : undefined}
                   className="group focus-visible:ring-ring block w-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
@@ -239,6 +242,11 @@ export function SeasonCarousel({
                         <Film className="size-6" aria-hidden />
                       </div>
                     )}
+
+                    {/* The marker the playing episode carries in the watch
+                        list — the open season is the same kind of "you are
+                        here", so it reads the same. */}
+                    {isActive && <CurrentEpisodeBeam />}
                   </div>
                   <span
                     className={cn(
