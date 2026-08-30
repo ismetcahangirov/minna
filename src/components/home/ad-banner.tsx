@@ -16,6 +16,21 @@ const DESKTOP_QUERY = "(min-width: 768px)";
 const LOADER_TIMEOUT_MS = 5_000;
 
 /**
+ * How long a unit gets to put an ad in its box after its loader has run,
+ * before the placement's fallback is given the box instead. Both networks
+ * insert their frame a moment after the loader's `load` event, so this is a
+ * grace period, not a deadline.
+ */
+const FILL_GRACE_MS = 3_000;
+
+/** True once something other than a loader script sits in the box. */
+function hasRendered(container: HTMLDivElement): boolean {
+  return Array.from(container.children).some(
+    (child) => child.tagName !== "SCRIPT",
+  );
+}
+
+/**
  * Adsterra's `invoke.js` reads a GLOBAL `atOptions` when it executes, so two
  * units loading concurrently on the same page can each pick up the other's
  * config. Units are therefore mounted one after another: each waits for the
@@ -108,7 +123,7 @@ interface AdBannerProps {
  */
 export function AdBanner({ placement, className }: AdBannerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { desktop, mobile } = adPlacement(placement);
+  const { desktop, mobile, desktopFallback } = adPlacement(placement);
   // HilltopAds is handed a selector rather than an element, so the box needs a
   // real id. Placements are unique per page, which makes this unique too.
   const containerId = `ad-slot-${placement}`;
@@ -132,15 +147,29 @@ export function AdBanner({ placement, className }: AdBannerProps) {
     container.style.height = `${unit.height}px`;
     container.style.transform = `scale(${scale})`;
 
+    // Only the unit the box was sized for has a stand-in — a 728x90 fallback
+    // dropped into a 300x250 box would be worse than the empty box it fills.
+    const fallback = unit === desktop ? desktopFallback : null;
+
     let cancelled = false;
-    loaderChain = loaderChain.then(() =>
-      cancelled ? undefined : mountUnit(container, containerId, unit),
-    );
+    loaderChain = loaderChain.then(async () => {
+      if (cancelled) return;
+      await mountUnit(container, containerId, unit);
+      if (cancelled || !fallback) return;
+
+      // Held inside the queue so the fallback's own loader still gets the
+      // globals to itself. The placements that have a fallback carry one slot
+      // per page, so nothing is waiting behind this.
+      await new Promise((resolve) => setTimeout(resolve, FILL_GRACE_MS));
+      if (cancelled || hasRendered(container)) return;
+
+      await mountUnit(container, containerId, fallback);
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [desktop, mobile, containerId]);
+  }, [desktop, mobile, desktopFallback, containerId]);
 
   if (!desktop && !mobile) return null;
 
