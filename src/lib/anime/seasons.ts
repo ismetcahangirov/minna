@@ -7,6 +7,11 @@ import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 import { animeDetailCacheKey } from "@/lib/anime/detail";
 import { fetchSeasonNode } from "@/lib/anime/provider";
 import {
+  canonicalAnimeHref,
+  canonicalSeasonSlugs,
+} from "@/lib/anime/canonical-slug";
+import { animeHref } from "@/lib/anime/href";
+import {
   type AnimeDetail,
   type AnimeRelation,
   toAnimeDetail,
@@ -353,3 +358,23 @@ export const getAnimeSeasons = cache(
     }
   },
 );
+
+/**
+ * The canonical detail path for `detail`, season-aware when it belongs to a
+ * chain of two or more entries: claims a `-{kind}-{index}` suffixed segment
+ * for every member of the chain at once ({@link canonicalSeasonSlugs}), so a
+ * franchise's sibling seasons resolve to distinguishable canonical URLs
+ * (`.../attack-on-titan-season-2`) as soon as any one of them is visited —
+ * not only the one that is. A title with no chain, or one that cannot be
+ * resolved, falls back to the plain per-title canonical.
+ */
+export async function canonicalSeasonAwareHref(
+  detail: AnimeDetail,
+): Promise<string> {
+  const seasons = await getAnimeSeasons(detail);
+  if (seasons.length < 2) return canonicalAnimeHref(detail.id, detail.title);
+
+  const slugs = await canonicalSeasonSlugs(seasons);
+  const slug = slugs.get(detail.id);
+  return slug ? animeHref(slug) : canonicalAnimeHref(detail.id, detail.title);
+}

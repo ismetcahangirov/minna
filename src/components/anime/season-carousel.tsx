@@ -13,7 +13,7 @@ import {
 
 import { CurrentEpisodeBeam } from "@/components/anime/current-episode-beam";
 import { Link } from "@/i18n/navigation";
-import { animeHref } from "@/lib/anime/href";
+import { seasonAnimeHref } from "@/lib/anime/href";
 import type { AnimeSeason } from "@/lib/anime/seasons";
 import { cn } from "@/lib/utils";
 
@@ -210,11 +210,20 @@ export function SeasonCarousel({
                 <Link
                   // The hash carries the viewer down to the episode list on
                   // whichever page this points at — its own for the active
-                  // card, the season's own detail page otherwise.
+                  // card, the season's own detail page otherwise. The
+                  // non-active href already carries the season suffix
+                  // (`-season-2`, `-movie-1`, …) the canonical registry will
+                  // claim for it, so the very first click lands on the same
+                  // URL search engines will eventually index.
                   href={`${
                     season.isCurrent
                       ? basePath
-                      : animeHref(season.id, season.title)
+                      : seasonAnimeHref(
+                          season.id,
+                          season.title,
+                          season.kind,
+                          season.index,
+                        )
                   }#episodes`}
                   aria-current={isActive ? "true" : undefined}
                   className="group focus-visible:ring-ring block w-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
