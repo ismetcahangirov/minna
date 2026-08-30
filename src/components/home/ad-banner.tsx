@@ -117,11 +117,12 @@ interface AdBannerProps {
  *
  * The slot's box is reserved in CSS at the same `md` breakpoint the unit is
  * chosen at, so the 300x250 (phones) and 728x90 (desktop) boxes are laid out
- * before any script runs and the ad never shifts the page. The loaded unit is
- * then scaled to the measured box, which only matters on viewports narrower
- * than the unit itself.
+ * before any script runs and the ad never shifts the page. Once a unit is
+ * picked the box is pinned to that unit's proportions and the unit is rescaled
+ * to fit whatever width the box currently has, so the two can never disagree.
  */
 export function AdBanner({ placement, className }: AdBannerProps) {
+  const boxRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { desktop, mobile, desktopFallback } = adPlacement(placement);
   // HilltopAds is handed a selector rather than an element, so the box needs a
@@ -129,8 +130,9 @@ export function AdBanner({ placement, className }: AdBannerProps) {
   const containerId = `ad-slot-${placement}`;
 
   useEffect(() => {
+    const box = boxRef.current;
     const container = containerRef.current;
-    if (!container || container.childElementCount > 0) return;
+    if (!box || !container) return;
 
     // The reserved box already committed to a size at this breakpoint; pick the
     // unit that matches it, falling back to the other half when a placement
@@ -139,35 +141,60 @@ export function AdBanner({ placement, className }: AdBannerProps) {
     const unit = wide ? (desktop ?? mobile) : (mobile ?? desktop);
     if (!unit) return;
 
+    // From here the box follows the MOUNTED unit rather than the `md`
+    // breakpoint. The two agree on first paint but drift apart the moment the
+    // viewport crosses 768px afterwards — a phone turned sideways, a window
+    // dragged wider — and the loaded ad is not re-picked to match, so a 300x250
+    // left in a 728x90 box had everything below its first 90px cut away by the
+    // box's `overflow-hidden`.
+    box.style.aspectRatio = `${unit.width} / ${unit.height}`;
+    box.style.maxWidth = `${unit.width}px`;
+
     // The loader box is absolutely positioned, so sizing it here is
-    // layout-neutral — nothing below it moves.
-    const box = container.parentElement;
-    const scale = box ? Math.min(1, box.clientWidth / unit.width) : 1;
+    // layout-neutral — nothing below it moves. Scaling to the box's CURRENT
+    // width keeps the whole unit visible on viewports narrower than it is, and
+    // the box's height follows the same ratio, so nothing is ever clipped.
     container.style.width = `${unit.width}px`;
     container.style.height = `${unit.height}px`;
-    container.style.transform = `scale(${scale})`;
+
+    const fit = () => {
+      const scale = Math.min(1, box.clientWidth / unit.width);
+      container.style.transform = `scale(${scale})`;
+    };
+    fit();
+    // Rotation and resize change the box's width without re-running this
+    // effect; the scale has to be recomputed or the unit stops fitting.
+    const observer = new ResizeObserver(fit);
+    observer.observe(box);
+
+    // Scripts are appended once — a second run (React's development remount)
+    // must resize the box without loading another ad into it.
+    const mounted = container.childElementCount > 0;
 
     // Only the unit the box was sized for has a stand-in — a 728x90 fallback
     // dropped into a 300x250 box would be worse than the empty box it fills.
     const fallback = unit === desktop ? desktopFallback : null;
 
     let cancelled = false;
-    loaderChain = loaderChain.then(async () => {
-      if (cancelled) return;
-      await mountUnit(container, containerId, unit);
-      if (cancelled || !fallback) return;
+    if (!mounted) {
+      loaderChain = loaderChain.then(async () => {
+        if (cancelled) return;
+        await mountUnit(container, containerId, unit);
+        if (cancelled || !fallback) return;
 
-      // Held inside the queue so the fallback's own loader still gets the
-      // globals to itself. The placements that have a fallback carry one slot
-      // per page, so nothing is waiting behind this.
-      await new Promise((resolve) => setTimeout(resolve, FILL_GRACE_MS));
-      if (cancelled || hasRendered(container)) return;
+        // Held inside the queue so the fallback's own loader still gets the
+        // globals to itself. The placements that have a fallback carry one slot
+        // per page, so nothing is waiting behind this.
+        await new Promise((resolve) => setTimeout(resolve, FILL_GRACE_MS));
+        if (cancelled || hasRendered(container)) return;
 
-      await mountUnit(container, containerId, fallback);
-    });
+        await mountUnit(container, containerId, fallback);
+      });
+    }
 
     return () => {
       cancelled = true;
+      observer.disconnect();
     };
   }, [desktop, mobile, desktopFallback, containerId]);
 
@@ -183,6 +210,7 @@ export function AdBanner({ placement, className }: AdBannerProps) {
   return (
     <div className={cn("w-full px-4", className)}>
       <div
+        ref={boxRef}
         className={cn(
           "relative mx-auto w-full overflow-hidden bg-black",
           boxClassName,
