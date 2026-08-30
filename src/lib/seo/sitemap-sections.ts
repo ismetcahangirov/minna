@@ -1,13 +1,7 @@
 import "server-only";
 
 import { canonicalSlugs } from "@/lib/anime/canonical-slug";
-import {
-  animeEpisodesPageHref,
-  animeHref,
-  animeSlug,
-  episodesPageCount,
-  watchHref,
-} from "@/lib/anime/href";
+import { animeHref, animeSlug, watchHref } from "@/lib/anime/href";
 import {
   listAnimeSitemapEntries,
   listEpisodeSitemapEntries,
@@ -177,9 +171,7 @@ export async function blogsSection(): Promise<SitemapUrl[]> {
 interface CatalogEntry {
   /** The final `{id}-{slug}` segment, already resolved against the registry. */
   slug: string;
-  /** Episode count, or null when unknown — decides the `?page=` span. */
-  episodes?: number | null;
-  /** Present on a watch entry instead of {@link episodes}. */
+  /** Present on a watch entry; absent on the anime's own detail entry. */
   episodeNumber?: number;
 }
 
@@ -196,9 +188,8 @@ function chunkKey(index: number): string {
  * entries, not the entire catalog's, so its Redis payload is a fraction of the
  * whole and it builds only the URLs it is going to emit.
  *
- * Boundaries are drawn by URL budget rather than by row count, because one row
- * is worth anywhere from three URLs to several dozen — a long series spans many
- * `?page=` URLs — so cutting every N rows would produce wildly uneven files.
+ * Boundaries are drawn by URL budget rather than by row count, so the files
+ * stay evenly sized however the locale set grows.
  */
 async function buildCatalogChunks(): Promise<number> {
   const [anime, episodes] = await Promise.all([
@@ -223,7 +214,6 @@ async function buildCatalogChunks(): Promise<number> {
   const rows: CatalogEntry[] = [
     ...anime.map((entry) => ({
       slug: slugs.get(entry.id) ?? animeSlug(entry.id, entry.title),
-      episodes: entry.episodes,
     })),
     ...episodes.map((entry) => ({
       slug:
@@ -237,7 +227,7 @@ async function buildCatalogChunks(): Promise<number> {
   let budget = 0;
 
   for (const row of rows) {
-    budget += urlsPerRow(row);
+    budget += urlsPerRow();
     current.push(row);
     if (budget >= ANIME_CHUNK_SIZE) {
       chunks.push(current);
@@ -259,11 +249,8 @@ async function buildCatalogChunks(): Promise<number> {
 }
 
 /** How many URLs one row expands into, across all three locales. */
-function urlsPerRow(row: CatalogEntry): number {
-  if (row.episodeNumber !== undefined) return locales.length;
-  const pages = row.episodes ? episodesPageCount(row.episodes) : 1;
-  // The detail page plus one URL per episodes-list page.
-  return locales.length * (1 + pages);
+function urlsPerRow(): number {
+  return locales.length;
 }
 
 /** Expands stored entries into the URLs one chunk emits. */
@@ -287,6 +274,12 @@ function catalogUrls(entries: CatalogEntry[]): SitemapUrl[] {
     // `entry.slug` is already the final `{id}-{slug}` segment, so the href
     // builders take it in place of the id and are given no title to slugify —
     // that decision was made once, in the registry.
+    // The detail page is the only listing URL an anime has: its episode list is
+    // rendered inline there, and `/anime/[id]/episodes` — which used to carry
+    // that list across `?page=` URLs — now canonicalises to it. Listing both
+    // would advertise the same episodes twice, which is what Search Console
+    // reports as a duplicate. The per-episode watch pages, listed above, still
+    // carry every episode into the index on a URL of its own.
     urls.push(
       ...perLocale(animeHref(entry.slug), {
         lastModified: now,
@@ -294,20 +287,6 @@ function catalogUrls(entries: CatalogEntry[]): SitemapUrl[] {
         priority: 0.8,
       }),
     );
-
-    // The episodes list of a long series spans several `?page=` URLs — each is
-    // a distinct set of episodes, so each is listed. Titles whose episode count
-    // is unknown contribute their first page only.
-    const pages = entry.episodes ? episodesPageCount(entry.episodes) : 1;
-    for (let page = 1; page <= pages; page++) {
-      urls.push(
-        ...perLocale(animeEpisodesPageHref(entry.slug, null, { page }), {
-          lastModified: now,
-          changeFrequency: "weekly",
-          priority: page === 1 ? 0.7 : 0.5,
-        }),
-      );
-    }
   }
 
   return urls;

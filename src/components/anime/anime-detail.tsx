@@ -297,27 +297,31 @@ export async function AnimeDetailView({
         </div>
 
         {/* Seasons and the episodes of whichever one is open. Full width, so
-            the cards read exactly as they do on the episodes route, and one
-            anchor for the hero's watch button to jump to. */}
-        <section
-          id="episodes"
-          className="mt-10 flex scroll-mt-20 flex-col gap-10"
-        >
+            the cards read exactly as they do on the episodes route. */}
+        <section className="mt-10 flex flex-col gap-10">
           <SeasonSwitcher
             detail={detail}
             basePath={basePath}
             activeSeasonId={season}
           />
-          <Suspense fallback={<DetailEpisodesSkeleton />}>
-            <DetailEpisodes
-              detail={detail}
-              basePath={basePath}
-              season={season}
-              page={page}
-              descending={descending}
-              query={query}
-            />
-          </Suspense>
+          {/* The anchor every season card and the hero's watch button jump to,
+              on the wrapper rather than inside the boundary so it exists before
+              the list has streamed in. No scroll margin: the "Episodes" heading
+              is meant to land flush at the top of the viewport, and the header
+              has slid away by then — the jump is a downward scroll, which is
+              what hides it. */}
+          <div id="episodes">
+            <Suspense fallback={<DetailEpisodesSkeleton />}>
+              <DetailEpisodes
+                detail={detail}
+                basePath={basePath}
+                season={season}
+                page={page}
+                descending={descending}
+                query={query}
+              />
+            </Suspense>
+          </div>
         </section>
 
         <AdBanner placement="anime" className="mt-10" />
