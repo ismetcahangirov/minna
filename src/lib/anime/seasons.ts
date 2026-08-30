@@ -45,9 +45,10 @@ export interface AnimeSeason {
 /** Cap the outward walk so a long or cyclic relation graph can't run away. */
 const MAX_SEASON_HOPS = 12;
 
-/** Bumped when the cached {@link AnimeSeason} shape changes (v2 adds `image`)
- * so stale poster-less entries don't linger until their long TTL expires. */
-const SEASONS_CACHE_VERSION = "v2";
+/** Bumped when the cached {@link AnimeSeason} shape or contents change (v2 adds
+ * `image`; v3 drops the off-franchise neighbours the walk used to follow) so
+ * stale entries don't linger until their long TTL expires. */
+const SEASONS_CACHE_VERSION = "v3";
 
 /** Media formats we treat as a watchable season (excludes MANGA/NOVEL/MUSIC). */
 const ANIME_FORMATS = new Set([
@@ -97,18 +98,119 @@ function isAnimeFormat(type: string | null): boolean {
   return type === null || ANIME_FORMATS.has(type.toUpperCase());
 }
 
-/** The first unvisited relation of the given kind that is a watchable anime. */
+/**
+ * Words that recur across unrelated titles, so sharing one says nothing about
+ * two entries belonging to the same show.
+ */
+const TITLE_STOPWORDS = new Set([
+  "anime",
+  "final",
+  "first",
+  "movie",
+  "part",
+  "season",
+  "second",
+  "series",
+  "special",
+  "story",
+  "third",
+]);
+
+/** Least share of the shorter title two entries must have in common. */
+const TITLE_OVERLAP_RATIO = 0.5;
+
+/** Shortest word that carries a franchise name ("Fate", "Aria", "Gintama"). */
+const MIN_TOKEN_LENGTH = 4;
+
+/** Letters and digits only, lowercased — punctuation and spacing vary wildly. */
+function normalizeTitle(title: string): string {
+  return title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+/** The title's distinctive words, for a cheap exact-overlap check. */
+function titleTokens(title: string): Set<string> {
+  return new Set(
+    title
+      .toLowerCase()
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter(
+        (token) =>
+          token.length >= MIN_TOKEN_LENGTH && !TITLE_STOPWORDS.has(token),
+      ),
+  );
+}
+
+/** Length of the longest run of characters `a` and `b` share. */
+function longestCommonRun(a: string, b: string): number {
+  let best = 0;
+  let previous = new Array<number>(b.length + 1).fill(0);
+
+  for (let i = 1; i <= a.length; i += 1) {
+    const row = new Array<number>(b.length + 1).fill(0);
+    for (let j = 1; j <= b.length; j += 1) {
+      if (a[i - 1] !== b[j - 1]) continue;
+      row[j] = previous[j - 1] + 1;
+      if (row[j] > best) best = row[j];
+    }
+    previous = row;
+  }
+
+  return best;
+}
+
+/**
+ * Whether two titles read as the same show.
+ *
+ * Seasons of one show carry its name — either as a shared word ("Fate/Zero" and
+ * "Fate/stay night") or, when the franchise name is fused into a single word, as
+ * a shared run of characters ("Bakemonogatari" and "Nisemonogatari"). Titles
+ * with nothing comparable left after normalisation (a native-script title next
+ * to a romanised one) are given the benefit of the doubt.
+ */
+function sameFranchise(a: string, b: string): boolean {
+  const tokens = titleTokens(a);
+  for (const token of titleTokens(b)) {
+    if (tokens.has(token)) return true;
+  }
+
+  const left = normalizeTitle(a);
+  const right = normalizeTitle(b);
+  const shorter = Math.min(left.length, right.length);
+  if (shorter === 0) return true;
+
+  return longestCommonRun(left, right) / shorter >= TITLE_OVERLAP_RATIO;
+}
+
+/** Every title variant an entry is known by, for `sameFranchise` to try. */
+function titlesOf(node: AnimeDetail): string[] {
+  return [node.title, node.titleRomaji, node.titleNative].filter(
+    (title): title is string => Boolean(title),
+  );
+}
+
+/**
+ * The first unvisited relation of the given kind that is a watchable anime of
+ * the same show as `from`.
+ *
+ * The franchise check is what keeps the walk on the show it started from:
+ * AniList's PREQUEL/SEQUEL edges also link franchise-adjacent one-offs, and
+ * following one puts an unrelated title in the switcher — `MONSTERS: 103
+ * Mercies Dragon Damnation`, a 2024 one-shot ONA, is a PREQUEL of ONE PIECE and
+ * so became its "Season 1".
+ */
 function pickRelation(
   relations: AnimeRelation[],
   relationType: "PREQUEL" | "SEQUEL",
   visited: Set<string>,
+  from: string[],
 ): AnimeRelation | null {
   return (
     relations.find(
       (r) =>
         r.relationType?.toUpperCase() === relationType &&
         isAnimeFormat(r.type) &&
-        !visited.has(r.id),
+        !visited.has(r.id) &&
+        from.some((title) => sameFranchise(title, r.title)),
     ) ?? null
   );
 }
@@ -152,12 +254,20 @@ async function walk(
   budget: { hops: number },
 ): Promise<SeasonNode[]> {
   const nodes: SeasonNode[] = [];
-  // `?? []` guards against an older cached node that predates the `relations`
-  // field, so a stale neighbour degrades to "chain ends here" not a throw.
-  let relations = start.relations ?? [];
+  // Each hop is judged against the entry it was reached from, not against the
+  // one the walk started at: consecutive seasons resemble each other even when
+  // the ends of a long chain no longer do.
+  let current = start;
 
   while (budget.hops > 0) {
-    const next = pickRelation(relations, relationType, visited);
+    // `?? []` guards against an older cached node that predates the `relations`
+    // field, so a stale neighbour degrades to "chain ends here" not a throw.
+    const next = pickRelation(
+      current.relations ?? [],
+      relationType,
+      visited,
+      titlesOf(current),
+    );
     if (!next) break;
     visited.add(next.id);
     budget.hops -= 1;
@@ -165,7 +275,7 @@ async function walk(
     const node = await fetchNode(next.id);
     if (!node) break;
     nodes.push(toNode(node));
-    relations = node.relations ?? [];
+    current = node;
   }
 
   return nodes;
