@@ -71,6 +71,23 @@ const DESKTOP_SIZE = { width: 728, height: 90 } as const;
 const MOBILE_SIZE = { width: 300, height: 250 } as const;
 
 /**
+ * The anime detail page's desktop unit, pinned here rather than read from the
+ * environment like the others.
+ *
+ * It is a HilltopAds leaderboard, replacing the Adsterra unit this slot used to
+ * share with every other desktop slot on the site. Pinning it makes swapping it
+ * a reviewable change with a deploy behind it, rather than something only
+ * whoever holds the Vercel project's environment can do. `NEXT_PUBLIC_AD_ANIME`
+ * is therefore no longer read — leaving it wired would let a stale value
+ * silently win over this.
+ */
+const ANIME_DESKTOP_UNIT: HilltopUnit = {
+  network: "hilltopads",
+  src: "https://relieved-understanding.com/bvXPVCsjd.GglZ0kY-W/cr/TePmB9OuHZ/UtlXkuPtTpcyzqN/jZc/zPMgjykbtSN/z/MU2iNDztMfzLMXwN",
+  ...DESKTOP_SIZE,
+};
+
+/**
  * Env values are read through static `process.env.NEXT_PUBLIC_*` references
  * because Next inlines them at build time — a dynamic lookup would resolve to
  * `undefined` in the browser bundle.
@@ -80,8 +97,8 @@ const ENV: Record<AdPlacementName, { desktop?: string; mobile?: string }> = {
     desktop: process.env.NEXT_PUBLIC_AD_HOME,
     mobile: process.env.NEXT_PUBLIC_AD_HOME_MOBILE,
   },
+  // Desktop is pinned — see ANIME_DESKTOP_UNIT.
   anime: {
-    desktop: process.env.NEXT_PUBLIC_AD_ANIME,
     mobile: process.env.NEXT_PUBLIC_AD_ANIME_MOBILE,
   },
   episodes: {
@@ -131,6 +148,13 @@ function parseUnit(
 
 function resolve(name: AdPlacementName): AdPlacement {
   const env = ENV[name];
+  if (name === "anime") {
+    return {
+      desktop: ANIME_DESKTOP_UNIT,
+      mobile: parseUnit(env.mobile, MOBILE_SIZE),
+    };
+  }
+
   const desktop = parseUnit(env.desktop, DESKTOP_SIZE);
 
   return {
