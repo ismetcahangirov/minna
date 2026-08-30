@@ -208,7 +208,7 @@ export default async function AnimeEpisodesPage({
             activeSeasonId={detail.id}
           />
           <AdBanner placement="episodes" />
-          <section id="episodes" className="scroll-mt-20">
+          <section id="episodes">
             <EpisodeCards
               animeId={detail.id}
               animeTitle={detail.title}
