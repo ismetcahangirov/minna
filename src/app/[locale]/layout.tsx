@@ -81,13 +81,6 @@ export async function generateMetadata({
       title: "Minna — Watch Anime Online",
       description,
     },
-    // HilltopAds serves its ads off the referring URL, so it asks publishers
-    // for the pre-2020 default policy: the full URL travels to every https
-    // destination instead of just the origin. It is a deliberate loosening —
-    // third parties we embed (the stream host, image CDNs, ad networks) now
-    // see which anime page a viewer is on, not merely that they came from
-    // Minna. Downgrades to http still send nothing.
-    referrer: "no-referrer-when-downgrade",
     verification: {
       google: "r2Z9CII6sLiZcDu8WO5InBtVXyLJPDet3UoB-jqwVbY",
       // HilltopAds site ownership. Its tag is a bare token used as both the

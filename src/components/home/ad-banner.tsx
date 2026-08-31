@@ -63,8 +63,9 @@ function mountUnit(
       loader.src = unit.src;
       loader.settings = { appendTo: `#${containerId}` };
       // The network's own snippet sets this, and its ad server reads the
-      // referring URL — keep it on the element rather than relying on the
-      // document-level policy alone.
+      // referring URL. Scoped to this one element on purpose: the document's
+      // policy stays strict, so only the loader HilltopAds needs it for sees
+      // the full URL, not every third party the page touches.
       loader.referrerPolicy = "no-referrer-when-downgrade";
     } else {
       // Adsterra's loader reads a global `atOptions` written immediately
