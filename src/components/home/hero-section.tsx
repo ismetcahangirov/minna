@@ -22,9 +22,11 @@ async function HeroFallback() {
 
   return (
     <section className="relative flex h-[68vh] max-h-[760px] min-h-[440px] w-full flex-col items-center justify-center gap-5 bg-black px-6 text-center">
-      <h1 className="text-primary text-5xl font-extrabold tracking-tight sm:text-7xl">
+      {/* A `p`, styled as the display type it is: the page's single `h1` is
+          in `page.tsx` and covers this state too. */}
+      <p className="text-primary text-5xl font-extrabold tracking-tight sm:text-7xl">
         {t("common.appName").toUpperCase()}
-      </h1>
+      </p>
       <p className="text-muted-foreground max-w-md text-base">
         {t("home.hero.tagline")}
       </p>
