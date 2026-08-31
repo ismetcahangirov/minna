@@ -8,10 +8,10 @@
  * the environment.
  *
  * Adsterra only allows ONE unit per format+size per website, so units alone
- * cannot separate four placements of the same size. A second network can:
- * each reports in its own dashboard, so pointing one placement at HilltopAds
- * both compares the two networks head-to-head and gives that placement numbers
- * of its own.
+ * cannot separate four placements of the same size. A second network can: each
+ * reports in its own dashboard, which is why an env value may name a HilltopAds
+ * loader instead. No placement does today — the one that did served no banner
+ * at all and only injected a page-wide popunder, so it was removed.
  *
  * Sizes are fixed per unit, so a slot that should also serve phones needs a
  * SECOND unit at a phone-friendly size: a 728x90 scaled into a 360px viewport
@@ -62,6 +62,9 @@ export interface AdPlacement {
    * hole in the page rather than as an absent ad. Same size as `desktop`, and
    * only ever mounted after it has had its chance, so the primary unit keeps
    * every impression it can actually fill.
+   *
+   * Null on every placement right now: it exists for a slot pointed at a
+   * network other than the site's default, and none is.
    */
   desktopFallback: AdUnit | null;
 }
@@ -77,23 +80,6 @@ const HILLTOP_PREFIX = "hilltop:";
 
 const DESKTOP_SIZE = { width: 728, height: 90 } as const;
 const MOBILE_SIZE = { width: 300, height: 250 } as const;
-
-/**
- * The anime detail page's desktop unit, pinned here rather than read from the
- * environment like the others.
- *
- * It is a HilltopAds leaderboard, replacing the Adsterra unit this slot used to
- * share with every other desktop slot on the site. Pinning it makes swapping it
- * a reviewable change with a deploy behind it, rather than something only
- * whoever holds the Vercel project's environment can do. `NEXT_PUBLIC_AD_ANIME`
- * is therefore no longer read — leaving it wired would let a stale value
- * silently win over this.
- */
-const ANIME_DESKTOP_UNIT: HilltopUnit = {
-  network: "hilltopads",
-  src: "https://relieved-understanding.com/bvXPVCsjd.GglZ0kY-W/cr/TePmB9OuHZ/UtlXkuPtTpcyzqN/jZc/zPMgjykbtSN/z/MU2iNDztMfzLMXwN",
-  ...DESKTOP_SIZE,
-};
 
 /** The shared Adsterra leaderboard, as a unit. */
 const LEGACY_DESKTOP_UNIT: AdsterraUnit = {
@@ -113,7 +99,9 @@ const ENV: Record<AdPlacementName, { desktop?: string; mobile?: string }> = {
     desktop: process.env.NEXT_PUBLIC_AD_HOME,
     mobile: process.env.NEXT_PUBLIC_AD_HOME_MOBILE,
   },
-  // Desktop is pinned — see ANIME_DESKTOP_UNIT.
+  // No desktop entry: `NEXT_PUBLIC_AD_ANIME` stays unwired so the slot falls to
+  // the Adsterra leaderboard below rather than to whatever a stale env value
+  // holds. Wire it again only alongside a unit that has been checked.
   anime: {
     mobile: process.env.NEXT_PUBLIC_AD_ANIME_MOBILE,
   },
@@ -164,18 +152,6 @@ function parseUnit(
 
 function resolve(name: AdPlacementName): AdPlacement {
   const env = ENV[name];
-  if (name === "anime") {
-    return {
-      desktop: ANIME_DESKTOP_UNIT,
-      mobile: parseUnit(env.mobile, MOBILE_SIZE),
-      // The only placement served by a network that is not also the site's
-      // default: if it has nothing to serve, the slot would sit empty where an
-      // Adsterra leaderboard used to be. The other placements need no
-      // stand-in — they already are the default network.
-      desktopFallback: LEGACY_DESKTOP_UNIT,
-    };
-  }
-
   const desktop = parseUnit(env.desktop, DESKTOP_SIZE);
 
   return {
