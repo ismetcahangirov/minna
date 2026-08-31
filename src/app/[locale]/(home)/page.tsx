@@ -44,9 +44,18 @@ export async function generateMetadata({
  * `<Suspense>` skeletons as their Redis-cached Consumet fetches resolve
  * (HOME-07). Section order follows HOME-02..HOME-05.
  */
-export default function Home() {
+export default async function Home() {
+  const t = await getTranslations("home.hero");
+
   return (
     <main className="flex flex-1 flex-col gap-10 pb-16 sm:gap-12">
+      {/* The page's single `h1`, and the only one on it (SEO-01). It is
+          screen-reader-only because the hero carries the design's opening
+          statement visually; what the hero cannot be is the heading, since
+          every slide is in the DOM at once and its text is a rotating anime
+          title rather than a description of this page. */}
+      <h1 className="sr-only">{t("heading")}</h1>
+
       <HeroSection />
 
       <AdBanner placement="home" />

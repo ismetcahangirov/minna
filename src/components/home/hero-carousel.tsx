@@ -220,9 +220,13 @@ export function HeroCarousel({
                       </div>
                     )}
 
-                    <h1 className="text-foreground text-2xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+                    {/* `h2`, not `h1`: every slide is in the DOM at once, so
+                        an `h1` here gives the home page one root heading per
+                        slide, none of which describes the page. The page's own
+                        `h1` lives in `page.tsx`. */}
+                    <h2 className="text-foreground text-2xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
                       {anime.title}
-                    </h1>
+                    </h2>
 
                     <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:mt-3 sm:text-sm">
                       {score && (
