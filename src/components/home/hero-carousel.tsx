@@ -285,14 +285,16 @@ export function HeroCarousel({
                     sharp beside the copy, at the 2:3 the art is drawn at.
                     Phones and small tablets do without it — the hero is already
                     the poster there. The widths are a poster's 176/224px grown
-                    15%. */}
+                    15%, and then a further 25% for presence in the hero. At
+                    2:3 that makes them 378/483px tall, which the hero's fixed
+                    580/670px still clears. */}
                   {portraitArtwork && (
-                    <div className="border-border bg-surface relative hidden aspect-[2/3] w-[202px] shrink-0 overflow-hidden border md:block lg:w-[258px]">
+                    <div className="border-border bg-surface relative hidden aspect-[2/3] w-[252px] shrink-0 overflow-hidden border md:block lg:w-[322px]">
                       <Image
                         src={portraitArtwork}
                         alt=""
                         fill
-                        sizes="(min-width: 1024px) 258px, 202px"
+                        sizes="(min-width: 1024px) 322px, 252px"
                         quality={90}
                         className="object-cover"
                       />
