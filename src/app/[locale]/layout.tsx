@@ -29,6 +29,9 @@ const geistMono = Geist_Mono({
 /** HilltopAds site-verification token — the meta tag's name *and* content. */
 const HILLTOPADS_VERIFICATION = "1a252ba84f266313738b4201f7d790b135aaf08a";
 
+/** Bing Webmaster Tools site-verification token (`msvalidate.01`). */
+const BING_VERIFICATION = "54DEDFDF0D0CB5F35DBA7704B575A176";
+
 type LocaleLayoutProps = LocaleRouteProps & { children: React.ReactNode };
 
 /*
@@ -92,6 +95,9 @@ export async function generateMetadata({
       // its own and goes through `other`.
       other: {
         [HILLTOPADS_VERIFICATION]: HILLTOPADS_VERIFICATION,
+        // Bing Webmaster Tools site ownership. Next.js has no `bing`
+        // shorthand, so the `msvalidate.01` meta name goes through `other`.
+        "msvalidate.01": BING_VERIFICATION,
       },
     },
   };
