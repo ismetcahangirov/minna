@@ -1,4 +1,5 @@
 import { EpisodeCards } from "@/components/anime/episode-cards";
+import { canonicalSlug } from "@/lib/anime/canonical-slug";
 import { getAnimeInfo } from "@/lib/anime/detail";
 import { filterEpisodes } from "@/lib/anime/episode-search";
 import { pageSlice, resolvePage } from "@/lib/anime/episode-listing";
@@ -87,7 +88,7 @@ export async function DetailEpisodes({
 
   return (
     <EpisodeCards
-      animeId={active.id}
+      animeSlug={await canonicalSlug(active.id, active.title)}
       animeTitle={active.title}
       basePath={basePath}
       season={seasonParam}

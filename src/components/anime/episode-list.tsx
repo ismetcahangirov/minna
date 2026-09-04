@@ -25,9 +25,14 @@ const COLLAPSED_COUNT = 20;
 const COLLAPSED_COUNT_MOBILE = 10;
 
 interface EpisodeListProps {
-  animeId: string;
-  /** Anime title — slugged into the readable watch URL. */
-  animeTitle: string;
+  /**
+   * The anime's canonical `{id}-{slug}` segment, resolved by the page.
+   *
+   * The episode links are built from this rather than from `animeTitle`:
+   * the segment the proxy redirects to is whatever the slug registry holds,
+   * and a list deriving its own sent every episode link through a 308.
+   */
+  animeSlug: string;
   episodes: AnimeEpisode[];
   /** Episode currently playing, highlighted in the list (watch route). */
   activeEpisodeNumber?: number | null;
@@ -44,8 +49,7 @@ interface EpisodeListProps {
  * icons.
  */
 export function EpisodeList({
-  animeId,
-  animeTitle,
+  animeSlug,
   episodes,
   activeEpisodeNumber = null,
 }: EpisodeListProps) {
@@ -139,7 +143,7 @@ export function EpisodeList({
             return (
               <li key={episode.id}>
                 <Link
-                  href={watchHref(animeId, episode.number, animeTitle)}
+                  href={watchHref(animeSlug, episode.number)}
                   aria-current={isActive ? "true" : undefined}
                   className={cn(
                     "group bg-surface hover:border-primary/60 hover:bg-muted relative flex items-center gap-3 border p-3 transition-colors",

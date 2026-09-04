@@ -7,7 +7,8 @@ import type { AnimeEpisode } from "@/lib/anime/types";
 
 interface WatchEpisodeListProps {
   animeId: string;
-  animeTitle: string;
+  /** The canonical `{id}-{slug}` segment the episode links use. */
+  animeSlug: string;
   episodes: AnimeEpisode[];
   /** Episode currently playing, marked in the list. */
   activeEpisodeNumber: number;
@@ -24,7 +25,7 @@ interface WatchEpisodeListProps {
  */
 export async function WatchEpisodeList({
   animeId,
-  animeTitle,
+  animeSlug,
   episodes,
   activeEpisodeNumber,
 }: WatchEpisodeListProps) {
@@ -32,8 +33,7 @@ export async function WatchEpisodeList({
 
   return (
     <EpisodeList
-      animeId={animeId}
-      animeTitle={animeTitle}
+      animeSlug={animeSlug}
       episodes={withEpisodeTitles(episodes, titles)}
       activeEpisodeNumber={activeEpisodeNumber}
     />

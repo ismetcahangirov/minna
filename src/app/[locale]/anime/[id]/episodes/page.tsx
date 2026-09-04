@@ -20,12 +20,11 @@ import {
   getSeriesEpisodeTitles,
   withEpisodeTitles,
 } from "@/lib/anime/episode-titles";
-import {
-  canonicalAnimeEpisodesHref,
-  canonicalAnimeHref,
-} from "@/lib/anime/canonical-slug";
+import { canonicalAnimeHref, canonicalSlug } from "@/lib/anime/canonical-slug";
 import {
   animeEpisodesHref,
+  animeEpisodesPageHref,
+  animeHref,
   episodesPageCount,
   parseAnimeParam,
   parseEpisodesPageParam,
@@ -112,13 +111,15 @@ export default async function AnimeEpisodesPage({
   // episodes path, params preserved. The proxy issues that 308 before the
   // response starts (see `src/proxy.ts`); this is the standby for an id whose
   // slug nothing has claimed yet.
-  const canonicalPath = await canonicalAnimeEpisodesHref(
-    detail.id,
-    detail.title,
-  );
+  // Resolved once and reused for every path this page builds — its own
+  // canonical URL, the redirects above it, and the episode links below. The
+  // registry read is what those all agree on, so asking for it per href was
+  // both several cache reads and a chance for them to disagree.
+  const slug = await canonicalSlug(detail.id, detail.title);
+  const canonicalPath = animeEpisodesHref(slug);
   if (`/anime/${id}/episodes` !== canonicalPath) {
     permanentRedirect({
-      href: await canonicalAnimeEpisodesHref(detail.id, detail.title, {
+      href: animeEpisodesPageHref(slug, null, {
         page: parseEpisodesPageParam(pageParam) ?? 1,
         descending,
         query,
@@ -147,10 +148,7 @@ export default async function AnimeEpisodesPage({
     (requested === null || requested === 1 || requested > totalPages)
   ) {
     redirect({
-      href: await canonicalAnimeEpisodesHref(detail.id, detail.title, {
-        descending,
-        query,
-      }),
+      href: animeEpisodesPageHref(slug, null, { descending, query }),
       locale,
     });
   }
@@ -158,7 +156,7 @@ export default async function AnimeEpisodesPage({
 
   const t = await getTranslations("detail");
   const user = await getCurrentUser();
-  const detailHref = await canonicalAnimeHref(detail.id, detail.title);
+  const detailHref = animeHref(slug);
 
   const { slice, from, to } = pageSlice(matched, page, descending);
   const [watchStates, titles] = await Promise.all([
@@ -193,9 +191,9 @@ export default async function AnimeEpisodesPage({
           <AdBanner placement="episodes" />
           <section id="episodes">
             <EpisodeCards
-              animeId={detail.id}
+              animeSlug={slug}
               animeTitle={detail.title}
-              basePath={animeEpisodesHref(detail.id, detail.title)}
+              basePath={canonicalPath}
               episodes={withEpisodeTitles(slice, titles)}
               totalEpisodes={detail.episodes.length}
               matchCount={matched.length}
