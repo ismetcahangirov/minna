@@ -1,0 +1,2 @@
+ALTER TABLE "watch_progress" DROP CONSTRAINT "watch_progress_user_episode_unique";--> statement-breakpoint
+ALTER TABLE "watch_progress" ADD CONSTRAINT "watch_progress_user_anime_episode_unique" UNIQUE("user_id","anime_id","episode_id");

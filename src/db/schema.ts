@@ -105,10 +105,18 @@ export type NewAd = typeof ads.$inferInsert;
 // Per-user watch progress so a viewer resumes where they left off (PLAYER-05).
 // Anime/episode ids are external Consumet ids (text, no FK). Position and
 // duration are stored in whole seconds; the client throttles writes (interval +
-// unload flush) rather than persisting every timeupdate. The (user, episode)
-// pair is unique so progress is upserted in place. `title`/`image` are
-// denormalized (like `favorites`) so the profile watch-history view (PROFILE-03)
-// renders without a Consumet round-trip.
+// unload flush) rather than persisting every timeupdate.
+// `title`/`image` are denormalized (like `favorites`) so the profile
+// watch-history view (PROFILE-03) renders without a Consumet round-trip.
+//
+// The upsert key is (user, anime, episode) — the anime is part of it because an
+// episode id is only unique *within* one anime. The streaming scrapers are
+// blocked from datacenter IPs, so the episode list is synthesized
+// (`@/lib/anime/detail`) and every episode is numbered "1".."N": episode "12" of
+// Chainsaw Man and episode "12" of Berserk carry the same id. Keyed by (user,
+// episode) alone they collided into a single row that kept the first anime's
+// `anime_id` while every later write overwrote its title, poster and position —
+// so the profile's continue-watching card linked to a different anime.
 export const watchProgress = pgTable(
   "watch_progress",
   {
@@ -130,8 +138,9 @@ export const watchProgress = pgTable(
       .$onUpdate(() => new Date()),
   },
   (table) => [
-    unique("watch_progress_user_episode_unique").on(
+    unique("watch_progress_user_anime_episode_unique").on(
       table.userId,
+      table.animeId,
       table.episodeId,
     ),
   ],
