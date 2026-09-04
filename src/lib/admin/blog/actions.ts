@@ -7,8 +7,11 @@ import { revalidatePath } from "next/cache";
 
 import { blogs, blogTags, blogsToTags } from "@/db/schema";
 import { redirect } from "@/i18n/navigation";
+import { localePath } from "@/i18n/paths";
 import { getActiveLocale } from "@/i18n/route-locale";
 import { requireAdmin } from "@/lib/auth/admin";
+import { blogPostHref, postLocale } from "@/lib/blog/href";
+import { pingIndexNow } from "@/lib/seo/indexnow";
 
 type BlogField =
   | "title"
@@ -271,6 +274,34 @@ function revalidateBlogPaths(slug: string, previousSlug?: string): void {
   revalidatePath("/admin/blogs");
 }
 
+/**
+ * Tells IndexNow the post's public URL changed.
+ *
+ * Awaited rather than left floating: a serverless invocation can be torn down
+ * as soon as it answers, which would drop a detached promise before it left the
+ * machine. It cannot fail the action — `pingIndexNow` swallows its own errors —
+ * and it is bounded by that function's timeout.
+ *
+ * The listing goes with the post, since one appearing or disappearing changes
+ * `/blogs` too. A slug that moved submits both addresses: the new one to be
+ * fetched, the old one so its 404 is noticed rather than waited for.
+ */
+async function notifyBlogChanged(
+  post: { slug: string; language: string },
+  previousSlug?: string,
+): Promise<void> {
+  // Every path is built for the post's own locale, because that is the only
+  // prefix its article is served under (see `@/lib/blog/href`).
+  const locale = postLocale(post.language);
+  const paths = [localePath("/blogs", locale), blogPostHref(post)];
+
+  if (previousSlug && previousSlug !== post.slug) {
+    paths.push(blogPostHref({ ...post, slug: previousSlug }));
+  }
+
+  await pingIndexNow(paths);
+}
+
 /** Ensures the slug is free (excluding the row being edited). */
 async function slugTaken(
   db: Awaited<typeof import("@/db")>["db"],
@@ -318,6 +349,8 @@ export async function createBlogAction(
   }
 
   revalidateBlogPaths(parsed.values.slug);
+  // A draft has no public URL to announce; only a published post does.
+  if (parsed.values.published) await notifyBlogChanged(parsed.values);
   redirect({ href: "/admin/blogs", locale: await getActiveLocale() });
 }
 
@@ -349,6 +382,9 @@ export async function updateBlogAction(
   }
 
   revalidateBlogPaths(parsed.values.slug, previousSlug);
+  // Unpublishing is worth announcing too: the URL now 404s, and a submitted
+  // 404 is how an engine learns to drop the page rather than waiting to recrawl.
+  await notifyBlogChanged(parsed.values, previousSlug);
   redirect({ href: "/admin/blogs", locale: await getActiveLocale() });
 }
 
@@ -359,6 +395,10 @@ export async function deleteBlogAction(
 ): Promise<void> {
   await requireAdmin();
 
+  // Read before deleting: the language decides which locale prefix the URL that
+  // is about to disappear lived under, and the row will not be there to ask.
+  const language = await postLanguage(id);
+
   try {
     const { db } = await import("@/db");
     await db.delete(blogs).where(eq(blogs.id, id));
@@ -367,6 +407,7 @@ export async function deleteBlogAction(
   }
 
   revalidateBlogPaths(slug);
+  if (language) await notifyBlogChanged({ slug, language });
 }
 
 /** Publishes/unpublishes a post inline from the list. */
@@ -385,4 +426,23 @@ export async function setBlogPublishedAction(
   }
 
   revalidateBlogPaths(slug);
+  // Both directions are news: one URL just appeared, or just started 404ing.
+  const language = await postLanguage(id);
+  if (language) await notifyBlogChanged({ slug, language });
+}
+
+/** The language a post is written in, or null when it cannot be read. */
+async function postLanguage(id: string): Promise<string | null> {
+  try {
+    const { db } = await import("@/db");
+    const rows = await db
+      .select({ language: blogs.language })
+      .from(blogs)
+      .where(eq(blogs.id, id))
+      .limit(1);
+    return rows[0]?.language ?? null;
+  } catch (error) {
+    console.error("[admin] postLanguage failed:", (error as Error).message);
+    return null;
+  }
 }
