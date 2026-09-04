@@ -171,9 +171,10 @@ export default async function WatchPage({ params }: WatchRouteProps) {
 
   const [ad, progress, t] = await Promise.all([
     getActivePreRollAd(),
-    // Progress rows are keyed by the resolved episode id, not the URL slug.
+    // Progress rows are keyed by (anime, resolved episode id), not the URL
+    // slug — an episode id repeats across anime, so the anime is part of the key.
     user?.id
-      ? getWatchProgress(user.id, located.current.id)
+      ? getWatchProgress(user.id, detail.id, located.current.id)
       : Promise.resolve(null),
     getTranslations("player"),
   ]);

@@ -52,6 +52,12 @@ function firstRow(result: unknown): Record<string, unknown> | undefined {
  * Completion is sticky (`completed OR excluded.completed`): re-watching an
  * episode from the start must not un-watch it and then count it a second time
  * when it finishes again, which would drift the library's episode counter.
+ *
+ * The conflict target is (user, anime, episode), never (user, episode): an
+ * episode id is unique only within its own anime — the synthesized lists this
+ * app plays from number every episode "1".."N" — so the narrower key made
+ * episode 12 of one anime overwrite episode 12 of another. See `watchProgress`
+ * in `@/db/schema`.
  */
 export async function saveWatchProgress(
   input: SaveWatchProgressInput,
@@ -83,7 +89,9 @@ export async function saveWatchProgress(
       WITH previous AS (
         SELECT completed
         FROM watch_progress
-        WHERE user_id = ${user.id} AND episode_id = ${episodeId}
+        WHERE user_id = ${user.id}
+          AND anime_id = ${animeId}
+          AND episode_id = ${episodeId}
       ), upserted AS (
         INSERT INTO watch_progress (
           user_id, anime_id, episode_id, episode_number,
@@ -93,7 +101,7 @@ export async function saveWatchProgress(
           ${user.id}, ${animeId}, ${episodeId}, ${episodeNumber},
           ${position}, ${duration}, ${completed}, ${title}, ${image}
         )
-        ON CONFLICT (user_id, episode_id) DO UPDATE SET
+        ON CONFLICT (user_id, anime_id, episode_id) DO UPDATE SET
           position_seconds = excluded.position_seconds,
           duration_seconds = COALESCE(excluded.duration_seconds, watch_progress.duration_seconds),
           completed = watch_progress.completed OR excluded.completed,

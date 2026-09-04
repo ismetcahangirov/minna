@@ -78,6 +78,13 @@
       "when": 1787741031851,
       "tag": "0010_hot_bedlam",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788529711466,
+      "tag": "0011_watch_progress_anime_scoped_key",
+      "breakpoints": true
     }
   ]
 }

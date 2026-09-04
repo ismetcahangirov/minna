@@ -13,9 +13,15 @@ export interface WatchProgressState {
 }
 
 /**
- * The signed-in user's saved progress for `episodeId` (PLAYER-05), used to seed
- * the player so it resumes where the viewer left off. Returns `null` when there
- * is no saved position.
+ * The signed-in user's saved progress for one episode of one anime (PLAYER-05),
+ * used to seed the player so it resumes where the viewer left off. Returns
+ * `null` when there is no saved position.
+ *
+ * Matched on the anime too, not the episode id alone: the episode lists this app
+ * plays from are synthesized and number every episode "1".."N", so an id is only
+ * unique within its own anime (see `watchProgress` in `@/db/schema`). Without
+ * the anime, episode 12 of one title resumed at episode 12 of another's
+ * position.
  *
  * `@/db` is imported dynamically so its `DATABASE_URL` requirement stays out of
  * the build-time module graph. Any failure degrades to `null` (start from the
@@ -23,6 +29,7 @@ export interface WatchProgressState {
  */
 export async function getWatchProgress(
   userId: string,
+  animeId: string,
   episodeId: string,
 ): Promise<WatchProgressState | null> {
   try {
@@ -37,6 +44,7 @@ export async function getWatchProgress(
       .where(
         and(
           eq(watchProgress.userId, userId),
+          eq(watchProgress.animeId, animeId),
           eq(watchProgress.episodeId, episodeId),
         ),
       )
