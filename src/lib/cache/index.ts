@@ -2,6 +2,7 @@ export {
   CACHE_TTL,
   cacheDelete,
   cacheGet,
+  cacheGetMany,
   cacheKey,
   cachePing,
   cacheSet,
