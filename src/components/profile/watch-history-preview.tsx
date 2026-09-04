@@ -3,6 +3,7 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
+import { canonicalSlugs } from "@/lib/anime/canonical-slug";
 import { animeSlug, watchHref } from "@/lib/anime/href";
 import type { WatchHistoryItem } from "@/lib/watch/types";
 
@@ -12,13 +13,24 @@ import type { WatchHistoryItem } from "@/lib/watch/types";
  * straight back into the player to resume. Metadata is denormalized onto the
  * `watch_progress` row, so this renders without a Consumet round-trip. Server
  * component — no interactivity, so it stays out of the client bundle.
+ *
+ * The `{id}-{slug}` segment comes from the canonical registry (one bulk read
+ * for the whole grid), not from slugifying the stored title: the title on the
+ * row is whichever source answered while the episode played, and deriving from
+ * it sent every card through the proxy's 308 to the canonical URL — the same
+ * reason listings link through `listedAnimeHref`.
  */
 export async function WatchHistoryPreview({
   items,
 }: {
   items: WatchHistoryItem[];
 }) {
-  const t = await getTranslations("profile.history");
+  const [t, slugs] = await Promise.all([
+    getTranslations("profile.history"),
+    canonicalSlugs(
+      items.map((item) => ({ id: item.animeId, title: item.title })),
+    ),
+  ]);
 
   return (
     <section className="flex flex-col gap-4">
@@ -37,68 +49,73 @@ export async function WatchHistoryPreview({
         </div>
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {items.map((item, index) => (
-            <li key={item.episodeId}>
-              <Link
-                href={
-                  item.episodeNumber != null
-                    ? watchHref(item.animeId, item.episodeNumber, item.title)
-                    : `/watch/${animeSlug(item.animeId, item.title)}/${encodeURIComponent(item.episodeId)}`
-                }
-                className="group focus-visible:ring-ring block w-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-              >
-                <div className="border-border bg-surface group-hover:border-primary/60 relative aspect-[2/3] overflow-hidden border transition-[transform,border-color] duration-300 group-hover:z-10 group-hover:scale-[1.03]">
-                  {item.image ? (
-                    <Image
-                      src={item.image}
-                      alt={item.title ?? ""}
-                      fill
-                      priority={index < 6}
-                      sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 180px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="text-muted-foreground flex h-full w-full items-center justify-center">
-                      <Film className="size-8" aria-hidden />
-                    </div>
-                  )}
+          {items.map((item, index) => {
+            const slug =
+              slugs.get(item.animeId) ?? animeSlug(item.animeId, item.title);
 
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/70 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    <span className="bg-primary text-primary-foreground flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
-                      <Play className="size-3.5 fill-current" aria-hidden />
-                      {t("resume")}
-                    </span>
+            return (
+              <li key={`${item.animeId}:${item.episodeId}`}>
+                <Link
+                  href={
+                    item.episodeNumber != null
+                      ? watchHref(slug, item.episodeNumber)
+                      : `/watch/${slug}/${encodeURIComponent(item.episodeId)}`
+                  }
+                  className="group focus-visible:ring-ring block w-full outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  <div className="border-border bg-surface group-hover:border-primary/60 relative aspect-[2/3] overflow-hidden border transition-[transform,border-color] duration-300 group-hover:z-10 group-hover:scale-[1.03]">
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt={item.title ?? ""}
+                        fill
+                        priority={index < 6}
+                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 180px"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="text-muted-foreground flex h-full w-full items-center justify-center">
+                        <Film className="size-8" aria-hidden />
+                      </div>
+                    )}
+
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/70 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                      <span className="bg-primary text-primary-foreground flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold">
+                        <Play className="size-3.5 fill-current" aria-hidden />
+                        {t("resume")}
+                      </span>
+                    </div>
+
+                    {/* Resume progress bar (PLAYER-05 position over runtime). */}
+                    {item.progress > 0 && (
+                      <div
+                        className="absolute inset-x-0 bottom-0 h-1 bg-black/60"
+                        aria-hidden
+                      >
+                        <div
+                          className="bg-primary h-full"
+                          style={{
+                            width: `${Math.round(item.progress * 100)}%`,
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  {/* Resume progress bar (PLAYER-05 position over runtime). */}
-                  {item.progress > 0 && (
-                    <div
-                      className="absolute inset-x-0 bottom-0 h-1 bg-black/60"
-                      aria-hidden
-                    >
-                      <div
-                        className="bg-primary h-full"
-                        style={{
-                          width: `${Math.round(item.progress * 100)}%`,
-                        }}
-                      />
-                    </div>
+                  <h3 className="text-foreground group-hover:text-primary mt-2 line-clamp-1 text-sm font-semibold transition-colors">
+                    {item.title ?? item.animeId}
+                  </h3>
+                  {item.episodeNumber != null && (
+                    <p className="text-muted-foreground text-xs">
+                      {item.completed
+                        ? t("completed")
+                        : t("episode", { number: item.episodeNumber })}
+                    </p>
                   )}
-                </div>
-
-                <h3 className="text-foreground group-hover:text-primary mt-2 line-clamp-1 text-sm font-semibold transition-colors">
-                  {item.title ?? item.animeId}
-                </h3>
-                {item.episodeNumber != null && (
-                  <p className="text-muted-foreground text-xs">
-                    {item.completed
-                      ? t("completed")
-                      : t("episode", { number: item.episodeNumber })}
-                  </p>
-                )}
-              </Link>
-            </li>
-          ))}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
