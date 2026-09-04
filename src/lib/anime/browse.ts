@@ -1,6 +1,7 @@
 import "server-only";
 
 import { advancedSearchAnime } from "@/lib/anime/provider";
+import { attachCanonicalSlugs } from "@/lib/anime/canonical-slug";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 import { BROWSE_PAGE_SIZE, type PagedResult } from "@/lib/browse/types";
 
@@ -8,6 +9,12 @@ import { hasPlayableEpisodes } from "@/lib/anime/episodes";
 import { findCategoryBySlug } from "@/lib/anime/genres";
 import { type AnimeSummary, toAnimeSummary } from "@/lib/anime/types";
 
+/**
+ * Bumped when the cached listing shape changes, so an entry written before it
+ * is ignored rather than read back short a field — v2 carries the canonical
+ * URL segment resolved for each summary.
+ */
+const LISTING_CACHE_VERSION = "v2";
 /** Guards the cache key and upstream call against absurd deep-link pages. */
 const MAX_PAGE = 500;
 
@@ -32,7 +39,13 @@ export async function listPopularAnime(
   page: number = 1,
 ): Promise<PagedResult<AnimeSummary>> {
   const current = safePage(page);
-  const key = cacheKey("anime", "popular-page", current, BROWSE_PAGE_SIZE);
+  const key = cacheKey(
+    "anime",
+    "popular-page",
+    LISTING_CACHE_VERSION,
+    current,
+    BROWSE_PAGE_SIZE,
+  );
 
   const cached = await cacheGet<PagedResult<AnimeSummary>>(key);
   if (cached) return cached;
@@ -44,11 +57,14 @@ export async function listPopularAnime(
       perPage: BROWSE_PAGE_SIZE,
     });
 
-    const items = (Array.isArray(data?.results) ? data.results : [])
-      .map(toAnimeSummary)
-      .filter((entry): entry is AnimeSummary => entry !== null)
-      // Drop titles with no playable episodes — their detail page would be empty.
-      .filter(hasPlayableEpisodes);
+    const items = await attachCanonicalSlugs(
+      (Array.isArray(data?.results) ? data.results : [])
+        .map(toAnimeSummary)
+        .filter((entry): entry is AnimeSummary => entry !== null)
+        // Drop titles with no playable episodes — their detail page would be
+        // empty.
+        .filter(hasPlayableEpisodes),
+    );
 
     const result: PagedResult<AnimeSummary> = {
       items,
@@ -79,7 +95,13 @@ export async function listRecentAnime(
   page: number = 1,
 ): Promise<PagedResult<AnimeSummary>> {
   const current = safePage(page);
-  const key = cacheKey("anime", "recent-page", current, BROWSE_PAGE_SIZE);
+  const key = cacheKey(
+    "anime",
+    "recent-page",
+    LISTING_CACHE_VERSION,
+    current,
+    BROWSE_PAGE_SIZE,
+  );
 
   const cached = await cacheGet<PagedResult<AnimeSummary>>(key);
   if (cached) return cached;
@@ -91,10 +113,12 @@ export async function listRecentAnime(
       perPage: BROWSE_PAGE_SIZE,
     });
 
-    const items = (Array.isArray(data?.results) ? data.results : [])
-      .map(toAnimeSummary)
-      .filter((entry): entry is AnimeSummary => entry !== null)
-      .filter(hasPlayableEpisodes);
+    const items = await attachCanonicalSlugs(
+      (Array.isArray(data?.results) ? data.results : [])
+        .map(toAnimeSummary)
+        .filter((entry): entry is AnimeSummary => entry !== null)
+        .filter(hasPlayableEpisodes),
+    );
 
     const result: PagedResult<AnimeSummary> = {
       items,
@@ -129,6 +153,7 @@ export async function listGenreAnime(
   const key = cacheKey(
     "anime",
     "genre-page",
+    LISTING_CACHE_VERSION,
     category.slug,
     current,
     BROWSE_PAGE_SIZE,
@@ -145,10 +170,12 @@ export async function listGenreAnime(
       perPage: BROWSE_PAGE_SIZE,
     });
 
-    const items = (Array.isArray(data?.results) ? data.results : [])
-      .map(toAnimeSummary)
-      .filter((entry): entry is AnimeSummary => entry !== null)
-      .filter(hasPlayableEpisodes);
+    const items = await attachCanonicalSlugs(
+      (Array.isArray(data?.results) ? data.results : [])
+        .map(toAnimeSummary)
+        .filter((entry): entry is AnimeSummary => entry !== null)
+        .filter(hasPlayableEpisodes),
+    );
 
     const result: PagedResult<AnimeSummary> = {
       items,

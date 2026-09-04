@@ -14,8 +14,14 @@ import { cn } from "@/lib/utils";
 type WatchState = { completed: boolean; progress: number };
 
 interface EpisodeCardsProps {
-  /** Id of the title these episodes belong to — the watch URL resolves it. */
-  animeId: string;
+  /**
+   * The anime's canonical `{id}-{slug}` segment, resolved by the page.
+   *
+   * The episode links are built from this rather than from `animeTitle`:
+   * the segment the proxy redirects to is whatever the slug registry holds,
+   * and a list deriving its own sent every episode link through a 308.
+   */
+  animeSlug: string;
   /** Anime title — slugged into the readable watch URL. */
   animeTitle: string;
   /**
@@ -55,7 +61,7 @@ interface EpisodeCardsProps {
  * icons — never emoji.
  */
 export async function EpisodeCards({
-  animeId,
+  animeSlug,
   animeTitle,
   basePath,
   season = null,
@@ -128,7 +134,7 @@ export async function EpisodeCards({
           return (
             <li key={episode.id}>
               <Link
-                href={watchHref(animeId, episode.number, animeTitle)}
+                href={watchHref(animeSlug, episode.number)}
                 className="group border-border bg-surface hover:border-primary/60 flex items-center gap-4 border p-3 transition-colors"
               >
                 <div className="border-border bg-muted relative aspect-video w-32 shrink-0 overflow-hidden border sm:w-44">

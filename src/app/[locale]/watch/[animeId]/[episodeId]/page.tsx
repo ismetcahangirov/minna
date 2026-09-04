@@ -13,8 +13,12 @@ import { permanentRedirect } from "@/i18n/navigation";
 import { resolveLocale } from "@/i18n/route-locale";
 import { getActivePreRollAd } from "@/lib/ads/queries";
 import { getAnimeInfo } from "@/lib/anime/detail";
-import { canonicalWatchHref } from "@/lib/anime/canonical-slug";
-import { parseAnimeParam, parseEpisodeNumber } from "@/lib/anime/href";
+import { canonicalSlug, canonicalWatchHref } from "@/lib/anime/canonical-slug";
+import {
+  parseAnimeParam,
+  parseEpisodeNumber,
+  watchHref,
+} from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeEpisode } from "@/lib/anime/types";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -153,11 +157,12 @@ export default async function WatchPage({ params }: WatchRouteProps) {
   // is the standby for the two cases it cannot resolve on its own — an id whose
   // slug nothing has claimed yet, and a legacy opaque episode id, whose number
   // is only knowable from the episode list fetched above.
-  const canonical = await canonicalWatchHref(
-    detail.id,
-    located.current.number,
-    detail.title,
-  );
+  // Resolved once and reused: the page's own canonical URL is built from it,
+  // and so are the links it renders — the episode navigation and the way back
+  // to the anime. Those used to derive their segment from the title, which is
+  // how a player linked its own next episode at a URL the proxy then 308'd.
+  const slug = await canonicalSlug(detail.id, detail.title);
+  const canonical = watchHref(slug, located.current.number);
   if (located.known && `/watch/${animeId}/${episodeId}` !== canonical) {
     permanentRedirect({ href: canonical, locale });
   }
@@ -184,6 +189,7 @@ export default async function WatchPage({ params }: WatchRouteProps) {
     <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 pt-20 pb-10 sm:px-6 lg:px-8">
       <WatchExperience
         animeId={detail.id}
+        animeSlug={slug}
         malId={detail.malId}
         animeTitle={detail.title}
         episode={{
@@ -251,8 +257,7 @@ export default async function WatchPage({ params }: WatchRouteProps) {
           <Suspense
             fallback={
               <EpisodeList
-                animeId={detail.id}
-                animeTitle={detail.title}
+                animeSlug={slug}
                 episodes={detail.episodes}
                 activeEpisodeNumber={current.number}
               />
@@ -260,7 +265,7 @@ export default async function WatchPage({ params }: WatchRouteProps) {
           >
             <WatchEpisodeList
               animeId={detail.id}
-              animeTitle={detail.title}
+              animeSlug={slug}
               episodes={detail.episodes}
               activeEpisodeNumber={current.number}
             />

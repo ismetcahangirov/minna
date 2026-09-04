@@ -9,7 +9,10 @@ import { ReplyForm } from "@/components/community/reply-form";
 import { SimplePager } from "@/components/ui/simple-pager";
 import { Link } from "@/i18n/navigation";
 import { resolveLocale } from "@/i18n/route-locale";
-import { animeHref, watchHref } from "@/lib/anime/href";
+import {
+  canonicalAnimeHref,
+  canonicalWatchHref,
+} from "@/lib/anime/canonical-slug";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getThread, listThreadPosts } from "@/lib/discussions/queries";
 import { memberHref } from "@/lib/members/types";
@@ -92,10 +95,17 @@ export default async function ThreadPage({
         : t("scopeAnime");
 
   // An episode thread points at the player; anything else at the anime page.
+  // Both go through the registry rather than this thread's stored title: the
+  // segment the proxy redirects to is whatever the registry holds, so deriving
+  // one here linked at a URL that answered 308.
   const targetHref =
     thread.scope === "episode" && thread.episodeNumber !== null
-      ? watchHref(thread.animeId, thread.episodeNumber, thread.animeTitle)
-      : animeHref(
+      ? await canonicalWatchHref(
+          thread.animeId,
+          thread.episodeNumber,
+          thread.animeTitle,
+        )
+      : await canonicalAnimeHref(
           thread.scope === "season" && thread.seasonId
             ? thread.seasonId
             : thread.animeId,

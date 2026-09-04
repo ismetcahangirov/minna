@@ -2,7 +2,13 @@ import "server-only";
 
 import { cache } from "react";
 
-import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
+import {
+  CACHE_TTL,
+  cacheGet,
+  cacheGetMany,
+  cacheKey,
+  cacheSet,
+} from "@/lib/cache";
 
 import { animeDetailCacheKey } from "@/lib/anime/detail";
 import { fetchSeasonNode } from "@/lib/anime/provider";
@@ -235,11 +241,17 @@ const SEASON_META_VERSION = "v2";
  * traversal only needs titles/formats/relations.
  */
 async function fetchNode(id: string): Promise<AnimeDetail | null> {
-  const warm = await cacheGet<AnimeDetail>(animeDetailCacheKey(id));
-  if (warm) return warm;
-
   const metaKey = cacheKey("anime", "seasons-meta", SEASON_META_VERSION, id);
-  const cached = await cacheGet<AnimeDetail>(metaKey);
+
+  // Both candidates are read in one `MGET` rather than one `cacheGet` each: a
+  // season chain walks a node per hop, so the second read was doubling this
+  // page's command count against the cache quota to save nothing — the full
+  // detail is the rarer hit of the two, so its miss was always paid anyway.
+  const [warm, cached] = await cacheGetMany<AnimeDetail>([
+    animeDetailCacheKey(id),
+    metaKey,
+  ]);
+  if (warm) return warm;
   if (cached) return cached;
 
   const node = toAnimeDetail(await fetchSeasonNode(id));

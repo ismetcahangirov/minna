@@ -30,6 +30,14 @@ export interface EpisodeRef {
 
 interface WatchExperienceProps {
   animeId: string;
+  /**
+   * The anime's canonical `{id}-{slug}` segment, resolved by the page.
+   *
+   * Passed in rather than derived here: the registry is what the proxy
+   * redirects to, and building this player's own links from `animeTitle`
+   * pointed the next-episode button at a URL that answered 308.
+   */
+  animeSlug: string;
   /** MyAnimeList id, when known — threaded to the embed's MAL-route fallback. */
   malId: number | null;
   /** Anime title, denormalized into saved progress for the profile history. */
@@ -59,6 +67,7 @@ const SAVE_INTERVAL_MS = 15_000;
  */
 export function WatchExperience({
   animeId,
+  animeSlug,
   malId,
   animeTitle,
   episode,
@@ -80,7 +89,7 @@ export function WatchExperience({
   // Latest playback position, kept in a ref so timeupdate never re-renders.
   const latest = useRef({ position: initialTime, duration: 0 });
   const nextHref = nextEpisode
-    ? watchHref(animeId, nextEpisode.number, animeTitle)
+    ? watchHref(animeSlug, nextEpisode.number)
     : null;
 
   const flushProgress = useCallback(() => {
@@ -179,18 +188,14 @@ export function WatchExperience({
       {/* Episode navigation — always available (PLAYER-04). */}
       <div className="flex items-center justify-between gap-3">
         <EpisodeNavButton
-          href={
-            prevEpisode
-              ? watchHref(animeId, prevEpisode.number, animeTitle)
-              : null
-          }
+          href={prevEpisode ? watchHref(animeSlug, prevEpisode.number) : null}
           label={t("prevEpisode")}
           shortLabel={t("prev")}
           icon="prev"
         />
 
         <Link
-          href={animeHref(animeId, animeTitle)}
+          href={animeHref(animeSlug)}
           className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm font-medium transition-colors"
         >
           <ListVideo className="size-4" aria-hidden />

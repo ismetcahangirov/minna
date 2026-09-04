@@ -51,6 +51,37 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
   }
 }
 
+/**
+ * Reads several keys in one round trip.
+ *
+ * Upstash bills per command, not per round trip, so this is not only about
+ * latency: two sequential `cacheGet`s on the render path cost two requests
+ * against the monthly quota where one `MGET` costs one. Returns one slot per
+ * input key, in order, `null` for a miss or for an entry that no longer parses.
+ */
+export async function cacheGetMany<T>(keys: string[]): Promise<(T | null)[]> {
+  if (keys.length === 0) return [];
+
+  const redis = getRedis();
+  if (!redis) return keys.map(() => null);
+
+  try {
+    const raw = await redis.mget(keys);
+    return raw.map((value) => {
+      if (!value) return null;
+      try {
+        return JSON.parse(value) as T;
+      } catch {
+        // One unparseable entry is a miss, not a failed read of the whole set.
+        return null;
+      }
+    });
+  } catch (error) {
+    console.error("[cache] mget failed:", (error as Error).message);
+    return keys.map(() => null);
+  }
+}
+
 export async function cacheSet<T>(
   key: string,
   value: T,

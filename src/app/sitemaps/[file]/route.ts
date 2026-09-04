@@ -51,9 +51,27 @@ export async function GET(
     // An index past the end is a stale entry in a crawler's copy of the index,
     // not a broken link — 404 so it stops asking, rather than serving an empty
     // set that looks like a section which legitimately has nothing in it.
-    if (!chunk) return new Response("Not found", { status: 404 });
+    if (!chunk) return notFound();
     return xmlResponse(renderUrlset(chunk.urls));
   }
 
-  return new Response("Not found", { status: 404 });
+  return notFound();
+}
+
+/**
+ * A 404 the edge is allowed to repeat for a few minutes.
+ *
+ * Uncached, every probe of a name this handler does not serve reached the
+ * origin, and for an `anime-{n}.xml` past the end of the catalog that meant
+ * paying for a range check per probe. The window is short because a chunk index
+ * that is out of range today is a real file once the catalog grows into it.
+ */
+function notFound(): Response {
+  return new Response("Not found", {
+    status: 404,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=0, s-maxage=300",
+    },
+  });
 }

@@ -34,6 +34,21 @@ import type { SitemapUrl } from "@/lib/seo/sitemap-xml";
 const SECTION_TTL = 3600;
 
 /**
+ * How long a built catalog is reused for.
+ *
+ * Longer than {@link SECTION_TTL} because the two sections are not comparable
+ * in what a rebuild costs: `blogs` is one database round trip, while the
+ * catalog walks every anime and resolves every canonical slug. At an hour, a
+ * crawler working through the chunks was rebuilding the whole catalog several
+ * times a day — enough Redis commands on its own to exhaust a month's quota,
+ * after which every cache read fails and the chunks 404.
+ *
+ * A day of staleness costs nothing a crawler can observe: an anime added today
+ * is listed tomorrow, and the sitemap is refetched far less often than that.
+ */
+const CATALOG_TTL = 60 * 60 * 24;
+
+/**
  * URLs per catalog chunk. Google's ceiling is 50,000, so this is not about the
  * limit — it is about how much one request has to build before it can answer.
  */
@@ -180,8 +195,51 @@ function chunkKey(index: number): string {
   return cacheKey("sitemap", "anime", "chunk", index, "v2");
 }
 
+/** A built catalog: its chunk boundaries, and when this process built them. */
+interface BuiltCatalog {
+  chunks: CatalogEntry[][];
+  builtAt: number;
+}
+
 /**
- * Walks the catalog and stores it as chunks, returning how many there are.
+ * The last catalog this process built.
+ *
+ * Redis is the cache; this is the fallback for when Redis cannot answer. A
+ * build that could not be stored used to be thrown away and redone by the very
+ * next request — which is how a cache outage turned into a rebuild per crawler
+ * fetch, each one thousands of commands deep, all of them failing to store.
+ */
+let builtCatalog: BuiltCatalog | null = null;
+
+/** An in-flight build, so concurrent chunk requests share one walk. */
+let catalogBuild: Promise<BuiltCatalog> | null = null;
+
+/** The remembered catalog while it is still within {@link CATALOG_TTL}. */
+function freshCatalog(): BuiltCatalog | null {
+  if (!builtCatalog) return null;
+  const age = Date.now() - builtCatalog.builtAt;
+  return age < CATALOG_TTL * 1000 ? builtCatalog : null;
+}
+
+/**
+ * The catalog, built at most once at a time.
+ *
+ * Chunks are requested one file at a time but built all at once, so without
+ * this a crawler fetching `anime-0` and `anime-1` in parallel starts two full
+ * walks that duplicate each other's work and each other's writes.
+ */
+async function catalogChunks(): Promise<BuiltCatalog> {
+  const fresh = freshCatalog();
+  if (fresh) return fresh;
+
+  catalogBuild ??= buildCatalogChunks().finally(() => {
+    catalogBuild = null;
+  });
+  return catalogBuild;
+}
+
+/**
+ * Walks the catalog and stores it as chunks, returning them.
  *
  * Chunking happens here, at write time, rather than when a request slices a
  * shared list. That is the whole point: a chunk request reads one chunk's
@@ -190,8 +248,12 @@ function chunkKey(index: number): string {
  *
  * Boundaries are drawn by URL budget rather than by row count, so the files
  * stay evenly sized however the locale set grows.
+ *
+ * The chunks are returned rather than only counted, so the request that paid
+ * for the walk can answer from what it just built instead of reading it back
+ * out of the cache it may not have reached.
  */
-async function buildCatalogChunks(): Promise<number> {
+async function buildCatalogChunks(): Promise<BuiltCatalog> {
   const [anime, episodes] = await Promise.all([
     listAnimeSitemapEntries(),
     listEpisodeSitemapEntries(),
@@ -238,14 +300,17 @@ async function buildCatalogChunks(): Promise<number> {
   if (current.length > 0) chunks.push(current);
   if (chunks.length === 0) chunks.push([]);
 
+  const built: BuiltCatalog = { chunks, builtAt: Date.now() };
+  builtCatalog = built;
+
   await Promise.all([
     ...chunks.map((entries, index) =>
-      cacheSet(chunkKey(index), entries, SECTION_TTL),
+      cacheSet(chunkKey(index), entries, CATALOG_TTL),
     ),
-    cacheSet(CHUNK_COUNT_KEY, chunks.length, SECTION_TTL),
+    cacheSet(CHUNK_COUNT_KEY, chunks.length, CATALOG_TTL),
   ]);
 
-  return chunks.length;
+  return built;
 }
 
 /** How many URLs one row expands into, across all three locales. */
@@ -304,6 +369,11 @@ export async function animeChunk(
 ): Promise<{ urls: SitemapUrl[]; chunkCount: number } | null> {
   if (index < 0 || !Number.isSafeInteger(index)) return null;
 
+  // What this process last built outranks the cache: it is the same data, it
+  // is free to read, and it is the only copy that exists when Redis is down.
+  const fresh = freshCatalog();
+  if (fresh) return fromCatalog(fresh, index);
+
   // Range is checked against the known count first, so an out-of-range request
   // is refused for the price of one small read. Without this, a crawler holding
   // a stale index — or anything probing `anime-99.xml` — would trigger a full
@@ -315,25 +385,35 @@ export async function animeChunk(
   if (cached) return { urls: catalogUrls(cached), chunkCount: known ?? 1 };
 
   // Either nothing is cached yet or this chunk expired out from under a set
-  // that is still partly warm. Rebuilding is the only way to know the count.
-  const chunkCount = await buildCatalogChunks();
-  if (index >= chunkCount) return null;
+  // that is still partly warm. Answer from the walk itself — the previous
+  // version read the chunk back out of Redis, so a cache that could not be
+  // written (an exhausted request quota, say) turned a catalog this request had
+  // already built into a 404, and unlisted every anime URL on the site.
+  return fromCatalog(await catalogChunks(), index);
+}
 
-  const rebuilt = await cacheGet<CatalogEntry[]>(chunkKey(index));
-  return rebuilt ? { urls: catalogUrls(rebuilt), chunkCount } : null;
+/** One chunk of a built catalog, or null when the index is past its end. */
+function fromCatalog(
+  catalog: BuiltCatalog,
+  index: number,
+): { urls: SitemapUrl[]; chunkCount: number } | null {
+  const entries = catalog.chunks[index];
+  if (!entries) return null;
+  return { urls: catalogUrls(entries), chunkCount: catalog.chunks.length };
 }
 
 /**
  * How many catalog chunks the index should list.
  *
- * Reads the count a previous chunk build left behind — one small Redis GET,
- * which is what keeps the index instant. Falls back to a single chunk when the
- * key is cold: the crawler fetches `anime-0`, that fetch writes the real count,
- * and the next index read lists the rest. One crawl cycle behind at worst, and
- * only on a cold cache.
+ * Reads this process's own build when it has one, then the count a previous
+ * chunk build left behind — one small Redis GET, which is what keeps the index
+ * instant. Falls back to a single chunk when neither can answer: the crawler
+ * fetches `anime-0`, that fetch builds the catalog and publishes the real
+ * count, and the next index read lists the rest. One crawl cycle behind at
+ * worst, and only on a cold process with a cold cache.
  */
 export async function animeChunkCount(): Promise<number> {
-  return (await cachedChunkCount()) ?? 1;
+  return freshCatalog()?.chunks.length ?? (await cachedChunkCount()) ?? 1;
 }
 
 /**

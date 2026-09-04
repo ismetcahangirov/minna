@@ -8,6 +8,7 @@ import {
   fetchRecent,
   fetchTrending,
 } from "@/lib/anime/provider";
+import { attachCanonicalSlugs } from "@/lib/anime/canonical-slug";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 
 import { hasPlayableEpisodes } from "@/lib/anime/episodes";
@@ -18,6 +19,12 @@ import {
   toAnimeSummary,
 } from "@/lib/anime/types";
 
+/**
+ * Bumped when the cached listing shape changes, so an entry written before it
+ * is ignored rather than read back short a field — v2 carries the canonical
+ * URL segment resolved for each summary.
+ */
+const LISTING_CACHE_VERSION = "v2";
 /** How many cards each home row requests from the AniList provider. */
 export const SECTION_LIMIT = 14;
 
@@ -55,13 +62,13 @@ async function fetchSection(
   }
 
   const results = Array.isArray(data?.results) ? data.results : [];
-  return (
+  return attachCanonicalSlugs(
     results
       .map(toAnimeSummary)
       .filter((entry): entry is AnimeSummary => entry !== null)
       // Drop titles with no playable episodes — their detail page would be empty.
       .filter(hasPlayableEpisodes)
-      .slice(0, limit)
+      .slice(0, limit),
   );
 }
 
@@ -85,7 +92,13 @@ export const getAnimeSection = cache(
     section: AnimeSection,
     limit: number = SECTION_LIMIT,
   ): Promise<AnimeSummary[]> => {
-    const key = cacheKey("anime", "section", section, limit);
+    const key = cacheKey(
+      "anime",
+      "section",
+      LISTING_CACHE_VERSION,
+      section,
+      limit,
+    );
 
     const cached = await cacheGet<AnimeSummary[]>(key);
     if (cached && cached.length > 0) return cached;

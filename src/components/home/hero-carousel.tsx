@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
-import { animeHref } from "@/lib/anime/href";
+import { listedAnimeHref } from "@/lib/anime/href";
 import type { AnimeSummary } from "@/lib/anime/types";
 import { cn } from "@/lib/utils";
 import { useGetAnimeSectionQuery } from "@/store/api/anime-api";
@@ -256,9 +256,7 @@ export function HeroCarousel({
                         size="default"
                         className="sm:h-11 sm:px-8 sm:text-base"
                         nativeButton={false}
-                        render={
-                          <Link href={animeHref(anime.id, anime.title)} />
-                        }
+                        render={<Link href={listedAnimeHref(anime)} />}
                       >
                         <Play
                           className="size-4 fill-current sm:size-5"
@@ -271,9 +269,7 @@ export function HeroCarousel({
                         variant="outline"
                         className="sm:h-11 sm:px-8 sm:text-base"
                         nativeButton={false}
-                        render={
-                          <Link href={animeHref(anime.id, anime.title)} />
-                        }
+                        render={<Link href={listedAnimeHref(anime)} />}
                       >
                         <Info className="size-4 sm:size-5" aria-hidden />
                         {t("moreInfo")}
