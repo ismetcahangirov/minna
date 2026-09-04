@@ -48,6 +48,19 @@ export interface AnimeSummary {
   color: string | null;
   /** Present only on the "recent episodes" listing. */
   episodeNumber: number | null;
+  /**
+   * The canonical `{id}-{slug}` URL segment, once the registry has been asked
+   * for it.
+   *
+   * A listing that links at `animeSlug(id, title)` links at whatever title its
+   * own source happened to return, which is not necessarily the slug the
+   * registry holds — so every card pointed at a URL the proxy then 308'd to the
+   * canonical one. Carrying the resolved segment on the summary lets a whole
+   * page's links be resolved in one `MGET` where asking per card would be one
+   * read each. Absent when the registry could not answer; callers fall back to
+   * deriving from the title, which is what they did before it existed.
+   */
+  slug?: string;
 }
 
 // --- Raw Consumet AniList meta shapes (permissive on purpose) --------------

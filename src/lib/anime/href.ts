@@ -42,6 +42,24 @@ export function animeHref(id: string, title?: string | null): string {
 }
 
 /**
+ * The detail path for a listed anime, preferring the canonical segment the
+ * registry resolved for it.
+ *
+ * Listings link through here rather than through {@link animeHref} directly:
+ * the title a listing's source returned is not always the one the registry
+ * claimed, and linking at the derived slug sent every card through the proxy's
+ * 308 to the canonical URL. Falls back to deriving from the title when the
+ * summary was built without a resolved segment.
+ */
+export function listedAnimeHref(anime: {
+  id: string;
+  title?: string | null;
+  slug?: string | null;
+}): string {
+  return anime.slug ? animeHref(anime.slug) : animeHref(anime.id, anime.title);
+}
+
+/**
  * The structural kind a season-chain member falls under. Always spelled in
  * English regardless of locale, matching every other structural URL segment
  * (`episode-5`, `-episodes`) — a URL's language is the site's locale prefix,

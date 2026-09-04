@@ -1,11 +1,18 @@
 import "server-only";
 
 import { advancedSearchAnime } from "@/lib/anime/provider";
+import { attachCanonicalSlugs } from "@/lib/anime/canonical-slug";
 import { CACHE_TTL, cacheGet, cacheKey, cacheSet } from "@/lib/cache";
 
 import { hasPlayableEpisodes } from "@/lib/anime/episodes";
 import { type AnimeSummary, toAnimeSummary } from "@/lib/anime/types";
 
+/**
+ * Bumped when the cached listing shape changes, so an entry written before it
+ * is ignored rather than read back short a field — v2 carries the canonical
+ * URL segment resolved for each summary.
+ */
+const LISTING_CACHE_VERSION = "v2";
 /** How many results one search page requests from the AniList provider. */
 export const SEARCH_PER_PAGE = 24;
 
@@ -72,6 +79,7 @@ export async function searchAnime({
   const key = cacheKey(
     "anime",
     "search",
+    LISTING_CACHE_VERSION,
     q || "*",
     genreList.join(",") || "-",
     safePage,
@@ -89,11 +97,14 @@ export async function searchAnime({
       perPage: SEARCH_PER_PAGE,
     });
 
-    const results = (Array.isArray(data?.results) ? data.results : [])
-      .map(toAnimeSummary)
-      .filter((entry): entry is AnimeSummary => entry !== null)
-      // Drop titles with no playable episodes — their detail page would be empty.
-      .filter(hasPlayableEpisodes);
+    const results = await attachCanonicalSlugs(
+      (Array.isArray(data?.results) ? data.results : [])
+        .map(toAnimeSummary)
+        .filter((entry): entry is AnimeSummary => entry !== null)
+        // Drop titles with no playable episodes — their detail page would be
+        // empty.
+        .filter(hasPlayableEpisodes),
+    );
 
     const result: SearchResult = {
       results,

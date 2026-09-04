@@ -302,6 +302,29 @@ async function claimBulkRefresh(redis: Redis): Promise<boolean> {
 }
 
 /**
+ * Fills in each item's canonical `{id}-{slug}` segment, in one bulk resolve.
+ *
+ * For listings: a page of cards is one `MGET`, where asking per card would be
+ * one read each. Items the registry cannot answer for are left as they are, so
+ * a caller still falls back to deriving the segment from the title.
+ *
+ * Mutates in place — every caller is enriching a list it has just built.
+ */
+export async function attachCanonicalSlugs<
+  T extends { id: string; title: string; slug?: string },
+>(items: T[]): Promise<T[]> {
+  if (items.length === 0) return items;
+
+  const slugs = await canonicalSlugs(items);
+  for (const item of items) {
+    const slug = slugs.get(item.id);
+    if (slug) item.slug = slug;
+  }
+
+  return items;
+}
+
+/**
  * The canonical `/anime/{id}-{slug}` path — what the page's `<link
  * rel="canonical">` must claim and what the proxy redirects to.
  *
