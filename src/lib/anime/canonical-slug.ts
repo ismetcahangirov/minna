@@ -33,6 +33,8 @@
  * import: `src/proxy.ts` reads it before a request is routed, and Next bundles
  * the proxy in a layer where `server-only` throws.
  */
+import type Redis from "ioredis";
+
 import {
   animeEpisodesPageHref,
   animeHref,
@@ -55,6 +57,20 @@ const SLUG_CACHE_VERSION = "v3";
 
 /** 30 days, refreshed on read. See "Stability" above. */
 const SLUG_TTL = 60 * 60 * 24 * 30;
+
+/**
+ * Shortest gap between two bulk lifetime refreshes.
+ *
+ * The bulk path is the sitemap's, and it holds the whole catalog at once: one
+ * refresh command per anime, thousands per build. Doing that on every build was
+ * the single largest consumer of the cache's request quota, and it bought
+ * nothing — {@link SLUG_TTL} is thirty days, so refreshing weekly leaves every
+ * entry with three weeks of headroom it never gets close to spending.
+ */
+const BULK_REFRESH_INTERVAL = 60 * 60 * 24 * 7;
+
+/** Marks that a bulk refresh has run; its own TTL is the interval. */
+const BULK_REFRESH_KEY = `anime:slug:${SLUG_CACHE_VERSION}:bulk-refreshed`;
 
 /** The Redis key holding one anime's canonical URL segment. */
 export function animeSlugCacheKey(id: string): string {
@@ -183,6 +199,10 @@ async function claimSlug(id: string, slug: string): Promise<void> {
  * one `MGET` plus one pipeline of writes for the ids nobody has claimed yet.
  * Doing it per entry would be ~1,800 sequential round trips on every crawl.
  *
+ * In the steady state — every id claimed, no refresh due — this is a single
+ * `MGET` and nothing else, which is what makes rebuilding the catalog sitemap
+ * affordable enough to do on a schedule.
+ *
  * @param entries id → the title to derive a slug from if the id is unclaimed.
  * @returns id → canonical segment, one per input entry.
  */
@@ -212,23 +232,38 @@ export async function canonicalSlugs(
     return derived;
   }
 
+  // Refreshing the lifetime of every already-claimed id is what keeps a title
+  // the sitemap keeps listing from expiring out from under the index. It is
+  // also one command per anime, so it runs on a schedule of its own rather than
+  // on every build — see BULK_REFRESH_INTERVAL.
+  const refreshing = await claimBulkRefresh(redis);
+
   // One pipeline for both halves: claim the ids nobody holds, and refresh the
-  // lifetime of the ones already claimed so a title the sitemap keeps listing
-  // never expires out from under the index.
+  // rest when this build is the one carrying that week's refresh.
   const pipeline = redis.pipeline();
+  let queued = 0;
+
   ids.forEach((id, index) => {
     const slug = stored[index];
     const key = animeSlugCacheKey(id);
 
     if (slug) {
       resolved.set(id, slug);
-      pipeline.expire(key, SLUG_TTL);
+      if (refreshing) {
+        pipeline.expire(key, SLUG_TTL);
+        queued += 1;
+      }
     } else {
       const claim = derived.get(id)!;
       resolved.set(id, claim);
       pipeline.set(key, claim, "EX", SLUG_TTL, "NX");
+      queued += 1;
     }
   });
+
+  // A steady-state build claims nothing and refreshes nothing, and an empty
+  // pipeline is still a round trip — so there is nothing to send.
+  if (queued === 0) return resolved;
 
   try {
     await pipeline.exec();
@@ -241,6 +276,29 @@ export async function canonicalSlugs(
   }
 
   return resolved;
+}
+
+/**
+ * Whether this call is the one that refreshes the catalog's slug lifetimes.
+ *
+ * `SET NX` on a key that expires after {@link BULK_REFRESH_INTERVAL}: exactly
+ * one caller per interval is told yes, across every instance, for the price of
+ * one command. A failure answers no — a cache that cannot take this write
+ * cannot take the thousands the refresh would queue behind it either.
+ */
+async function claimBulkRefresh(redis: Redis): Promise<boolean> {
+  try {
+    const reply = await redis.set(
+      BULK_REFRESH_KEY,
+      "1",
+      "EX",
+      BULK_REFRESH_INTERVAL,
+      "NX",
+    );
+    return reply === "OK";
+  } catch {
+    return false;
+  }
 }
 
 /**
