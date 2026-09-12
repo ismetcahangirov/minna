@@ -120,9 +120,15 @@ async function kitsuFetch<D>(path: string): Promise<KitsuDocument<D>> {
   const res = await fetch(`${KITSU_API}${path}`, {
     headers: { Accept: "application/vnd.api+json" },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    // Listings are Redis-cached by the callers; skip Next's own data cache so a
-    // stale fetch cache cannot outlive the Redis TTL.
-    cache: "no-store",
+    // Cached for an hour, matching the AniList queries in
+    // `@/lib/anime/anilist-graphql`. This used to be `no-store`, reasoning that
+    // the callers already hold a Redis cache and a stale fetch cache should not
+    // outlive its TTL — but an uncached fetch during render opts the whole page
+    // out of static rendering, and because Kitsu is the *fallback* provider,
+    // that happened exactly when AniList had already failed: a single upstream
+    // hiccup silently turned a cacheable page into a per-request render. Anime
+    // metadata does not move in an hour, and the Redis layer still fronts this.
+    next: { revalidate: 60 * 60 },
   });
 
   if (!res.ok) {

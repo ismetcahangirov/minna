@@ -9,6 +9,13 @@ import {
   openGraphLocaleSet,
 } from "@/lib/seo/locale-alternates";
 
+/**
+ * Cached at the edge for an hour. Newly released titles arrive on a seasonal
+ * cadence, not a per-request one. See the home page for why this never
+ * prerenders at build time.
+ */
+export const revalidate = 3600;
+
 export async function generateMetadata({
   params,
 }: LocaleRouteProps): Promise<Metadata> {
