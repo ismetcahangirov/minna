@@ -12,6 +12,16 @@ import {
   openGraphLocaleSet,
 } from "@/lib/seo/locale-alternates";
 
+/**
+ * Cached at the edge for an hour. Genre listings are the largest crawlable
+ * surface outside the catalog itself — one page per category per locale — and
+ * every one of them is identical for all visitors. See the home page for why
+ * this never prerenders at build time; `generateStaticParams` below only
+ * enumerates the slugs, which cannot be resolved into build-time pages while
+ * `[locale]` declares none of its own.
+ */
+export const revalidate = 3600;
+
 interface GenrePageProps {
   params: Promise<{ locale: string; slug: string }>;
 }

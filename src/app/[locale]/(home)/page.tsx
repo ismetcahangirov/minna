@@ -12,6 +12,22 @@ import {
   openGraphLocaleSet,
 } from "@/lib/seo/locale-alternates";
 
+/**
+ * Serve this page from the edge and rebuild it at most twice an hour.
+ *
+ * Nothing here is per-visitor — the sections are the same trending feed for
+ * everyone — so a reader or a crawler asking for it does not need a function
+ * run. Half an hour is well inside how often AniList's trending ordering
+ * actually moves, and it is the difference between one render per interval and
+ * one render per request.
+ *
+ * `[locale]` declares no `generateStaticParams`, so this is never prerendered
+ * during the build: the first request after a deploy renders it and every
+ * request after that is served from the cache. Upstream being down can delay a
+ * page, never fail a deploy.
+ */
+export const revalidate = 1800;
+
 export async function generateMetadata({
   params,
 }: LocaleRouteProps): Promise<Metadata> {

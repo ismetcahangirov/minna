@@ -10,11 +10,40 @@ import { Link, permanentRedirect } from "@/i18n/navigation";
 import { resolveLocale } from "@/i18n/route-locale";
 import { blogPostHref, postLocale } from "@/lib/blog/href";
 import { renderBlogMarkdown } from "@/lib/blog/markdown";
-import { getBlogBySlug } from "@/lib/blog/queries";
+import { getBlogBySlug, listBlogSitemapEntries } from "@/lib/blog/queries";
 import { blogDescription, buildBlogJsonLd } from "@/lib/seo/blog-jsonld";
 import { pickDefaultVersion } from "@/lib/seo/hreflang";
 import { localeNames } from "@/i18n/config";
 import type { BlogDetail } from "@/lib/blog/types";
+
+/**
+ * Cached at the edge for an hour, and refreshed the moment the post is
+ * published, edited or removed — `revalidateBlogPaths` in
+ * `@/lib/admin/blog/actions` invalidates this exact path for every locale, so
+ * the interval is only a backstop. An article is the same for every reader, so
+ * nothing here justifies a render per request.
+ */
+export const revalidate = 3600;
+
+/**
+ * Enumerates the published slugs so the posts are rendered once at build time
+ * rather than on whichever request arrives first. Without this the segment has
+ * no params to prerender and Next keeps the route dynamic, which is the one
+ * thing `revalidate` above cannot fix on its own.
+ *
+ * Reuses the sitemap's query — the same set of URLs by definition — and that
+ * query swallows its own database failures and returns an empty list, so a Neon
+ * hiccup during a build costs the prerender, never the deploy: the posts are
+ * then generated on demand and cached from that point.
+ *
+ * Slugs are enumerated across all three locales. A post is written in one
+ * language, so the other two prerender the `permanentRedirect` to its canonical
+ * URL, which is exactly what they would compute per request otherwise.
+ */
+export async function generateStaticParams() {
+  const entries = await listBlogSitemapEntries();
+  return entries.map(({ slug }) => ({ slug }));
+}
 
 interface BlogDetailRouteProps {
   params: Promise<{ locale: string; slug: string }>;

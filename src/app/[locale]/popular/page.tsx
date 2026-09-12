@@ -9,6 +9,14 @@ import {
   openGraphLocaleSet,
 } from "@/lib/seo/locale-alternates";
 
+/**
+ * Cached at the edge for an hour. A ranking of all-time popular titles is the
+ * same for every visitor and barely moves between rebuilds, so there is no
+ * reason for a crawler's request to run a render. See the home page for why
+ * this never prerenders at build time.
+ */
+export const revalidate = 3600;
+
 export async function generateMetadata({
   params,
 }: LocaleRouteProps): Promise<Metadata> {

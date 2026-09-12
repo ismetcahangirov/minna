@@ -9,7 +9,7 @@ import { WebVitals } from "@/components/analytics/web-vitals";
 import { SiteHeader } from "@/components/header";
 import { HeaderGate } from "@/components/header/header-gate";
 import { JsonLd } from "@/components/seo/json-ld";
-import { openGraphLocales } from "@/i18n/config";
+import { locales, openGraphLocales } from "@/i18n/config";
 import { resolveLocale, type LocaleRouteProps } from "@/i18n/route-locale";
 import { localeAlternates } from "@/lib/seo/locale-alternates";
 import { getSiteUrlObject } from "@/lib/seo/site";
@@ -34,20 +34,31 @@ const BING_VERIFICATION = "54DEDFDF0D0CB5F35DBA7704B575A176";
 
 type LocaleLayoutProps = LocaleRouteProps & { children: React.ReactNode };
 
-/*
- * Deliberately no `generateStaticParams` for the locale segment.
+/**
+ * Enumerates the locale segment, which is what makes any page below this layout
+ * eligible to be rendered once and cached rather than per request.
  *
- * next-intl suggests it to enable static rendering, but nothing under this
- * layout is statically renderable: every page reads the session, the Redis-
- * cached catalogue or Neon. Declaring the params only makes the build attempt a
- * prerender of each route in each locale, which fires live AniList/Kitsu
- * requests at build time — the same failure mode `sitemap.ts` is marked
- * `force-dynamic` to avoid, where a deploy fails because an upstream API
- * happened to be down while it built.
+ * This used to be omitted on the grounds that nothing under the layout was
+ * statically renderable anyway — every page read the session, the Redis-cached
+ * catalogue or Neon. Only the first of those actually forces dynamic rendering,
+ * and it did so because *this layout's* header read the session, which made the
+ * claim self-fulfilling for all three locales at once. With that read moved into
+ * the browser, the pages that carry a `revalidate` can be served from the edge,
+ * and a page without one is still detected as dynamic and rendered per request
+ * exactly as before. Nothing here opts a page *into* caching; it only stops
+ * blocking the ones that ask.
  *
- * `setRequestLocale` below is still called, so the day a page does become
- * static this is one line to add back.
+ * The original worry — a deploy failing because an upstream API was down while
+ * the build prerendered — does not apply to the pages that opted in. Every data
+ * function they call (`@/lib/anime/browse`, `@/lib/blog/queries`,
+ * `@/lib/blog/tags`) catches its own failures and degrades to stale cache or an
+ * empty result rather than throwing, and `revalidate` then replaces a thin
+ * prerender within the hour. `sitemap.xml` stays `force-dynamic` for its own
+ * reasons.
  */
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
+}
 
 export async function generateMetadata({
   params,

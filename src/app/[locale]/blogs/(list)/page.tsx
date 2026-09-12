@@ -14,6 +14,14 @@ import {
   openGraphLocaleSet,
 } from "@/lib/seo/locale-alternates";
 
+/**
+ * Cached at the edge for an hour, and refreshed the moment a post is published,
+ * edited or removed — `revalidateBlogPaths` in `@/lib/admin/blog/actions`
+ * invalidates this route explicitly, so the interval is only a backstop rather
+ * than how long an editor waits to see their work.
+ */
+export const revalidate = 3600;
+
 export async function generateMetadata({
   params,
 }: LocaleRouteProps): Promise<Metadata> {
