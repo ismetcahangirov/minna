@@ -61,6 +61,12 @@ export function useAnimeUserState(animeId: string): AnimeViewerState {
   const viewer = useViewer();
   const { data } = useGetAnimeUserStateQuery(animeId, {
     skip: !viewer.isAuthenticated,
+    // Every mutation that changes this — favoriting, filing a title, finishing
+    // an episode — is a server action, so it writes without going through RTK
+    // Query and cannot invalidate its tags. Refetching whenever an island
+    // mounts is what keeps a client-side navigation back to a page from showing
+    // the state as it was before the write.
+    refetchOnMountOrArgChange: true,
   });
 
   return {
@@ -81,7 +87,9 @@ export function useWatchProgress(
   const viewer = useViewer();
   const { data } = useGetWatchProgressQuery(
     { animeId, episodeId },
-    { skip: !viewer.isAuthenticated },
+    // Written by a server action (`saveWatchProgress`), so RTK never learns it
+    // changed — see {@link useAnimeUserState}.
+    { skip: !viewer.isAuthenticated, refetchOnMountOrArgChange: true },
   );
 
   return { ...viewer, progress: data ?? null, loaded: data !== undefined };
