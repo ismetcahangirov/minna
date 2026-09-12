@@ -3,42 +3,34 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { type ReactNode, Suspense } from "react";
 
-import { FavoriteButton } from "@/components/anime/favorite-button";
 import { DetailBanner } from "@/components/anime/detail-banner";
 import {
   DetailEpisodes,
   DetailEpisodesSkeleton,
 } from "@/components/anime/detail-episodes";
+import { DetailLibraryProgress } from "@/components/anime/detail-library-progress";
+import { DetailUserActions } from "@/components/anime/detail-user-actions";
 import { HeroInitialScroll } from "@/components/anime/hero-initial-scroll";
 import { SeasonSwitcher } from "@/components/anime/season-tabs";
 import { AdBanner } from "@/components/home/ad-banner";
-import { LibraryProgressBar } from "@/components/library/progress-bar";
-import { LibraryStatusMenu } from "@/components/library/status-menu";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeDetail } from "@/lib/anime/types";
-import type { LibraryEntry } from "@/lib/library/types";
 import { buildAnimeJsonLd } from "@/lib/seo/anime-jsonld";
 
 interface AnimeDetailViewProps {
   detail: AnimeDetail;
-  isAuthenticated: boolean;
-  isFavorite: boolean;
-  /** The viewer's library entry for this anime, or null when it is not filed. */
-  libraryEntry: LibraryEntry | null;
   /** Login flow target for the favorite button when signed out. */
   loginHref: string;
-  /** Canonical detail path — the episode list's own links point back at it. */
+  /** Canonical detail path — this page's own address. */
   basePath: string;
-  /** `?season=` — which season card is open, unverified against the chain. */
-  season: string | null;
-  /** `?page=` of the episode list, or null when the value was junk. */
-  page: number | null;
-  /** `?order=desc` — the episode list is newest-first. */
-  descending: boolean;
-  /** `?q=` — the episode list's active filter. */
-  query: string | null;
+  /**
+   * Where the episode list's sort, search and pagination controls lead: the
+   * standalone episodes route, which is dynamic and owns those views. This page
+   * renders the first page only, so that it can be cached (PERF-05).
+   */
+  episodesPath: string;
 }
 
 /** One label/value row in the side info panel; renders nothing when empty. */
@@ -67,26 +59,16 @@ function InfoRow({ label, value }: { label: string; value: ReactNode | null }) {
  */
 export async function AnimeDetailView({
   detail,
-  isAuthenticated,
-  isFavorite,
-  libraryEntry,
   loginHref,
   basePath,
-  season,
-  page,
-  descending,
-  query,
+  episodesPath,
 }: AnimeDetailViewProps) {
   const t = await getTranslations("detail");
-  const tLibrary = await getTranslations("library");
 
   const backdrop = detail.banner ?? detail.image;
   const score = detail.rating !== null ? (detail.rating / 10).toFixed(1) : null;
   const episodeCount = detail.totalEpisodes ?? (detail.episodes.length || null);
   const hasEpisodes = detail.episodes.length > 0;
-  // The library row's own count wins over the catalog's, so a series whose
-  // length changed after it was filed keeps a bar that matches its counter.
-  const libraryTotal = libraryEntry?.totalEpisodes ?? episodeCount;
   const synopsis = detail.description ? stripHtml(detail.description) : null;
 
   const metaItems = [
@@ -200,44 +182,21 @@ export async function AnimeDetailView({
                     {t("watchNow")}
                   </Button>
                 )}
-                <FavoriteButton
-                  animeId={detail.id}
-                  title={detail.title}
-                  image={detail.image}
-                  initialIsFavorite={isFavorite}
-                  isAuthenticated={isAuthenticated}
-                  loginHref={loginHref}
-                />
-                <LibraryStatusMenu
+                <DetailUserActions
                   animeId={detail.id}
                   title={detail.title}
                   image={detail.image}
                   totalEpisodes={episodeCount}
-                  status={libraryEntry?.status ?? null}
-                  loginHref={isAuthenticated ? null : loginHref}
+                  loginHref={loginHref}
                 />
               </div>
 
-              {/* How far the viewer is through the series (LIB-04). The counter
-                  behind it is kept on the library row, so this costs no extra
-                  work beyond the entry the page already read. */}
-              {libraryEntry && libraryEntry.episodesWatched > 0 && (
-                <LibraryProgressBar
-                  watched={libraryEntry.episodesWatched}
-                  total={libraryTotal}
-                  label={
-                    libraryTotal
-                      ? tLibrary("progress", {
-                          watched: libraryEntry.episodesWatched,
-                          total: libraryTotal,
-                        })
-                      : tLibrary("progressUnknown", {
-                          watched: libraryEntry.episodesWatched,
-                        })
-                  }
-                  className="mt-5 max-w-md"
-                />
-              )}
+              {/* How far the viewer is through the series (LIB-04), read in
+                  the browser alongside the actions above it. */}
+              <DetailLibraryProgress
+                animeId={detail.id}
+                totalEpisodes={episodeCount}
+              />
             </div>
           </div>
         </div>
@@ -299,11 +258,7 @@ export async function AnimeDetailView({
         {/* Seasons and the episodes of whichever one is open. Full width, so
             the cards read exactly as they do on the episodes route. */}
         <section className="mt-10 flex flex-col gap-10">
-          <SeasonSwitcher
-            detail={detail}
-            basePath={basePath}
-            activeSeasonId={season}
-          />
+          <SeasonSwitcher detail={detail} basePath={basePath} />
           {/* The anchor every season card and the hero's watch button jump to,
               on the wrapper rather than inside the boundary so it exists before
               the list has streamed in. No scroll margin: the "Episodes" heading
@@ -312,14 +267,7 @@ export async function AnimeDetailView({
               what hides it. */}
           <div id="episodes">
             <Suspense fallback={<DetailEpisodesSkeleton />}>
-              <DetailEpisodes
-                detail={detail}
-                basePath={basePath}
-                season={season}
-                page={page}
-                descending={descending}
-                query={query}
-              />
+              <DetailEpisodes detail={detail} episodesPath={episodesPath} />
             </Suspense>
           </div>
         </section>

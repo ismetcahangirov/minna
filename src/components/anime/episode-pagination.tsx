@@ -8,8 +8,6 @@ import { cn } from "@/lib/utils";
 interface EpisodePaginationProps {
   /** Path the list lives under — the detail page, or the episodes route. */
   basePath: string;
-  /** Selected season id, carried into every page link. */
-  season?: string | null;
   /** 1-based page currently rendered. */
   page: number;
   totalPages: number;
@@ -53,7 +51,6 @@ const LINK_BASE =
  */
 export async function EpisodePagination({
   basePath,
-  season = null,
   page,
   totalPages,
   descending,
@@ -66,7 +63,6 @@ export async function EpisodePagination({
   // top of the page, which on the detail page is the hero.
   const href = (target: number) =>
     `${episodeListHref(basePath, {
-      season,
       page: target,
       descending,
       query,

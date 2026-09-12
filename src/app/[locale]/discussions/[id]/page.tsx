@@ -13,7 +13,6 @@ import {
   canonicalAnimeHref,
   canonicalWatchHref,
 } from "@/lib/anime/canonical-slug";
-import { getCurrentUser } from "@/lib/auth/session";
 import { getThread, listThreadPosts } from "@/lib/discussions/queries";
 import { memberHref } from "@/lib/members/types";
 import {
@@ -82,10 +81,7 @@ export default async function ThreadPage({
 
   const t = await getTranslations("community");
   const format = await getFormatter();
-  const [posts, user] = await Promise.all([
-    listThreadPosts(thread.id, page),
-    getCurrentUser(),
-  ]);
+  const posts = await listThreadPosts(thread.id, page);
 
   const scopeLabel =
     thread.scope === "episode" && thread.episodeNumber !== null
@@ -225,7 +221,6 @@ export default async function ThreadPage({
         <ReplyForm
           threadId={thread.id}
           placeholder={t("replyPlaceholder")}
-          isAuthenticated={Boolean(user?.id)}
           loginHref={loginHref}
           locked={thread.locked}
         />

@@ -163,14 +163,12 @@ export function episodesPageCount(total: number): number {
 }
 
 /**
- * The URL state an episode list carries: which season of the chain is open,
- * which page of it, in which order, filtered by which term. The detail page
- * uses all four (its list is inline, under the season cards); the episodes
- * route never sets `season`, since its season is the one in its path.
+ * The URL state an episode list carries: which page of it, in which order,
+ * filtered by which term. Only `/anime/[id]/episodes` reads any of these — the
+ * detail page renders the first page and links here for the rest, so that it
+ * can be cached (PERF-05).
  */
 export interface EpisodeListQuery {
-  /** Selected season's anime id — omitted for the page's own title. */
-  season?: string | null;
   page?: number;
   descending?: boolean;
   query?: string | null;
@@ -186,8 +184,6 @@ export function episodeListHref(
   options: EpisodeListQuery = {},
 ): string {
   const params = new URLSearchParams();
-  const season = options.season?.trim();
-  if (season) params.set("season", season);
   const search = options.query?.trim();
   if (search) params.set("q", search);
   if (options.page && options.page > 1)
@@ -208,19 +204,6 @@ export function animeEpisodesPageHref(
   options: EpisodeListQuery = {},
 ): string {
   return episodeListHref(animeEpisodesHref(id, title), options);
-}
-
-/**
- * Reads the `?season=` param: the anime id of the season card the viewer
- * opened, or `null` when absent or not an id. The value is only trusted after
- * the caller has matched it against the title's own season chain.
- */
-export function parseSeasonParam(
-  raw: string | string[] | undefined,
-): string | null {
-  if (typeof raw !== "string") return null;
-  const id = raw.trim();
-  return /^\d+$/.test(id) ? id : null;
 }
 
 /**

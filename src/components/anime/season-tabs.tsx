@@ -8,8 +8,6 @@ interface SeasonSwitcherProps {
   detail: AnimeDetail;
   /** Page the cards select a season on (the canonical anime detail path). */
   basePath: string;
-  /** Season whose episodes are listed below the rail — the title's own by default. */
-  activeSeasonId?: string | null;
 }
 
 /** Fixed-height placeholder so streaming the tabs in causes minimal layout shift. */
@@ -37,24 +35,19 @@ function SeasonTabsSkeleton() {
  * between. Fetching is deferred behind {@link Suspense} so the slow relation
  * walk never blocks the first paint.
  */
-async function SeasonTabsResolver({
-  detail,
-  basePath,
-  activeSeasonId,
-}: SeasonSwitcherProps) {
+async function SeasonTabsResolver({ detail, basePath }: SeasonSwitcherProps) {
   const seasons = await getAnimeSeasons(detail);
   if (seasons.length < 2) return null;
 
-  // An unknown `?season=` is not a season of this chain, so the rail keeps
-  // pointing at the title's own entry — the same one its episode list falls
-  // back to.
-  const active =
-    activeSeasonId && seasons.some((season) => season.id === activeSeasonId)
-      ? activeSeasonId
-      : detail.id;
-
+  // The card that is highlighted is always this page's own title: a card for
+  // another season is a link to that season's own detail page, not a view of
+  // this one.
   return (
-    <SeasonCarousel seasons={seasons} basePath={basePath} activeId={active} />
+    <SeasonCarousel
+      seasons={seasons}
+      basePath={basePath}
+      activeId={detail.id}
+    />
   );
 }
 

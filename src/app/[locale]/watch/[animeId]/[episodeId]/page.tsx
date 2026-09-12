@@ -11,7 +11,7 @@ import { WatchEpisodeLabel } from "@/components/watch/watch-episode-label";
 import { WatchExperience } from "@/components/watch/watch-experience";
 import { permanentRedirect } from "@/i18n/navigation";
 import { resolveLocale } from "@/i18n/route-locale";
-import { getActivePreRollAd } from "@/lib/ads/queries";
+import { getActiveAdPool } from "@/lib/ads/queries";
 import { getAnimeInfo } from "@/lib/anime/detail";
 import { canonicalSlug, canonicalWatchHref } from "@/lib/anime/canonical-slug";
 import {
@@ -21,15 +21,35 @@ import {
 } from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
 import type { AnimeEpisode } from "@/lib/anime/types";
-import { getCurrentUser } from "@/lib/auth/session";
 import {
   localeAlternates,
   openGraphLocaleSet,
 } from "@/lib/seo/locale-alternates";
-import { getWatchProgress } from "@/lib/watch/queries";
 
 interface WatchRouteProps {
   params: Promise<{ locale: string; animeId: string; episodeId: string }>;
+}
+
+/**
+ * Rendered once an hour and served from the edge in between (PERF-05).
+ *
+ * Nothing here is per-visitor any more: the player reads its own resume
+ * position and the reviews box its own session, and the pre-roll ad is drawn
+ * from the pool in the browser so a cached page still rotates ads. The episode
+ * reviews below are revalidated on demand when one is written
+ * (`revalidateEpisodeReviews`), so the hour is a floor on staleness, not a
+ * delay on new reviews.
+ */
+export const revalidate = 3600;
+
+/**
+ * Empty on purpose, and required: without it a dynamic segment is served fully
+ * dynamically whatever `revalidate` says. Nothing is prerendered at build —
+ * there is an episode page per episode of every title in the catalog — so each
+ * one is rendered when it is first asked for and cached from then on.
+ */
+export function generateStaticParams() {
+  return [];
 }
 
 /**
@@ -133,13 +153,15 @@ export async function generateMetadata({
 }
 
 /**
- * Episode watch page (EPIC-06). Server-rendered for SEO: the anime record flows
- * through the Redis-cached AniList layer while the active pre-roll ad and the
- * signed-in viewer's resume position load in parallel. Only the player is a
- * client island — it embeds the stream in the viewer's browser (the source
- * sites block datacenter IPs, so playback can't be resolved server-side). A
- * missing anime is a 404; an episode the embed can't resolve degrades to the
- * player's unavailable state.
+ * Episode watch page (EPIC-06). Prerendered on demand and revalidated hourly
+ * (see `revalidate` above) for SEO: the anime record flows through the
+ * Redis-cached AniList layer, and the active ad pool alongside it. Only the
+ * player is a client island — it embeds the stream in the viewer's browser (the
+ * source sites block datacenter IPs, so playback can't be resolved
+ * server-side) — and it is also where the viewer's resume position is read, so
+ * that nothing on this page depends on who asked for it. A missing anime is a
+ * 404; an episode the embed can't resolve degrades to the player's unavailable
+ * state.
  */
 export default async function WatchPage({ params }: WatchRouteProps) {
   const { animeId, episodeId } = await params;
@@ -167,21 +189,10 @@ export default async function WatchPage({ params }: WatchRouteProps) {
     permanentRedirect({ href: canonical, locale });
   }
 
-  const user = await getCurrentUser();
-
-  const [ad, progress, t] = await Promise.all([
-    getActivePreRollAd(),
-    // Progress rows are keyed by (anime, resolved episode id), not the URL
-    // slug — an episode id repeats across anime, so the anime is part of the key.
-    user?.id
-      ? getWatchProgress(user.id, detail.id, located.current.id)
-      : Promise.resolve(null),
+  const [ads, t] = await Promise.all([
+    getActiveAdPool(),
     getTranslations("player"),
   ]);
-
-  // Resume from the saved position unless the episode was already finished.
-  const initialTime =
-    progress && !progress.completed ? progress.positionSeconds : 0;
 
   const { current, prev, next } = located;
   const poster = detail.banner ?? detail.image;
@@ -200,11 +211,9 @@ export default async function WatchPage({ params }: WatchRouteProps) {
         }}
         prevEpisode={prev ? { id: prev.id, number: prev.number } : null}
         nextEpisode={next ? { id: next.id, number: next.number } : null}
-        ad={ad}
+        ads={ads}
         poster={poster}
         totalEpisodes={detail.totalEpisodes ?? detail.episodes.length}
-        initialTime={initialTime}
-        isAuthenticated={Boolean(user?.id)}
       />
 
       {/* Title + context */}
@@ -238,7 +247,6 @@ export default async function WatchPage({ params }: WatchRouteProps) {
           animeTitle={detail.title}
           animeImage={detail.image}
           episodeNumber={current.number}
-          isAuthenticated={Boolean(user?.id)}
           loginHref={`/login?callbackUrl=${encodeURIComponent(canonical)}`}
         />
       </Suspense>

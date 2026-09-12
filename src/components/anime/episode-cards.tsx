@@ -1,8 +1,9 @@
-import { ArrowDownUp, Check, Film, Play } from "lucide-react";
+import { ArrowDownUp, Film, Play } from "lucide-react";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 
 import { EpisodePagination } from "@/components/anime/episode-pagination";
+import { EpisodeWatchMarks } from "@/components/anime/episode-watch-marks";
 import { EpisodeSearch } from "@/components/anime/episode-search";
 import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -10,10 +11,10 @@ import { episodeListHref, watchHref } from "@/lib/anime/href";
 import type { AnimeEpisode } from "@/lib/anime/types";
 import { cn } from "@/lib/utils";
 
-/** Per-episode watched/resume state, keyed by episode id. */
-type WatchState = { completed: boolean; progress: number };
-
 interface EpisodeCardsProps {
+  /** AniList id of the anime whose episodes these are — the key the viewer's
+   * watched/resume marks are read under, in the browser. */
+  animeId: string;
   /**
    * The anime's canonical `{id}-{slug}` segment, resolved by the page.
    *
@@ -29,8 +30,6 @@ interface EpisodeCardsProps {
    * detail page for the inline list, the episodes route for the standalone one.
    */
   basePath: string;
-  /** Season id to keep in those links, when the list is not the page's own. */
-  season?: string | null;
   /** The episodes of the current page only, already in display order. */
   episodes: AnimeEpisode[];
   /** Episodes in the whole series (the heading count, not the page's). */
@@ -41,8 +40,6 @@ interface EpisodeCardsProps {
   query: string;
   /** Anime cover, used for episodes no source has a still for. */
   thumbnail: string | null;
-  /** Signed-in viewer's watched/resume state per episode id (empty if none). */
-  watchStates?: Record<string, WatchState>;
   /** 1-based page being rendered. */
   page: number;
   totalPages: number;
@@ -61,16 +58,15 @@ interface EpisodeCardsProps {
  * icons — never emoji.
  */
 export async function EpisodeCards({
+  animeId,
   animeSlug,
   animeTitle,
   basePath,
-  season = null,
   episodes,
   totalEpisodes,
   matchCount,
   query,
   thumbnail,
-  watchStates = {},
   page,
   totalPages,
   descending,
@@ -96,7 +92,6 @@ export async function EpisodeCards({
             // reload and pagination always slices the list the viewer sees.
             <Link
               href={episodeListHref(basePath, {
-                season,
                 descending: !descending,
                 query,
               })}
@@ -111,7 +106,6 @@ export async function EpisodeCards({
         {totalEpisodes > 1 && (
           <EpisodeSearch
             basePath={basePath}
-            season={season}
             query={query}
             descending={descending}
           />
@@ -126,8 +120,6 @@ export async function EpisodeCards({
 
       <ul className="flex flex-col gap-3 empty:hidden">
         {episodes.map((episode) => {
-          const state = watchStates[episode.id];
-          const inProgress = state && !state.completed && state.progress > 0;
           // The episode's own still when a source has one; the anime art is
           // the stand-in, which is why every card used to look the same.
           const art = episode.image ?? thumbnail;
@@ -144,11 +136,7 @@ export async function EpisodeCards({
                       alt=""
                       fill
                       sizes="(max-width: 640px) 128px, 176px"
-                      className={
-                        state?.completed
-                          ? "object-cover opacity-40"
-                          : "object-cover"
-                      }
+                      className="object-cover"
                     />
                   ) : (
                     <div className="text-muted-foreground flex h-full w-full items-center justify-center">
@@ -156,27 +144,9 @@ export async function EpisodeCards({
                     </div>
                   )}
 
-                  {/* Watched tick. */}
-                  {state?.completed && (
-                    <span
-                      className="bg-primary text-primary-foreground absolute top-0 right-0 flex size-6 items-center justify-center"
-                      title={t("watched")}
-                    >
-                      <Check className="size-4" aria-label={t("watched")} />
-                    </span>
-                  )}
-
-                  {/* Resume progress bar. */}
-                  {inProgress && (
-                    <span className="absolute inset-x-0 bottom-0 h-1 bg-black/60">
-                      <span
-                        className="bg-primary block h-full"
-                        style={{
-                          width: `${Math.round(state.progress * 100)}%`,
-                        }}
-                      />
-                    </span>
-                  )}
+                  {/* The viewer's own watched tick and resume bar, read in the
+                      browser so the card around them stays cacheable. */}
+                  <EpisodeWatchMarks animeId={animeId} episodeId={episode.id} />
 
                   <span className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                     <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center">
@@ -212,7 +182,6 @@ export async function EpisodeCards({
 
       <EpisodePagination
         basePath={basePath}
-        season={season}
         page={page}
         totalPages={totalPages}
         descending={descending}
