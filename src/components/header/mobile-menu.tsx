@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { COMMUNITY_ITEMS, NAV_ITEMS } from "@/components/header/nav-config";
 import { locales, localeNames, type Locale } from "@/i18n/config";
 import { Link, usePathname } from "@/i18n/navigation";
-import { keepHash, useCurrentRoute } from "@/i18n/use-locale-switch";
+import { keepLocation, useCurrentRoute } from "@/i18n/use-locale-switch";
 import type { Category } from "@/lib/anime/genres";
 import { cn } from "@/lib/utils";
 import { useGetSessionQuery } from "@/store/api/session-api";
@@ -195,7 +195,7 @@ export function MobileMenu({
                       locale={locale}
                       hrefLang={locale}
                       lang={locale}
-                      onClick={keepHash}
+                      onClick={keepLocation}
                     />
                   }
                   className={cn(

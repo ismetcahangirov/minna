@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { locales, localeNames, type Locale } from "@/i18n/config";
 import { Link } from "@/i18n/navigation";
-import { keepHash, useCurrentRoute } from "@/i18n/use-locale-switch";
+import { keepLocation, useCurrentRoute } from "@/i18n/use-locale-switch";
 import { cn } from "@/lib/utils";
 
 const itemClass =
@@ -64,7 +64,7 @@ export function LanguageSwitcher() {
                     locale={locale}
                     hrefLang={locale}
                     lang={locale}
-                    onClick={keepHash}
+                    onClick={keepLocation}
                   />
                 }
               >

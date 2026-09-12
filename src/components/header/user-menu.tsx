@@ -51,8 +51,24 @@ export function UserMenu({
   // render and on the first client paint. Holding the slot's footprint instead
   // of guessing keeps a signed-in reader from seeing a Login button flash into
   // their avatar, and keeps the header from reflowing either way.
+  //
+  // The `noscript` copy is what a reader without JavaScript gets instead. Since
+  // the session is no longer read on the server, the prerendered HTML cannot
+  // assert that nobody is signed in — so without this the header would simply
+  // have no way in for them. It costs nothing for everyone else: the browser
+  // drops it, and the branch below replaces the whole slot the moment the
+  // session resolves.
   if (user === undefined) {
-    return <div aria-hidden className="size-9" />;
+    return (
+      <>
+        <div aria-hidden className="size-9" />
+        <noscript>
+          <Button nativeButton={false} render={<Link href={loginHref} />}>
+            {t("login")}
+          </Button>
+        </noscript>
+      </>
+    );
   }
 
   if (!user) {
