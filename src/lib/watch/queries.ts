@@ -3,14 +3,13 @@ import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 
 import { watchProgress } from "@/db/schema";
-import type { WatchHistoryItem } from "@/lib/watch/types";
+import type {
+  EpisodeWatchState,
+  WatchHistoryItem,
+  WatchProgressState,
+} from "@/lib/watch/types";
 
-/** Resume state for one episode (PLAYER-05). */
-export interface WatchProgressState {
-  positionSeconds: number;
-  durationSeconds: number | null;
-  completed: boolean;
-}
+export type { EpisodeWatchState, WatchProgressState };
 
 /**
  * The signed-in user's saved progress for one episode of one anime (PLAYER-05),
@@ -55,13 +54,6 @@ export async function getWatchProgress(
     console.error("[watch] getProgress failed:", (error as Error).message);
     return null;
   }
-}
-
-/** Per-episode watched/resume state for the episodes list (one anime). */
-export interface EpisodeWatchState {
-  completed: boolean;
-  /** 0..1 fraction of the episode watched (1 when completed with no duration). */
-  progress: number;
 }
 
 /**
