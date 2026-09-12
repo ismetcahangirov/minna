@@ -30,9 +30,7 @@ import {
   parseEpisodesPageParam,
   parseEpisodesQueryParam,
 } from "@/lib/anime/href";
-import { getCurrentUser } from "@/lib/auth/session";
 import { localeAlternates } from "@/lib/seo/locale-alternates";
-import { getAnimeWatchStates } from "@/lib/watch/queries";
 
 interface EpisodesRouteProps {
   params: Promise<{ locale: string; id: string }>;
@@ -82,15 +80,22 @@ export async function generateMetadata({
 }
 
 /**
- * Episodes list page (`/anime/[id]/episodes`). Nothing in the UI links here any
- * more — the same list is rendered inline on the detail page, under the season
- * cards — but the route is kept so its URLs, which search engines have indexed,
- * keep resolving.
+ * Episodes list page (`/anime/[id]/episodes`). The detail page renders the
+ * first page of this same list inline, and every other view of it — page two
+ * onwards, newest-first, filtered — lives here: reading a search param makes a
+ * route render per request, and the detail page is the one that had to stop
+ * doing that (PERF-05). The sort, search and pagination controls under the
+ * inline list therefore lead here.
  *
- * Server-rendered for SEO, including pagination: series longer than
- * `EPISODES_PAGE_SIZE` split into `?page=N` pages, and the sort order
- * rides along as `?order=desc`, so every view has its own crawlable URL. Only
- * the current page's episode titles are fetched (see `@/lib/anime/episode-titles`).
+ * Deliberately still dynamic, and the only one of the three anime routes that
+ * is. It reads `?page=`, `?order=` and `?q=`; caching a page per combination of
+ * those would fill the cache with views nobody links to. It costs little: every
+ * view of it canonicalises to the detail page, so search engines crawl that one
+ * instead, and no session is read here any more — the watched ticks are read in
+ * the browser, so a signed-out request decodes no session it does not have.
+ *
+ * Only the current page's episode titles are fetched (see
+ * `@/lib/anime/episode-titles`).
  */
 export default async function AnimeEpisodesPage({
   params,
@@ -155,16 +160,11 @@ export default async function AnimeEpisodesPage({
   const page = resolvePage(requested, totalPages);
 
   const t = await getTranslations("detail");
-  const user = await getCurrentUser();
   const detailHref = animeHref(slug);
 
   const { slice, from, to } = pageSlice(matched, page, descending);
-  const [watchStates, titles] = await Promise.all([
-    user?.id ? getAnimeWatchStates(user.id, detail.id) : Promise.resolve({}),
-    !query && from > 0
-      ? getEpisodeTitles(detail.id, from, to)
-      : Promise.resolve({}),
-  ]);
+  const titles =
+    !query && from > 0 ? await getEpisodeTitles(detail.id, from, to) : {};
 
   return (
     <main className="flex flex-1 flex-col pb-10">
@@ -191,6 +191,7 @@ export default async function AnimeEpisodesPage({
           <AdBanner placement="episodes" />
           <section id="episodes">
             <EpisodeCards
+              animeId={detail.id}
               animeSlug={slug}
               animeTitle={detail.title}
               basePath={canonicalPath}
@@ -199,7 +200,6 @@ export default async function AnimeEpisodesPage({
               matchCount={matched.length}
               query={query ?? ""}
               thumbnail={detail.banner ?? detail.image}
-              watchStates={watchStates}
               page={page}
               totalPages={totalPages}
               descending={descending}

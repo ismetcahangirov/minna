@@ -19,6 +19,12 @@ interface LibraryStatusMenuProps {
   status: LibraryStatus | null;
   /** When signed out, where the control sends the visitor instead of acting. */
   loginHref?: string | null;
+  /**
+   * True while the viewer's entry is still being read. The trigger holds its
+   * place but stays shut, so nobody files a title against a shelf the control
+   * has not learned yet.
+   */
+  loading?: boolean;
   className?: string;
 }
 
@@ -50,6 +56,7 @@ export function LibraryStatusMenu({
   totalEpisodes,
   status,
   loginHref,
+  loading = false,
   className,
 }: LibraryStatusMenuProps) {
   const t = useTranslations("library");
@@ -57,12 +64,22 @@ export function LibraryStatusMenu({
   const [current, setCurrent] = useState<LibraryStatus | null>(status);
   const [pending, startTransition] = useTransition();
 
+  // On the anime detail page the entry arrives after mount — the page is cached
+  // at the edge now, so nothing about the viewer is rendered into it (PERF-05).
+  // Adjusting during render rather than in an effect is React's own pattern for
+  // this, and the one this codebase lints for.
+  const [seed, setSeed] = useState(status);
+  if (seed !== status) {
+    setSeed(status);
+    setCurrent(status);
+  }
+
   const triggerClass = cn(
     "border-border bg-surface text-foreground hover:border-primary/60 hover:text-primary inline-flex h-9 items-center justify-between gap-2 border px-3 text-sm font-medium transition-colors outline-none disabled:opacity-50",
     className,
   );
 
-  if (loginHref) {
+  if (loginHref && !loading) {
     return (
       <Link href={loginHref} className={triggerClass}>
         <Plus className="size-4" aria-hidden />
@@ -95,7 +112,7 @@ export function LibraryStatusMenu({
 
   return (
     <Menu.Root>
-      <Menu.Trigger disabled={pending} className={triggerClass}>
+      <Menu.Trigger disabled={pending || loading} className={triggerClass}>
         <span className="truncate">
           {pending
             ? t("saving")

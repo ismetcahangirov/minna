@@ -6,18 +6,8 @@ import { permanentRedirect } from "@/i18n/navigation";
 import { resolveLocale } from "@/i18n/route-locale";
 import { getAnimeInfo } from "@/lib/anime/detail";
 import { canonicalSeasonAwareHref } from "@/lib/anime/seasons";
-import { isDescending } from "@/lib/anime/episode-listing";
-import {
-  episodeListHref,
-  parseAnimeParam,
-  parseEpisodesPageParam,
-  parseEpisodesQueryParam,
-  parseSeasonParam,
-} from "@/lib/anime/href";
+import { parseAnimeParam } from "@/lib/anime/href";
 import { stripHtml } from "@/lib/anime/text";
-import { getCurrentUser } from "@/lib/auth/session";
-import { isFavorite } from "@/lib/favorites/queries";
-import { getLibraryEntry } from "@/lib/library/queries";
 import {
   localeAlternates,
   openGraphLocaleSet,
@@ -25,18 +15,20 @@ import {
 
 interface AnimeDetailRouteProps {
   params: Promise<{ locale: string; id: string }>;
-  /**
-   * State of the episode list rendered under the season cards: which season is
-   * open, and its page, sort order and filter. Every view canonicalises to the
-   * bare detail URL, so these never split the page across several addresses.
-   */
-  searchParams: Promise<{
-    season?: string | string[];
-    page?: string | string[];
-    order?: string | string[];
-    q?: string | string[];
-  }>;
 }
+
+/**
+ * Rendered once an hour and served from the edge in between (PERF-05).
+ *
+ * Nothing on this page is per-visitor any more: the favorite button, the
+ * library menu, the progress bar and the episode ticks read their own state in
+ * the browser (`@/lib/hooks/use-viewer`), and the episode list's paged, sorted
+ * and filtered views moved to `/anime/[id]/episodes` so no search param is read
+ * here. An anime record changes on the scale of a new episode a week, so an
+ * hour of staleness costs nothing and the page stops invoking a function per
+ * crawl of the sitemap's thousands of entries.
+ */
+export const revalidate = 3600;
 
 /**
  * Dynamic SEO metadata (DETAIL-04): title, description and Open Graph/Twitter
@@ -85,28 +77,19 @@ export async function generateMetadata({
 }
 
 /**
- * Anime detail page (EPIC-05). Server-rendered (SSR) for SEO: the record is
- * fetched through the Redis-cached Consumet layer and a missing/unresolvable
- * title becomes a 404. The signed-in user's favorite state seeds the button.
+ * Anime detail page (EPIC-05). Prerendered on demand and revalidated hourly
+ * (see `revalidate` above) for SEO: the record is fetched through the
+ * Redis-cached AniList layer and a missing/unresolvable title becomes a 404.
+ * Nothing about the viewer is rendered here — the controls that need it read it
+ * themselves, in the browser.
  */
 export default async function AnimeDetailPage({
   params,
-  searchParams,
 }: AnimeDetailRouteProps) {
-  const [{ id }, { season, page, order, q }] = await Promise.all([
-    params,
-    searchParams,
-  ]);
+  const { id } = await params;
   const locale = await resolveLocale(params);
   const detail = await getAnimeInfo(parseAnimeParam(id));
   if (!detail) notFound();
-
-  const episodeList = {
-    season: parseSeasonParam(season),
-    page: parseEpisodesPageParam(page),
-    descending: isDescending(order),
-    query: parseEpisodesQueryParam(q),
-  };
 
   // Consolidate SEO on one canonical URL. The 308 itself is issued by the
   // proxy, which is the only place a status code can still be set (see
@@ -115,34 +98,18 @@ export default async function AnimeDetailPage({
   // and degrades to the client-side redirect Next emits mid-stream.
   const canonical = await canonicalSeasonAwareHref(detail);
   if (`/anime/${id}` !== canonical) {
-    permanentRedirect({
-      href: episodeListHref(canonical, {
-        ...episodeList,
-        page: episodeList.page ?? 1,
-      }),
-      locale,
-    });
+    permanentRedirect({ href: canonical, locale });
   }
 
-  const user = await getCurrentUser();
-  const [favorited, libraryEntry] = user?.id
-    ? await Promise.all([
-        isFavorite(user.id, detail.id),
-        getLibraryEntry(user.id, detail.id),
-      ])
-    : [false, null];
   const loginHref = `/login?callbackUrl=${encodeURIComponent(canonical)}`;
 
   return (
     <main className="flex flex-1 flex-col pb-8">
       <AnimeDetailView
         detail={detail}
-        isAuthenticated={Boolean(user?.id)}
-        isFavorite={favorited}
-        libraryEntry={libraryEntry}
         loginHref={loginHref}
         basePath={canonical}
-        {...episodeList}
+        episodesPath={`${canonical}/episodes`}
       />
     </main>
   );
