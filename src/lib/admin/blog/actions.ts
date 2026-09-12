@@ -6,6 +6,7 @@ import { and, eq, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { blogs, blogTags, blogsToTags } from "@/db/schema";
+import { locales } from "@/i18n/config";
 import { redirect } from "@/i18n/navigation";
 import { localePath } from "@/i18n/paths";
 import { getActiveLocale } from "@/i18n/route-locale";
@@ -260,18 +261,32 @@ async function syncBlogTags(
 /**
  * Refreshes every public surface a post appears on.
  *
+ * Every path carries its locale segment. These pages live under `[locale]`, so
+ * the paths Next holds them at are `/en/blogs`, `/tr/blogs`, … — a bare
+ * `revalidatePath("/blogs")` matches none of them and silently refreshes
+ * nothing. That went unnoticed for as long as the pages were dynamically
+ * rendered, since there was no cache entry to miss; now that they are cached
+ * (`revalidate` in the page modules), a post would otherwise stay stale for the
+ * whole interval after an edit.
+ *
+ * Listings use the bracketed route form, which covers all three locales in one
+ * call. A post is addressed per locale instead, so editing one does not discard
+ * every other post's cached page.
+ *
  * Tag archives are revalidated by route rather than by slug: retagging a post
  * changes the archives it left as well as the ones it joined, and the ones it
  * left are exactly the slugs no longer available to enumerate.
  */
 function revalidateBlogPaths(slug: string, previousSlug?: string): void {
-  revalidatePath("/blogs");
-  revalidatePath(`/blogs/${slug}`);
-  if (previousSlug && previousSlug !== slug) {
-    revalidatePath(`/blogs/${previousSlug}`);
+  revalidatePath("/[locale]/blogs", "page");
+  for (const locale of locales) {
+    revalidatePath(`/${locale}/blogs/${slug}`);
+    if (previousSlug && previousSlug !== slug) {
+      revalidatePath(`/${locale}/blogs/${previousSlug}`);
+    }
   }
-  revalidatePath("/blogs/tag/[slug]", "page");
-  revalidatePath("/admin/blogs");
+  revalidatePath("/[locale]/blogs/tag/[slug]", "page");
+  revalidatePath("/[locale]/admin/blogs", "page");
 }
 
 /**
