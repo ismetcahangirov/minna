@@ -5,29 +5,30 @@ import { LanguageSwitcher } from "@/components/header/language-switcher";
 import { Logo } from "@/components/header/logo";
 import { MobileMenu } from "@/components/header/mobile-menu";
 import { NavLinks } from "@/components/header/nav-links";
-import { UserMenu, type SessionUser } from "@/components/header/user-menu";
+import { UserMenu } from "@/components/header/user-menu";
 import { getCategories } from "@/lib/anime/categories";
-import { getCurrentUser } from "@/lib/auth/session";
 
 /**
  * The shared site header (EPIC-03), rendered on every page from the root
  * layout. Server component: fetches the category taxonomy once (Redis-cached)
  * and hydrates the interactive pieces as client islands.
  *
- * `user` is threaded through as a prop so the auth session (EPIC-02) is wired
- * here in a single place without touching the client components — the session
- * user (or `null` when signed out) is read server-side and passed down.
+ * Deliberately session-free. This component is mounted from the root layout on
+ * *every* route, so anything it reads, every page pays for. It used to read the
+ * session here and pass the user down — and because a cookie read during render
+ * opts a route out of static and ISR rendering, that single call made Next emit
+ * `Cache-Control: private, no-cache, no-store` across the whole site. Nothing
+ * could be cached at the edge, so every request from every crawler rendered
+ * React on the server: the account's Fluid Active CPU allowance went 300% over
+ * and Vercel paused it.
+ *
+ * `UserMenu` and `MobileMenu` now read the session in the browser instead (they
+ * were already client components), which leaves the HTML identical for every
+ * visitor and therefore cacheable. The session must not come back into this
+ * render path — see `@/store/api/session-api`.
  */
 export async function SiteHeader() {
   const categories = await getCategories();
-  const currentUser = await getCurrentUser();
-  const user: SessionUser | null = currentUser
-    ? {
-        name: currentUser.name,
-        email: currentUser.email,
-        image: currentUser.image,
-      }
-    : null;
 
   return (
     <HeaderShell>
@@ -44,9 +45,9 @@ export async function SiteHeader() {
       <div className="ml-auto flex items-center gap-1">
         <div className="hidden items-center gap-1 lg:flex">
           <LanguageSwitcher />
-          <UserMenu user={user} />
+          <UserMenu />
         </div>
-        <MobileMenu categories={categories} user={user} />
+        <MobileMenu categories={categories} />
       </div>
     </HeaderShell>
   );

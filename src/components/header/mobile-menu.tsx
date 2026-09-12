@@ -5,16 +5,15 @@ import { Check, LogOut, Menu as MenuIcon, User, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { COMMUNITY_ITEMS, NAV_ITEMS } from "@/components/header/nav-config";
-import type { SessionUser } from "@/components/header/user-menu";
 import { locales, localeNames, type Locale } from "@/i18n/config";
 import { Link, usePathname } from "@/i18n/navigation";
 import { keepHash, useCurrentRoute } from "@/i18n/use-locale-switch";
 import type { Category } from "@/lib/anime/genres";
 import { cn } from "@/lib/utils";
+import { useGetSessionQuery } from "@/store/api/session-api";
 
 interface MobileMenuProps {
   categories: Category[];
-  user?: SessionUser | null;
   loginHref?: string;
   profileHref?: string;
   signOutHref?: string;
@@ -34,13 +33,15 @@ const sectionTitle =
  */
 export function MobileMenu({
   categories,
-  user,
   loginHref = "/login",
   profileHref = "/profile",
   signOutHref = "/api/auth/signout",
 }: MobileMenuProps) {
   const tNav = useTranslations("nav");
   const tAuth = useTranslations("auth");
+  // Read in the browser, not handed down from the server — that is what keeps
+  // the page's HTML the same for every visitor. See `@/store/api/session-api`.
+  const { data: user } = useGetSessionQuery();
   const pathname = usePathname();
   const activeLocale = useLocale() as Locale;
   const localeHref = useCurrentRoute();
@@ -78,9 +79,10 @@ export function MobileMenu({
               {tNav("menu")}
             </Drawer.Description>
 
-            {/* Auth */}
+            {/* Auth — `undefined` while the session request is in flight, so
+                neither state is asserted before it is known. */}
             <div className="mt-6">
-              {user ? (
+              {user === undefined ? null : user ? (
                 <div className="border-border flex flex-col gap-1 border-b pb-4">
                   <Drawer.Close
                     nativeButton={false}

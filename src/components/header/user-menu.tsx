@@ -7,21 +7,11 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import type { SessionUser } from "@/lib/auth/session-user";
 import { cn } from "@/lib/utils";
-
-/**
- * Authenticated user as consumed by the header. Kept intentionally minimal and
- * local so this component stays decoupled from the auth implementation
- * (EPIC-02): the session is wired in once, in `SiteHeader`, when it lands.
- */
-export interface SessionUser {
-  name?: string | null;
-  email?: string | null;
-  image?: string | null;
-}
+import { useGetSessionQuery } from "@/store/api/session-api";
 
 interface UserMenuProps {
-  user?: SessionUser | null;
   /** Where the login button points (Google login flow lives in EPIC-10). */
   loginHref?: string;
   profileHref?: string;
@@ -44,14 +34,26 @@ const itemClass =
 /**
  * Header right slot (HEADER-04): a Login button when signed out, or the profile
  * avatar with a dropdown (Profile / Log out) when signed in.
+ *
+ * The session is read here in the browser rather than passed down from the
+ * server, which is what keeps every page's HTML identical for all visitors and
+ * therefore cacheable at the edge — see `@/store/api/session-api`.
  */
 export function UserMenu({
-  user,
   loginHref = "/login",
   profileHref = "/profile",
   signOutHref = "/api/auth/signout",
 }: UserMenuProps) {
   const t = useTranslations("auth");
+  const { data: user } = useGetSessionQuery();
+
+  // `undefined` means the session request has not answered yet — on the server
+  // render and on the first client paint. Holding the slot's footprint instead
+  // of guessing keeps a signed-in reader from seeing a Login button flash into
+  // their avatar, and keeps the header from reflowing either way.
+  if (user === undefined) {
+    return <div aria-hidden className="size-9" />;
+  }
 
   if (!user) {
     return (

@@ -45,6 +45,7 @@ export const baseApi = createApi({
     "Blogs",
     "Ads",
     "Users",
+    "Session",
   ],
   endpoints: () => ({}),
 });
