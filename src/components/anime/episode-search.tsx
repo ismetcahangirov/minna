@@ -10,8 +10,6 @@ import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 interface EpisodeSearchProps {
   /** Path the list lives under — the detail page, or the episodes route. */
   basePath: string;
-  /** Selected season id, kept in the URL so a search stays in that season. */
-  season?: string | null;
   /** The `?q=` currently rendered by the server (empty when unfiltered). */
   query: string;
   /** Kept across searches so the sort order is not silently reset. */
@@ -29,7 +27,6 @@ interface EpisodeSearchProps {
  */
 export function EpisodeSearch({
   basePath,
-  season = null,
   query,
   descending,
 }: EpisodeSearchProps) {
@@ -46,18 +43,13 @@ export function EpisodeSearch({
     if (debounced === navigatedTo.current) return;
     navigatedTo.current = debounced;
     router.replace(
-      episodeListHref(basePath, {
-        season,
-        query: debounced,
-        descending,
-      }),
+      episodeListHref(basePath, { query: debounced, descending }),
       { scroll: false },
     );
-  }, [debounced, basePath, season, descending, router]);
+  }, [debounced, basePath, descending, router]);
 
   return (
     <form action={basePath} role="search" className="w-full sm:max-w-sm">
-      {season && <input type="hidden" name="season" value={season} />}
       {descending && <input type="hidden" name="order" value="desc" />}
       <EpisodeSearchField name="q" value={input} onValueChange={setInput} />
     </form>

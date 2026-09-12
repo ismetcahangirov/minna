@@ -30,8 +30,6 @@ interface EpisodeCardsProps {
    * detail page for the inline list, the episodes route for the standalone one.
    */
   basePath: string;
-  /** Season id to keep in those links, when the list is not the page's own. */
-  season?: string | null;
   /** The episodes of the current page only, already in display order. */
   episodes: AnimeEpisode[];
   /** Episodes in the whole series (the heading count, not the page's). */
@@ -64,7 +62,6 @@ export async function EpisodeCards({
   animeSlug,
   animeTitle,
   basePath,
-  season = null,
   episodes,
   totalEpisodes,
   matchCount,
@@ -95,7 +92,6 @@ export async function EpisodeCards({
             // reload and pagination always slices the list the viewer sees.
             <Link
               href={episodeListHref(basePath, {
-                season,
                 descending: !descending,
                 query,
               })}
@@ -110,7 +106,6 @@ export async function EpisodeCards({
         {totalEpisodes > 1 && (
           <EpisodeSearch
             basePath={basePath}
-            season={season}
             query={query}
             descending={descending}
           />
@@ -187,7 +182,6 @@ export async function EpisodeCards({
 
       <EpisodePagination
         basePath={basePath}
-        season={season}
         page={page}
         totalPages={totalPages}
         descending={descending}

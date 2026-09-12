@@ -183,11 +183,7 @@ export default async function AnimeEpisodesPage({
         </h1>
 
         <div className="mt-8 flex flex-col gap-10">
-          <SeasonSwitcher
-            detail={detail}
-            basePath={detailHref}
-            activeSeasonId={detail.id}
-          />
+          <SeasonSwitcher detail={detail} basePath={detailHref} />
           <AdBanner placement="episodes" />
           <section id="episodes">
             <EpisodeCards
