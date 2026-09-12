@@ -7,8 +7,9 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Link, useRouter } from "@/i18n/navigation";
+import { pickPreRollAd, type PreRollAdPool } from "@/lib/ads/pre-roll";
 import { animeHref, watchHref } from "@/lib/anime/href";
-import type { PreRollAd as PreRollAdData } from "@/lib/ads/queries";
+import { useWatchProgress } from "@/lib/hooks/use-viewer";
 import { saveWatchProgress } from "@/lib/watch/actions";
 import { cn } from "@/lib/utils";
 
@@ -18,8 +19,13 @@ import { NextEpisodeOverlay } from "./next-episode-overlay";
 // The pre-roll ad is optional (only present when an admin has an active ad) and
 // non-critical to the first paint, so it is code-split out of the watch bundle
 // and fetched on demand when an ad actually needs to render (PERF-03).
-const PreRollAd = dynamic(() =>
-  import("./pre-roll-ad").then((mod) => mod.PreRollAd),
+//
+// Never server-rendered: which ad this is comes out of a random draw made in
+// the browser, and rendering the server's own draw into the cached HTML would
+// both freeze the rotation and disagree with the client's on hydration.
+const PreRollAd = dynamic(
+  () => import("./pre-roll-ad").then((mod) => mod.PreRollAd),
+  { ssr: false },
 );
 
 /** Minimal neighbouring-episode reference for prev/next navigation. */
@@ -45,13 +51,14 @@ interface WatchExperienceProps {
   episode: { id: string; number: number; title: string | null };
   prevEpisode: EpisodeRef | null;
   nextEpisode: EpisodeRef | null;
-  ad: PreRollAdData | null;
+  /**
+   * Every active pre-roll ad, weights included — one is drawn from it here, in
+   * the browser, so the rotation survives the page being cached (PERF-05).
+   */
+  ads: PreRollAdPool;
   poster: string | null;
   /** Series length, carried into the library entry behind its progress bar. */
   totalEpisodes: number | null;
-  /** Resume position in seconds (PLAYER-05), seeded into the progress writer. */
-  initialTime: number;
-  isAuthenticated: boolean;
 }
 
 /** How often (ms) the throttled progress writer flushes to the server. */
@@ -73,21 +80,38 @@ export function WatchExperience({
   episode,
   prevEpisode,
   nextEpisode,
-  ad,
+  ads,
   poster,
   totalEpisodes,
-  initialTime,
-  isAuthenticated,
 }: WatchExperienceProps) {
   const t = useTranslations("player");
   const router = useRouter();
 
+  // Who is watching, and where they left off — read here rather than rendered
+  // into the page, so the page itself is the same for everyone and cacheable
+  // (PERF-05). Both are skipped entirely for a signed-out viewer.
+  const { isAuthenticated, progress } = useWatchProgress(animeId, episode.id);
+
+  // One draw per mount. The pool is identical for every viewer (it comes out of
+  // the cached HTML); the ad is not.
+  const [ad] = useState(() => pickPreRollAd(ads));
+
   // Gate the player behind the pre-roll ad when one is configured (PLAYER-02/03).
-  const [adDone, setAdDone] = useState(!ad);
+  const [adDone, setAdDone] = useState(ads.length === 0);
   const [showNext, setShowNext] = useState(false);
 
   // Latest playback position, kept in a ref so timeupdate never re-renders.
-  const latest = useRef({ position: initialTime, duration: 0 });
+  const latest = useRef({ position: 0, duration: 0 });
+
+  // Seed the resume position once it arrives (PLAYER-05), unless playback has
+  // already moved past it — the fetch is in flight while the viewer can already
+  // be watching, and a stale answer must never rewind a live position. An
+  // episode already finished resumes from the start, as it did before.
+  useEffect(() => {
+    if (!progress || progress.completed) return;
+    if (latest.current.position > 0) return;
+    latest.current.position = progress.positionSeconds;
+  }, [progress]);
   const nextHref = nextEpisode
     ? watchHref(animeSlug, nextEpisode.number)
     : null;

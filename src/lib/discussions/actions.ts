@@ -1,10 +1,14 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { sql } from "drizzle-orm";
 
 import { discussionThreads } from "@/db/schema";
+import { locales } from "@/i18n/config";
 import { redirect } from "@/i18n/navigation";
+import { localePath } from "@/i18n/paths";
 import { getActiveLocale } from "@/i18n/route-locale";
+import { canonicalWatchHref } from "@/lib/anime/canonical-slug";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   isDiscussionScope,
@@ -242,6 +246,29 @@ async function resolveEpisodeThreadId(input: {
  * Shaped for `useActionState`; the form refreshes the route on success rather
  * than revalidating a path the action would have to be told about.
  */
+/**
+ * Drops the cached watch pages an episode review is rendered on.
+ *
+ * The watch route is prerendered and revalidated hourly now (PERF-05), and the
+ * reviews under the player come out of that cached render — so without this a
+ * member would write a review and not see it, on any device, for up to an hour.
+ * `router.refresh()` cannot cover it: a refresh of a cached route is answered
+ * from the same cache entry.
+ *
+ * Every locale is named explicitly rather than revalidating the route pattern,
+ * which would drop every watch page on the site for one review. The path is
+ * built through the slug registry, because that is the only address the page is
+ * cached under — every other spelling 308s to it before it renders.
+ */
+async function revalidateEpisodeReviews(
+  animeId: string,
+  animeTitle: string,
+  episodeNumber: number,
+): Promise<void> {
+  const href = await canonicalWatchHref(animeId, episodeNumber, animeTitle);
+  for (const locale of locales) revalidatePath(localePath(href, locale));
+}
+
 export async function createPost(
   _prevState: PostFormState,
   formData: FormData,
@@ -303,6 +330,15 @@ export async function createPost(
 
     const postId = firstRow(result)?.post_id;
     if (typeof postId !== "string") return { status: "error", error: "locked" };
+
+    // An episode review is rendered on a cached page; a reply in a thread is
+    // not, and the thread route refreshes itself.
+    const animeId = text(formData, "animeId");
+    const animeTitle = text(formData, "animeTitle");
+    const episodeNumber = positiveInt(formData, "episodeNumber");
+    if (animeId && animeTitle && episodeNumber !== null) {
+      await revalidateEpisodeReviews(animeId, animeTitle, episodeNumber);
+    }
 
     return { status: "success" };
   } catch (error) {

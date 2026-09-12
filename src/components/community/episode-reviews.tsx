@@ -12,7 +12,6 @@ interface EpisodeReviewsProps {
   animeTitle: string;
   animeImage: string | null;
   episodeNumber: number;
-  isAuthenticated: boolean;
   /** Where a signed-out viewer is sent to sign in and come back. */
   loginHref: string;
 }
@@ -27,14 +26,15 @@ interface EpisodeReviewsProps {
  * nobody has written about costs one index probe and no rows.
  *
  * Rendered inside a `Suspense` boundary on the watch route, so these two
- * queries never hold up the player.
+ * queries never hold up the player. The watch page is cached at the edge
+ * (PERF-05), so the box reads the session in the browser and a new review
+ * revalidates the page it was written on rather than waiting out the hour.
  */
 export async function EpisodeReviews({
   animeId,
   animeTitle,
   animeImage,
   episodeNumber,
-  isAuthenticated,
   loginHref,
 }: EpisodeReviewsProps) {
   const t = await getTranslations("community");
@@ -81,11 +81,11 @@ export async function EpisodeReviews({
       <div className="mt-6">
         <ReplyForm
           threadId={thread?.id ?? null}
-          episodeTarget={
-            thread ? null : { animeId, animeTitle, animeImage, episodeNumber }
-          }
+          // Always passed, not only for the first review: the action opens the
+          // thread from it when there is none, and needs it either way to know
+          // which cached watch pages to revalidate once the review lands.
+          episodeTarget={{ animeId, animeTitle, animeImage, episodeNumber }}
           placeholder={t("reviewPlaceholder")}
-          isAuthenticated={isAuthenticated}
           loginHref={loginHref}
           locked={thread?.locked ?? false}
         />

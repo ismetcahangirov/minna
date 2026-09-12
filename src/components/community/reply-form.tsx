@@ -6,6 +6,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { COMMUNITY_ERROR_KEY } from "@/components/community/error-key";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
+import { useViewer } from "@/lib/hooks/use-viewer";
 import { createPost, type PostFormState } from "@/lib/discussions/actions";
 import { TEXT_LIMITS } from "@/lib/moderation/limits";
 
@@ -13,8 +14,9 @@ interface ReplyFormProps {
   /** Existing thread to post into. Omitted for an episode's first review. */
   threadId?: string | null;
   /**
-   * The episode this box belongs to, when there is no thread yet: the action
-   * opens the episode's own thread with these details on the first review.
+   * The episode this box belongs to, on the watch page. The action opens the
+   * episode's own thread from it when there is none yet, and uses it to
+   * revalidate the cached watch pages the review appears on.
    */
   episodeTarget?: {
     animeId: string;
@@ -23,7 +25,6 @@ interface ReplyFormProps {
     episodeNumber: number;
   } | null;
   placeholder: string;
-  isAuthenticated: boolean;
   /** Where a signed-out visitor is sent to sign in and come back. */
   loginHref: string;
   /** True when the thread is closed — the box is replaced by a notice. */
@@ -47,11 +48,15 @@ export function ReplyForm({
   threadId,
   episodeTarget,
   placeholder,
-  isAuthenticated,
   loginHref,
   locked = false,
 }: ReplyFormProps) {
   const t = useTranslations("community");
+  // Read here rather than passed down: the watch page this box also sits on is
+  // cached at the edge now, so it renders nothing about the viewer (PERF-05).
+  // Until the answer arrives the box renders in its signed-out shape, which is
+  // the honest one — a post cannot be written before the session is known.
+  const { isAuthenticated } = useViewer();
   const router = useRouter();
   const [state, formAction, pending] = useActionState(createPost, INITIAL);
   const form = useRef<HTMLFormElement>(null);

@@ -4,6 +4,11 @@ import { eq } from "drizzle-orm";
 
 import { ads } from "@/db/schema";
 import {
+  pickPreRollAd,
+  type PreRollAd,
+  type PreRollAdPool,
+} from "@/lib/ads/pre-roll";
+import {
   CACHE_TTL,
   cacheDelete,
   cacheGet,
@@ -11,24 +16,7 @@ import {
   cacheSet,
 } from "@/lib/cache";
 
-/**
- * Client-safe pre-roll ad DTO (PLAYER-03). Only the fields the player needs are
- * exposed — internal columns like `weight`/`active` never reach the browser.
- */
-export interface PreRollAd {
-  id: string;
-  videoUrl: string;
-  targetUrl: string | null;
-  /** Admin-configured cap before auto-advancing; `null` plays to the end. */
-  durationSeconds: number | null;
-  /** Seconds before the "Skip ad" button unlocks (admin-configured). */
-  skipAfterSeconds: number;
-}
-
-type AdPoolRow = Pick<
-  PreRollAd,
-  "id" | "videoUrl" | "targetUrl" | "durationSeconds" | "skipAfterSeconds"
-> & { weight: number };
+export type { PreRollAd, PreRollAdPool } from "@/lib/ads/pre-roll";
 
 const AD_POOL_KEY = cacheKey("ads", "preroll", "active");
 
@@ -46,9 +34,14 @@ export async function invalidateAdPool(): Promise<void> {
  * Redis-cached on a short TTL so admin edits (EPIC-12) surface quickly while a
  * burst of viewers doesn't hammer the DB. `@/db` is imported dynamically so its
  * `DATABASE_URL` requirement stays out of the build-time module graph.
+ *
+ * The whole pool is what the watch page renders now, and the player draws from
+ * it in the browser: the page is cached at the edge (PERF-05), so a pick made
+ * here would be baked into the HTML and every viewer inside the revalidate
+ * window would see the same ad — which is not a weighted rotation at all.
  */
-async function getActiveAdPool(): Promise<AdPoolRow[]> {
-  const cached = await cacheGet<AdPoolRow[]>(AD_POOL_KEY);
+export async function getActiveAdPool(): Promise<PreRollAdPool> {
+  const cached = await cacheGet<PreRollAdPool>(AD_POOL_KEY);
   if (cached) return cached;
 
   try {
@@ -75,38 +68,9 @@ async function getActiveAdPool(): Promise<AdPoolRow[]> {
 
 /**
  * Selects one active pre-roll ad to show before an episode (PLAYER-02/03), or
- * `null` when none are configured — in which case the player skips straight to
- * the episode rather than showing an empty overlay.
- *
- * Selection is weighted-random across the active pool so admins can bias
- * exposure via each ad's `weight`.
+ * `null` when none are configured. Kept for callers that pick server-side; the
+ * watch page hands the pool to the player instead (see {@link getActiveAdPool}).
  */
 export async function getActivePreRollAd(): Promise<PreRollAd | null> {
-  const pool = await getActiveAdPool();
-  if (pool.length === 0) return null;
-
-  const totalWeight = pool.reduce((sum, ad) => sum + Math.max(1, ad.weight), 0);
-  let ticket = Math.random() * totalWeight;
-
-  for (const ad of pool) {
-    ticket -= Math.max(1, ad.weight);
-    if (ticket <= 0) {
-      return {
-        id: ad.id,
-        videoUrl: ad.videoUrl,
-        targetUrl: ad.targetUrl,
-        durationSeconds: ad.durationSeconds,
-        skipAfterSeconds: ad.skipAfterSeconds,
-      };
-    }
-  }
-
-  const fallback = pool[0];
-  return {
-    id: fallback.id,
-    videoUrl: fallback.videoUrl,
-    targetUrl: fallback.targetUrl,
-    durationSeconds: fallback.durationSeconds,
-    skipAfterSeconds: fallback.skipAfterSeconds,
-  };
+  return pickPreRollAd(await getActiveAdPool());
 }
