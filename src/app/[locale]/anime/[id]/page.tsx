@@ -31,6 +31,19 @@ interface AnimeDetailRouteProps {
 export const revalidate = 3600;
 
 /**
+ * Empty on purpose, and required: a dynamic segment with no
+ * `generateStaticParams` at all is served fully dynamically, `revalidate` or
+ * not. Declaring it — with nothing to prerender at build time, because the
+ * catalog is thousands of titles deep and most of them are never asked for —
+ * is what puts the route in the prerender manifest, so the first request for a
+ * title renders it and every request after that is answered from the cache
+ * until it goes stale.
+ */
+export function generateStaticParams() {
+  return [];
+}
+
+/**
  * Dynamic SEO metadata (DETAIL-04): title, description and Open Graph/Twitter
  * cards built from the anime record. Shares `getAnimeInfo`'s per-request cache
  * with the page component, so this adds no extra fetch.
