@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { searchAnime } from "@/lib/anime/search";
+import { PUBLIC_API_CACHE } from "@/lib/http/cache";
 
 /**
  * Search endpoint (SEARCH-01): the browser → server → Redis → Consumet seam for
@@ -26,5 +27,5 @@ export async function GET(request: Request) {
     page: Number.isFinite(page) ? page : 1,
   });
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: PUBLIC_API_CACHE });
 }

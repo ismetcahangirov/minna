@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getAnimeSection } from "@/lib/anime/catalog";
 import { ANIME_SECTIONS, isAnimeSection } from "@/lib/anime/types";
+import { PUBLIC_API_CACHE } from "@/lib/http/cache";
 
 /**
  * Section listing endpoint (HOME-07): the browser → server → Redis → Consumet
@@ -24,5 +25,5 @@ export async function GET(
   }
 
   const results = await getAnimeSection(section);
-  return NextResponse.json({ results });
+  return NextResponse.json({ results }, { headers: PUBLIC_API_CACHE });
 }
