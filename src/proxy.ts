@@ -19,13 +19,17 @@ const PROTECTED_PREFIXES = ["/profile", "/favorites", "/library"];
 const ADMIN_PREFIX = "/admin";
 
 /**
- * Locale routing (I18N-01). For a prefixed URL it rewrites `/tr/blogs` onto the
- * `[locale]` segment; for a bare URL it negotiates — cookie first, then
- * `Accept-Language` — and **redirects**, so one URL never renders two
- * languages. English is the exception by design: under `as-needed` the bare URL
- * *is* the English URL, so an English visitor is rewritten, never bounced.
+ * Locale routing (I18N-01) for the requests that still reach the proxy: it
+ * rewrites onto the `[locale]` segment and sets the locale header server
+ * actions read. Negotiation is off — the edge rules in
+ * `src/i18n/edge-routing.ts` already redirected a bare visit before the proxy
+ * ran, and a second, finer negotiation here would send a POST from an English
+ * page to `/tr` for an `Accept-Language` the edge rules left in English.
  */
-const handleI18nRouting = createMiddleware(routing);
+const handleI18nRouting = createMiddleware({
+  ...routing,
+  localeDetection: false,
+});
 
 function matches(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
@@ -113,7 +117,23 @@ export default async function proxy(
   request: NextRequest,
   event: unknown,
 ): Promise<Response> {
-  const { path } = splitLocalePath(request.nextUrl.pathname);
+  const { locale, path } = splitLocalePath(request.nextUrl.pathname);
+
+  // `/en/…` is never a canonical URL under `as-needed`. Sending it to the bare
+  // path is also an explicit choice of English, so it is recorded — otherwise a
+  // reader holding `NEXT_LOCALE=tr` would be bounced from the bare path straight
+  // back to `/tr` by the edge rules.
+  if (locale === defaultLocale) {
+    const target = request.nextUrl.clone();
+    target.pathname = path;
+    const response = NextResponse.redirect(target, 307);
+    response.cookies.set(LOCALE_COOKIE, defaultLocale, {
+      path: "/",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+    return response;
+  }
 
   if (needsSession(path)) {
     // `auth()` types its handler as optionally returning nothing, meaning "let
@@ -127,17 +147,30 @@ export default async function proxy(
 
 export const config = {
   /*
-   * Only what still needs code at request time (PERF-06): the auth-gated
-   * sections, and server-action POSTs, whose handlers resolve the visitor's
-   * locale from the header the i18n middleware sets. Every other page is
-   * routed by the rules in `src/i18n/edge-routing.ts`, so a cached page is
-   * served without running a function at all.
+   * Only what still needs code at request time (PERF-06): `/en/…` URLs, the
+   * auth-gated sections, and server-action POSTs, whose handlers resolve the
+   * visitor's locale from the header the i18n middleware sets. A form submitted
+   * before hydration carries no `Next-Action` header, so form bodies are
+   * matched too. Every other page is routed by the rules in
+   * `src/i18n/edge-routing.ts`, so a cached page is served without running a
+   * function at all.
    */
   matcher: [
-    "/:locale(en|tr|ru)?/:section(admin|profile|favorites|library)/:path*",
+    "/en/:path*",
+    "/:locale(tr|ru)?/:section(admin|profile|favorites|library)/:path*",
     {
       source: "/((?!api|_next|_vercel|.*\\..*).*)",
       has: [{ type: "header", key: "next-action" }],
+    },
+    {
+      source: "/((?!api|_next|_vercel|.*\\..*).*)",
+      has: [
+        {
+          type: "header",
+          key: "content-type",
+          value: "(?:multipart/form-data|application/x-www-form-urlencoded).*",
+        },
+      ],
     },
   ],
 };

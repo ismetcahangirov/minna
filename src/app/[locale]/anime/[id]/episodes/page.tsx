@@ -113,9 +113,8 @@ export default async function AnimeEpisodesPage({
   const query = parseEpisodesQueryParam(q);
 
   // Keep SEO on one canonical URL: a bare id or stale slug 308s to the slugged
-  // episodes path, params preserved. The proxy issues that 308 before the
-  // response starts (see `src/proxy.ts`); this is the standby for an id whose
-  // slug nothing has claimed yet.
+  // episodes path, params preserved, as a real 308: no `loading.tsx` sits
+  // above this route (PERF-06).
   // Resolved once and reused for every path this page builds — its own
   // canonical URL, the redirects above it, and the episode links below. The
   // registry read is what those all agree on, so asking for it per href was

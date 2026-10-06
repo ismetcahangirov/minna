@@ -174,15 +174,13 @@ export default async function WatchPage({ params }: WatchRouteProps) {
   if (!located) notFound();
 
   // Keep SEO on one canonical URL: a bare id, stale anime slug, legacy opaque
-  // episode id or bare number 308s to `/watch/{id}-{slug}/episode-{n}`. The
-  // proxy issues that 308 before the response starts (see `src/proxy.ts`); this
-  // is the standby for the two cases it cannot resolve on its own — an id whose
-  // slug nothing has claimed yet, and a legacy opaque episode id, whose number
-  // is only knowable from the episode list fetched above.
+  // episode id or bare number 308s to `/watch/{id}-{slug}/episode-{n}`. No
+  // `loading.tsx` sits above this route, so it goes out as a real 308 before
+  // the response starts (PERF-06).
   // Resolved once and reused: the page's own canonical URL is built from it,
   // and so are the links it renders — the episode navigation and the way back
   // to the anime. Those used to derive their segment from the title, which is
-  // how a player linked its own next episode at a URL the proxy then 308'd.
+  // how a player linked its own next episode at a URL that then 308'd.
   const slug = await canonicalSlug(detail.id, detail.title);
   const canonical = watchHref(slug, located.current.number);
   if (located.known && `/watch/${animeId}/${episodeId}` !== canonical) {

@@ -60,15 +60,9 @@ function negotiated(locale: string): Redirects {
 }
 
 export function localeRedirects(): Redirects {
-  return [
-    { source: `/${defaultLocale}`, destination: "/", permanent: false },
-    {
-      source: `/${defaultLocale}/:path*`,
-      destination: "/:path*",
-      permanent: false,
-    },
-    ...prefixed.flatMap(negotiated),
-  ];
+  // `/en/…` → bare is the proxy's job: it also has to record English in the
+  // cookie, which a config redirect cannot set.
+  return prefixed.flatMap(negotiated);
 }
 
 export function localeRewrites(): Rewrites {

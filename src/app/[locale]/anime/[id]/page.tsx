@@ -106,11 +106,9 @@ export default async function AnimeDetailPage({
   const detail = await getAnimeInfo(parseAnimeParam(id));
   if (!detail) notFound();
 
-  // Consolidate SEO on one canonical URL. The 308 itself is issued by the
-  // proxy, which is the only place a status code can still be set (see
-  // `canonicalAnimePath` in `src/proxy.ts`); this is the standby for the one
-  // case the proxy cannot cover — an id nothing has claimed a slug for yet —
-  // and degrades to the client-side redirect Next emits mid-stream.
+  // Consolidate SEO on one canonical URL. No `loading.tsx` sits above this
+  // route, so the redirect is thrown before the response starts and goes out
+  // as a real 308, cached like the page (PERF-06).
   const canonical = await canonicalSeasonAwareHref(detail);
   if (`/anime/${id}` !== canonical) {
     permanentRedirect({ href: canonical, locale });
