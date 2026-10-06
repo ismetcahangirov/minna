@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { getTranslations } from "next-intl/server";
 
+import { defaultLocale } from "@/i18n/config";
+
 /**
  * Web app manifest — one of the four sources Google reads a site name from
  * (alongside `WebSite` structured data, `og:site_name` and the home page
@@ -11,7 +13,12 @@ import { getTranslations } from "next-intl/server";
  * standalone on the black ground the design system uses everywhere.
  */
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
-  const t = await getTranslations("home.hero");
+  // An explicit locale keeps the manifest static: without one next-intl reads
+  // the request headers, and every browser fetch of it invoked a function.
+  const t = await getTranslations({
+    locale: defaultLocale,
+    namespace: "home.hero",
+  });
 
   return {
     name: "Minna — Watch Anime Online",

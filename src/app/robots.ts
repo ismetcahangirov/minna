@@ -11,7 +11,17 @@ import { absoluteUrl } from "@/lib/seo/site";
  * `/api` is deliberately absent from this list — it takes no locale prefix, so
  * it is added once below rather than three times.
  */
-const PRIVATE_PREFIXES = ["/admin", "/profile", "/favorites"];
+const PRIVATE_PREFIXES = [
+  "/admin",
+  "/profile",
+  "/favorites",
+  "/library",
+  // Rendered per request and worth nothing in an index (PERF-06): a crawler
+  // walking query strings or episode-list pages runs a function every time.
+  "/login",
+  "/search",
+  "/anime/*/episodes",
+];
 
 /**
  * Crawlers refused the whole site (PERF-05).
