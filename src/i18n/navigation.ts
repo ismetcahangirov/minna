@@ -1,4 +1,5 @@
 import { createNavigation } from "next-intl/navigation";
+import { type ComponentProps, createElement } from "react";
 
 import { routing } from "@/i18n/routing";
 
@@ -17,7 +18,18 @@ import { routing } from "@/i18n/routing";
  */
 const navigation = createNavigation(routing);
 
-export const { Link, usePathname, useRouter, getPathname } = navigation;
+export const { usePathname, useRouter, getPathname } = navigation;
+
+/**
+ * Viewport prefetch is off by default (PERF-06): a card grid otherwise fans one
+ * page view out into dozens of metered requests and on-demand renders.
+ */
+export function Link({
+  prefetch = false,
+  ...props
+}: ComponentProps<typeof navigation.Link>) {
+  return createElement(navigation.Link, { prefetch, ...props });
+}
 
 /**
  * Re-exported with an explicit type rather than destructured with the rest.
