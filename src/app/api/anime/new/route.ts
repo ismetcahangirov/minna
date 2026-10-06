@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { listRecentAnime } from "@/lib/anime/browse";
-import { PUBLIC_API_CACHE } from "@/lib/http/cache";
+import { publicApiCache } from "@/lib/http/cache";
 
 /**
  * New/Recent listing endpoint: the browser → server → Redis → Consumet
@@ -14,5 +14,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   const page = Number.parseInt(searchParams.get("page") ?? "1", 10);
 
   const result = await listRecentAnime(Number.isFinite(page) ? page : 1);
-  return NextResponse.json(result, { headers: PUBLIC_API_CACHE });
+  return NextResponse.json(result, {
+    headers: publicApiCache(result.items),
+  });
 }
