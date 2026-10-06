@@ -10,11 +10,6 @@ import {
 } from "@/i18n/config";
 import { localePath, splitLocalePath } from "@/i18n/paths";
 import { routing } from "@/i18n/routing";
-import {
-  canonicalRoutePath,
-  matchAnimeRoute,
-} from "@/lib/anime/canonical-path";
-import { readCanonicalSlug } from "@/lib/anime/canonical-slug";
 
 // Route segments that require an authenticated user. Extend this list as
 // login-only areas are built (profile — EPIC-09, favorites — EPIC-08, …).
@@ -105,81 +100,9 @@ const guarded = auth((request) => {
 });
 
 /**
- * The canonical path for a slugged anime URL, or `null` when the request is
- * already canonical, is not one of those routes, or cannot be resolved.
- *
- * This has to happen here rather than in the page, which is where it used to
- * live and where it silently did nothing. `permanentRedirect` only produces a
- * 308 while the response has not started; `src/app/[locale]/loading.tsx` puts a
- * Suspense boundary above every page, so the shell is flushed long before
- * `getAnimeInfo` resolves and Next degrades the redirect to a `<meta refresh>`
- * inside a 200. A browser follows that and notices nothing — a crawler indexes
- * the 200 it was served, and `/anime/21-anything-at-all` becomes an indexable
- * duplicate of `/anime/21-one-piece`. Next's own guidance is explicit: "if
- * you'd like to redirect before the render process, use next.config.js or
- * Proxy".
- *
- * The cost is one Redis read on anime and watch URLs only — the registry is a
- * bare `{id}-{slug}` string, not the anime record — and a miss returns `null`,
- * which leaves the request behaving exactly as it did before.
- */
-async function canonicalAnimePath(path: string): Promise<string | null> {
-  const match = matchAnimeRoute(path);
-  if (!match) return null;
-
-  const slug = await readCanonicalSlug(match.id);
-  if (!slug) return null;
-
-  const canonical = canonicalRoutePath(match, slug);
-  return canonical === path ? null : canonical;
-}
-
-/**
- * Emits the canonical redirect, folding it into whatever the locale layer
- * already decided so a visitor is never sent twice.
- *
- * A bare `/anime/21` from a Turkish reader is two moves at once: it has to gain
- * a `/tr` prefix *and* a slug. next-intl answers the first with a redirect of
- * its own, so rather than redirecting again on top of it, that response's
- * `Location` is rewritten in place — keeping its status and its `NEXT_LOCALE`
- * cookie. Everything else (an explicit `/tr/anime/21`, or `/anime/21` in
- * English) was going to be rewritten, not redirected, and gets a plain 308.
- */
-function withCanonicalPath(
-  request: NextRequest,
-  response: Response,
-  locale: Locale | null,
-  canonical: string,
-): Response {
-  const location = response.headers.get("location");
-
-  if (response.status >= 300 && response.status < 400 && location) {
-    const target = new URL(location, request.nextUrl.origin);
-    const { locale: targetLocale } = splitLocalePath(target.pathname);
-    target.pathname = localePath(canonical, targetLocale ?? defaultLocale);
-
-    response.headers.set("location", target.toString());
-    return response;
-  }
-
-  const target = new URL(
-    localePath(canonical, locale ?? defaultLocale),
-    request.nextUrl.origin,
-  );
-  target.search = request.nextUrl.search;
-
-  // 308 rather than 307: these URLs are consolidated permanently, and the
-  // method preservation is what keeps a POST from silently becoming a GET.
-  return NextResponse.redirect(target, 308);
-}
-
-/**
- * Next 16 renamed the `middleware` convention to `proxy`. One file gets to
- * handle a request, so the two concerns are composed rather than chained:
- * locale routing needs to see every public page, while the session decode is
- * expensive enough — and mutates `Set-Cookie` often enough to matter for a
- * cached public page — that it is worth confining to the routes that are
- * actually gated. Anything else goes straight to the i18n middleware.
+ * Next 16 renamed the `middleware` convention to `proxy`. The gated sections
+ * get the session check followed by locale routing; a server action only
+ * needs the locale routing, which is what tells its handler the locale.
  */
 type GuardedHandler = (
   request: NextRequest,
@@ -190,7 +113,7 @@ export default async function proxy(
   request: NextRequest,
   event: unknown,
 ): Promise<Response> {
-  const { locale, path } = splitLocalePath(request.nextUrl.pathname);
+  const { path } = splitLocalePath(request.nextUrl.pathname);
 
   if (needsSession(path)) {
     // `auth()` types its handler as optionally returning nothing, meaning "let
@@ -199,27 +122,22 @@ export default async function proxy(
     return gated ?? NextResponse.next();
   }
 
-  // Resolved before the locale layer runs so the two answers can be merged into
-  // a single hop; `null` for every path that is not a slugged anime URL, which
-  // costs one string match.
-  const canonical = await canonicalAnimePath(path);
-
-  const response = await handleI18nRouting(request);
-  if (!canonical) return response;
-
-  return withCanonicalPath(request, response, locale, canonical);
+  return handleI18nRouting(request);
 }
 
 export const config = {
   /*
-   * Everything except API routes, Next's own assets, and any path with a file
-   * extension — which covers `/sitemap.xml`, `/robots.txt`, `/icon.svg` and
-   * `/manifest.webmanifest`. Those are locale-independent by definition: they
-   * enumerate every locale rather than being served in one, so prefixing them
-   * would produce three copies of the same file.
-   *
-   * The old matcher listed only the protected segments; locale routing has to
-   * see every page, so the guard moved from the matcher into the handler.
+   * Only what still needs code at request time (PERF-06): the auth-gated
+   * sections, and server-action POSTs, whose handlers resolve the visitor's
+   * locale from the header the i18n middleware sets. Every other page is
+   * routed by the rules in `src/i18n/edge-routing.ts`, so a cached page is
+   * served without running a function at all.
    */
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  matcher: [
+    "/:locale(en|tr|ru)?/:section(admin|profile|favorites|library)/:path*",
+    {
+      source: "/((?!api|_next|_vercel|.*\\..*).*)",
+      has: [{ type: "header", key: "next-action" }],
+    },
+  ],
 };
