@@ -31,16 +31,16 @@ interface WatchRouteProps {
 }
 
 /**
- * Rendered once an hour and served from the edge in between (PERF-05).
+ * Rendered once a day and served from the edge in between (PERF-05/PERF-06).
  *
  * Nothing here is per-visitor any more: the player reads its own resume
  * position and the reviews box its own session, and the pre-roll ad is drawn
  * from the pool in the browser so a cached page still rotates ads. The episode
  * reviews below are revalidated on demand when one is written
- * (`revalidateEpisodeReviews`), so the hour is a floor on staleness, not a
+ * (`revalidateEpisodeReviews`), so the day is a floor on staleness, not a
  * delay on new reviews.
  */
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 /**
  * Empty on purpose, and required: without it a dynamic segment is served fully
