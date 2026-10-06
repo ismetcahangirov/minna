@@ -120,15 +120,16 @@ async function kitsuFetch<D>(path: string): Promise<KitsuDocument<D>> {
   const res = await fetch(`${KITSU_API}${path}`, {
     headers: { Accept: "application/vnd.api+json" },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    // Cached for an hour, matching the AniList queries in
-    // `@/lib/anime/anilist-graphql`. This used to be `no-store`, reasoning that
+    // Cached for a day, matching the pages that read it: a page's ISR window is
+    // the shortest fetch window inside it, so an hour here capped the anime
+    // pages at an hour whenever the fallback answered (PERF-06). This used to be `no-store`, reasoning that
     // the callers already hold a Redis cache and a stale fetch cache should not
     // outlive its TTL — but an uncached fetch during render opts the whole page
     // out of static rendering, and because Kitsu is the *fallback* provider,
     // that happened exactly when AniList had already failed: a single upstream
     // hiccup silently turned a cacheable page into a per-request render. Anime
-    // metadata does not move in an hour, and the Redis layer still fronts this.
-    next: { revalidate: 60 * 60 },
+    // metadata does not move in a day, and the Redis layer still fronts this.
+    next: { revalidate: 60 * 60 * 24 },
   });
 
   if (!res.ok) {

@@ -4,6 +4,7 @@ import { getLocale } from "next-intl/server";
 
 import { isLocale } from "@/i18n/config";
 import { listBlogs } from "@/lib/blog/queries";
+import { publicApiCache } from "@/lib/http/cache";
 
 /**
  * Blog listing endpoint (LIST-03): the browser → server → Neon seam for the
@@ -26,5 +27,7 @@ export async function GET(request: Request) {
     Number.isFinite(page) ? page : 1,
     isLocale(locale) ? locale : undefined,
   );
-  return NextResponse.json(result);
+  return NextResponse.json(result, {
+    headers: publicApiCache(result.items),
+  });
 }

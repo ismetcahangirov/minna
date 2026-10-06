@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { listPopularAnime } from "@/lib/anime/browse";
+import { publicApiCache } from "@/lib/http/cache";
 
 /**
  * Popular listing endpoint (LIST-02): the browser → server → Redis → Consumet
@@ -13,5 +14,7 @@ export async function GET(request: Request) {
   const page = Number.parseInt(searchParams.get("page") ?? "1", 10);
 
   const result = await listPopularAnime(Number.isFinite(page) ? page : 1);
-  return NextResponse.json(result);
+  return NextResponse.json(result, {
+    headers: publicApiCache(result.items),
+  });
 }

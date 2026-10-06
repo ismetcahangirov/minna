@@ -182,8 +182,9 @@ export async function fetchAniListEpisodeTitles(
         query: EPISODE_TITLES_QUERY,
         variables: { id: numeric },
       }),
-      // Episode titles only change when a new episode airs.
-      next: { revalidate: 60 * 60 * 12 },
+      // Episode titles only change when a new episode airs, and a shorter
+      // window here would shorten the anime page's ISR window with it.
+      next: { revalidate: 60 * 60 * 24 },
     });
     if (!res.ok) return out;
     const json = (await res.json()) as {

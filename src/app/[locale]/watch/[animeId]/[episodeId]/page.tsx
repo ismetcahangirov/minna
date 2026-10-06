@@ -31,16 +31,16 @@ interface WatchRouteProps {
 }
 
 /**
- * Rendered once an hour and served from the edge in between (PERF-05).
+ * Rendered once a day and served from the edge in between (PERF-05/PERF-06).
  *
  * Nothing here is per-visitor any more: the player reads its own resume
  * position and the reviews box its own session, and the pre-roll ad is drawn
  * from the pool in the browser so a cached page still rotates ads. The episode
  * reviews below are revalidated on demand when one is written
- * (`revalidateEpisodeReviews`), so the hour is a floor on staleness, not a
+ * (`revalidateEpisodeReviews`), so the day is a floor on staleness, not a
  * delay on new reviews.
  */
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 /**
  * Empty on purpose, and required: without it a dynamic segment is served fully
@@ -174,15 +174,13 @@ export default async function WatchPage({ params }: WatchRouteProps) {
   if (!located) notFound();
 
   // Keep SEO on one canonical URL: a bare id, stale anime slug, legacy opaque
-  // episode id or bare number 308s to `/watch/{id}-{slug}/episode-{n}`. The
-  // proxy issues that 308 before the response starts (see `src/proxy.ts`); this
-  // is the standby for the two cases it cannot resolve on its own — an id whose
-  // slug nothing has claimed yet, and a legacy opaque episode id, whose number
-  // is only knowable from the episode list fetched above.
+  // episode id or bare number 308s to `/watch/{id}-{slug}/episode-{n}`. No
+  // `loading.tsx` sits above this route, so it goes out as a real 308 before
+  // the response starts (PERF-06).
   // Resolved once and reused: the page's own canonical URL is built from it,
   // and so are the links it renders — the episode navigation and the way back
   // to the anime. Those used to derive their segment from the title, which is
-  // how a player linked its own next episode at a URL the proxy then 308'd.
+  // how a player linked its own next episode at a URL that then 308'd.
   const slug = await canonicalSlug(detail.id, detail.title);
   const canonical = watchHref(slug, located.current.number);
   if (located.known && `/watch/${animeId}/${episodeId}` !== canonical) {

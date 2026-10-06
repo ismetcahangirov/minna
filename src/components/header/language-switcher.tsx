@@ -22,8 +22,9 @@ const itemClass =
  * without changing the URL: the result could not be linked to, shared or
  * indexed, and was the reason two thirds of the site was invisible to search.
  *
- * The cookie has not disappeared — the proxy still writes it as a
- * returning-visitor hint for bare URLs — but it no longer decides anything an
+ * The cookie has not disappeared — the link writes it on click, and an
+ * explicit `/en/…` visit resets it (`src/i18n/edge-routing.ts`) — as a
+ * returning-visitor hint for bare URLs, but it no longer decides anything an
  * explicit URL has already settled.
  */
 export function LanguageSwitcher() {

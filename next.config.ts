@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
+import { localeRedirects, localeRewrites } from "./src/i18n/edge-routing";
+
 const nextConfig: NextConfig = {
+  redirects: async () => localeRedirects(),
+  rewrites: async () => localeRewrites(),
   // `@consumet/extensions` is a Node-only scraping library (cheerio, crypto,
   // dynamic requires). Keep it out of the Server Components bundle and let it
   // load via native require at runtime. See src/lib/consumet/anilist.ts.

@@ -18,17 +18,19 @@ interface AnimeDetailRouteProps {
 }
 
 /**
- * Rendered once an hour and served from the edge in between (PERF-05).
+ * Rendered once a day and served from the edge in between (PERF-05/PERF-06);
+ * crawlers revisit a title far less often than hourly, so a shorter window
+ * only means paying for a regeneration on nearly every crawl.
  *
  * Nothing on this page is per-visitor any more: the favorite button, the
  * library menu, the progress bar and the episode ticks read their own state in
  * the browser (`@/lib/hooks/use-viewer`), and the episode list's paged, sorted
  * and filtered views moved to `/anime/[id]/episodes` so no search param is read
- * here. An anime record changes on the scale of a new episode a week, so an
- * hour of staleness costs nothing and the page stops invoking a function per
+ * here. An anime record changes on the scale of a new episode a week, so a
+ * day of staleness costs little and the page stops invoking a function per
  * crawl of the sitemap's thousands of entries.
  */
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 /**
  * Empty on purpose, and required: a dynamic segment with no
@@ -90,7 +92,7 @@ export async function generateMetadata({
 }
 
 /**
- * Anime detail page (EPIC-05). Prerendered on demand and revalidated hourly
+ * Anime detail page (EPIC-05). Prerendered on demand and revalidated daily
  * (see `revalidate` above) for SEO: the record is fetched through the
  * Redis-cached AniList layer and a missing/unresolvable title becomes a 404.
  * Nothing about the viewer is rendered here — the controls that need it read it
@@ -104,11 +106,9 @@ export default async function AnimeDetailPage({
   const detail = await getAnimeInfo(parseAnimeParam(id));
   if (!detail) notFound();
 
-  // Consolidate SEO on one canonical URL. The 308 itself is issued by the
-  // proxy, which is the only place a status code can still be set (see
-  // `canonicalAnimePath` in `src/proxy.ts`); this is the standby for the one
-  // case the proxy cannot cover — an id nothing has claimed a slug for yet —
-  // and degrades to the client-side redirect Next emits mid-stream.
+  // Consolidate SEO on one canonical URL. No `loading.tsx` sits above this
+  // route, so the redirect is thrown before the response starts and goes out
+  // as a real 308, cached like the page (PERF-06).
   const canonical = await canonicalSeasonAwareHref(detail);
   if (`/anime/${id}` !== canonical) {
     permanentRedirect({ href: canonical, locale });

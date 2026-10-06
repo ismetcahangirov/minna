@@ -10,7 +10,6 @@ import { Link } from "@/i18n/navigation";
 import { listedAnimeHref } from "@/lib/anime/href";
 import type { AnimeSummary } from "@/lib/anime/types";
 import { cn } from "@/lib/utils";
-import { useGetAnimeSectionQuery } from "@/store/api/anime-api";
 
 const ROTATE_MS = 7000;
 const MAX_SLIDES = 5;
@@ -27,10 +26,10 @@ function stripHtml(input: string): string {
  * Featured hero (HOME-01). Auto-rotating banner over the top trending titles.
  *
  * Data model for HOME-07: `initialItems` is fetched server-side (SSR) so the
- * first slide ships in the HTML for LCP/SEO, while `useGetAnimeSectionQuery`
- * (RTK Query → `/api/anime/trending` → Redis → Consumet) drives the client
- * list and refetch-on-focus. Legibility uses flat black layers — no gradient,
- * no glassmorphism (design system).
+ * first slide ships in the HTML for LCP/SEO. The page is ISR-cached, so the
+ * list is refreshed with the page rather than refetched per visit (PERF-06).
+ * Legibility uses flat black layers — no gradient, no glassmorphism (design
+ * system).
  */
 export function HeroCarousel({
   initialItems,
@@ -38,12 +37,7 @@ export function HeroCarousel({
   initialItems: AnimeSummary[];
 }) {
   const t = useTranslations("home.hero");
-  const { data } = useGetAnimeSectionQuery("trending");
-
-  const slides = (data && data.length > 0 ? data : initialItems).slice(
-    0,
-    MAX_SLIDES,
-  );
+  const slides = initialItems.slice(0, MAX_SLIDES);
 
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);

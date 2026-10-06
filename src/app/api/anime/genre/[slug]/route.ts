@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { listGenreAnime } from "@/lib/anime/browse";
 import { ANIME_GENRES } from "@/lib/anime/genres";
+import { publicApiCache } from "@/lib/http/cache";
 
 export async function GET(
   request: Request,
@@ -19,5 +20,7 @@ export async function GET(
     );
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, {
+    headers: publicApiCache(result.items),
+  });
 }

@@ -61,8 +61,13 @@ interface WatchExperienceProps {
   totalEpisodes: number | null;
 }
 
-/** How often (ms) the throttled progress writer flushes to the server. */
-const SAVE_INTERVAL_MS = 15_000;
+/**
+ * How often (ms) the throttled progress writer flushes to the server. Each
+ * flush is a metered server action (PERF-06); hide, pagehide, unmount and the
+ * end of an episode flush on their own, so a minute only bounds what a crash
+ * can lose.
+ */
+const SAVE_INTERVAL_MS = 60_000;
 
 /**
  * Watch experience orchestrator (EPIC-06). Sequences the pre-roll ad
@@ -102,6 +107,8 @@ export function WatchExperience({
 
   // Latest playback position, kept in a ref so timeupdate never re-renders.
   const latest = useRef({ position: 0, duration: 0 });
+  // Last position written, so a paused player or a hidden tab sends nothing.
+  const saved = useRef(-1);
 
   // Seed the resume position once it arrives (PLAYER-05), unless playback has
   // already moved past it — the fetch is in flight while the viewer can already
@@ -111,6 +118,7 @@ export function WatchExperience({
     if (!progress || progress.completed) return;
     if (latest.current.position > 0) return;
     latest.current.position = progress.positionSeconds;
+    saved.current = progress.positionSeconds;
   }, [progress]);
   const nextHref = nextEpisode
     ? watchHref(animeSlug, nextEpisode.number)
@@ -119,7 +127,8 @@ export function WatchExperience({
   const flushProgress = useCallback(() => {
     if (!isAuthenticated) return;
     const { position, duration } = latest.current;
-    if (position <= 0) return;
+    if (position <= 0 || position === saved.current) return;
+    saved.current = position;
     void saveWatchProgress({
       animeId,
       episodeId: episode.id,

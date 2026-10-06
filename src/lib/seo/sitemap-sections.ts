@@ -96,7 +96,6 @@ const STATIC_ROUTES: ReadonlyArray<{
   { path: "/", changeFrequency: "daily", priority: 1 },
   { path: "/popular", changeFrequency: "daily", priority: 0.9 },
   { path: "/blogs", changeFrequency: "weekly", priority: 0.7 },
-  { path: "/search", changeFrequency: "monthly", priority: 0.5 },
 ];
 
 /** The static pages. No I/O at all — this section is always instant. */
