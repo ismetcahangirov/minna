@@ -218,7 +218,7 @@ export default async function BlogDetailPage({ params }: BlogDetailRouteProps) {
         </Link>
 
         <header className="border-border mb-8 border-b pb-8">
-          <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs tracking-wide uppercase">
+          <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
             <time dateTime={post.publishedAt}>
               {format.dateTime(new Date(post.publishedAt), {
                 year: "numeric",
@@ -262,7 +262,7 @@ export default async function BlogDetailPage({ params }: BlogDetailRouteProps) {
                   <Link
                     href={`/blogs/tag/${tag.slug}`}
                     rel="tag"
-                    className="border-border text-muted-foreground hover:border-primary hover:text-foreground focus-visible:ring-ring inline-flex border px-2.5 py-1 text-xs font-medium tracking-wide uppercase transition-colors outline-none focus-visible:ring-2"
+                    className="border-border text-muted-foreground hover:border-primary hover:text-foreground focus-visible:ring-ring inline-flex border px-2.5 py-1 text-xs font-medium transition-colors outline-none focus-visible:ring-2"
                   >
                     {tag.name}
                   </Link>
@@ -273,7 +273,7 @@ export default async function BlogDetailPage({ params }: BlogDetailRouteProps) {
 
           {post.translations.length > 0 && (
             <nav aria-label={t("translations")} className="mt-5">
-              <p className="text-muted-foreground mb-2 inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase">
+              <p className="text-muted-foreground mb-2 inline-flex items-center gap-1.5 text-xs font-semibold">
                 <Languages className="size-3.5" aria-hidden />
                 {t("translations")}
               </p>
@@ -319,7 +319,7 @@ export default async function BlogDetailPage({ params }: BlogDetailRouteProps) {
             aria-label={t("tableOfContents")}
             className="border-border mb-10 border p-4 sm:p-5"
           >
-            <p className="text-muted-foreground mb-3 inline-flex items-center gap-2 text-xs font-semibold tracking-wide uppercase">
+            <p className="text-muted-foreground mb-3 inline-flex items-center gap-2 text-xs font-semibold">
               <List className="size-3.5" aria-hidden />
               {t("tableOfContents")}
             </p>

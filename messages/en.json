@@ -41,6 +41,7 @@
     "hero": {
       "heading": "Watch Anime Online Free",
       "tagline": "Stream trending, popular and top-rated anime in premium quality.",
+      "metaTitle": "Minna — Watch Anime Online",
       "watchNow": "Watch now",
       "moreInfo": "More info",
       "carouselLabel": "Featured anime",
@@ -166,7 +167,6 @@
       "updatedOn": "Updated on {date}",
       "tableOfContents": "Contents",
       "tag": {
-        "eyebrow": "Topic",
         "heading": "Posts tagged {tag}",
         "fallbackDescription": "Every post on Minna about {tag}.",
         "browseByTopic": "Browse by topic",

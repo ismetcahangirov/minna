@@ -127,9 +127,6 @@ export default async function BlogTagArchivePage({
       </Link>
 
       <header className="mb-8 flex flex-col gap-2">
-        <p className="text-primary text-xs font-semibold tracking-wide uppercase">
-          {t("tag.eyebrow")}
-        </p>
         <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
           {copy.heading}
         </h1>

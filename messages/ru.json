@@ -41,6 +41,7 @@
     "hero": {
       "heading": "Смотреть аниме онлайн бесплатно",
       "tagline": "Смотрите трендовые, популярные и топовые аниме в премиум-качестве.",
+      "metaTitle": "Minna — смотреть аниме онлайн",
       "watchNow": "Смотреть",
       "moreInfo": "Подробнее",
       "carouselLabel": "Избранное аниме",
@@ -166,7 +167,6 @@
       "updatedOn": "Обновлено {date}",
       "tableOfContents": "Содержание",
       "tag": {
-        "eyebrow": "Тема",
         "heading": "Записи с тегом {tag}",
         "fallbackDescription": "Все записи на Minna о {tag}.",
         "browseByTopic": "Просмотр по темам",

@@ -85,7 +85,6 @@ export async function AnimeDetailView({
     <article className="flex flex-col">
       <JsonLd data={buildAnimeJsonLd(detail, basePath)} />
       <HeroInitialScroll targetId="detail-body" viewportRatio={0.62} />
-      {/* Hero */}
       <section className="relative flex min-h-[78vh] w-full items-end overflow-hidden bg-black sm:min-h-[96vh] lg:min-h-[123vh]">
         {backdrop && <DetailBanner src={backdrop} />}
         {/* Legibility scrim: transparent up top, ramping gradually to solid black
