@@ -58,7 +58,7 @@ export function BlogCard({ blog, priority }: BlogCardProps) {
 
       <time
         dateTime={blog.publishedAt}
-        className="text-muted-foreground mt-3 block text-xs tracking-wide uppercase"
+        className="text-muted-foreground mt-3 block text-xs"
       >
         {format.dateTime(published, {
           year: "numeric",

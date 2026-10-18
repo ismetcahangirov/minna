@@ -89,7 +89,7 @@ export default async function BlogsPage({ params }: LocaleRouteProps) {
                 <Link
                   href={`/blogs/tag/${tag.slug}`}
                   rel="tag"
-                  className="border-border text-muted-foreground hover:border-primary hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors outline-none focus-visible:ring-2"
+                  className="border-border text-muted-foreground hover:border-primary hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs font-medium transition-colors outline-none focus-visible:ring-2"
                 >
                   {tag.name}
                   <span className="text-muted-foreground/60 tabular-nums">

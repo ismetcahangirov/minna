@@ -167,7 +167,6 @@
       "updatedOn": "Updated on {date}",
       "tableOfContents": "Contents",
       "tag": {
-        "eyebrow": "Topic",
         "heading": "Posts tagged {tag}",
         "fallbackDescription": "Every post on Minna about {tag}.",
         "browseByTopic": "Browse by topic",

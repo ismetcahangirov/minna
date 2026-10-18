@@ -167,7 +167,6 @@
       "updatedOn": "{date} tarihinde güncellendi",
       "tableOfContents": "İçindekiler",
       "tag": {
-        "eyebrow": "Konu",
         "heading": "{tag} etiketli yazılar",
         "fallbackDescription": "Minna'da {tag} hakkındaki tüm yazılar.",
         "browseByTopic": "Konuya göre gözat",
