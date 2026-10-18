@@ -33,7 +33,7 @@ export async function generateMetadata({
 }: LocaleRouteProps): Promise<Metadata> {
   const locale = await resolveLocale(params);
   const t = await getTranslations({ locale });
-  const title = "Minna — Watch Anime Online";
+  const title = t("home.hero.metaTitle");
   const description = t("home.hero.tagline");
 
   return {

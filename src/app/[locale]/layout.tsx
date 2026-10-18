@@ -65,6 +65,7 @@ export async function generateMetadata({
 }: LocaleLayoutProps): Promise<Metadata> {
   const locale = await resolveLocale(params);
   const t = await getTranslations({ locale, namespace: "home.hero" });
+  const title = t("metaTitle");
   const description = t("tagline");
 
   return {
@@ -75,7 +76,7 @@ export async function generateMetadata({
     // A plain string (not a title template): every child page already appends
     // " — Minna" to its own title, so a `%s — Minna` template would produce a
     // double suffix. This value only covers pages without their own title.
-    title: "Minna — Watch Anime Online",
+    title,
     description,
     applicationName: "Minna",
     alternates: localeAlternates("/", locale),
@@ -83,13 +84,13 @@ export async function generateMetadata({
       type: "website",
       siteName: "Minna",
       locale: openGraphLocales[locale],
-      title: "Minna — Watch Anime Online",
+      title,
       description,
       url: localeAlternates("/", locale).canonical,
     },
     twitter: {
       card: "summary_large_image",
-      title: "Minna — Watch Anime Online",
+      title,
       description,
     },
     verification: {
