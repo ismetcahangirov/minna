@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter } from "next/font/google";
+import { Geist_Mono, Golos_Text } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import "../globals.css";
@@ -16,8 +16,8 @@ import { getSiteUrlObject } from "@/lib/seo/site";
 import { buildSiteJsonLd } from "@/lib/seo/site-jsonld";
 import { StoreProvider } from "@/store/provider";
 
-const inter = Inter({
-  variable: "--font-inter",
+const golos = Golos_Text({
+  variable: "--font-golos",
   subsets: ["latin", "latin-ext", "cyrillic"],
 });
 
@@ -117,7 +117,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
-      className={`${inter.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${golos.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <JsonLd data={buildSiteJsonLd()} />
