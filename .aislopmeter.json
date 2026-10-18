@@ -1,0 +1,4 @@
+{
+  "disable": ["perma-dark", "stock-icons"],
+  "keep": "The black (#000000) background with the Netflix-red accent, the lucide-react SVG icon set and the atmospheric background videos are the design system in CLAUDE.md and DESIGN-SPEC.md. Do not change them."
+}
